@@ -49,7 +49,7 @@ import ply.lex as lex
 import os
 import sys
 
-__version__ = "1.01"
+__version__ = "1.02"
 
 tokens = [
     'NUMBER',
@@ -64,15 +64,18 @@ tokens = [
     'COMMENT_SINGLELINE',
     'COMMENT_MULTILINE',
     'PRECOMP_MACRO',
+    'PRECOMP_MACRO_CONT', 
     'ASTERISK',
     'AMPERSTAND',
     'EQUALS',
     'MINUS', 
+    'DIVIDE', 
+    'CHAR_LITERAL', 
     'STRING_LITERAL',
     'NEW_LINE'
 ]
 
-t_ignore = " \t\r+~[]."
+t_ignore = " \t\r+~[].|!?%@"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_][A-Za-z0-9_]*'
 t_OPEN_PAREN = r'\('
@@ -83,11 +86,14 @@ t_SEMI_COLON = r';'
 t_COLON = r':'
 t_COMMA = r','
 t_PRECOMP_MACRO = r'\#.*'
+t_PRECOMP_MACRO_CONT = r'.*\\\n'
 t_COMMENT_SINGLELINE = r'\/\/.*\n'
 t_ASTERISK = r'\*'
 t_MINUS = r'\-'
+t_DIVIDE = r'/[^/]'
 t_AMPERSTAND = r'&'
 t_EQUALS = r'='
+t_CHAR_LITERAL = "'.'"
 #found at http://wordaligned.org/articles/string-literals-and-regular-expressions
 #TODO: This does not work with the string "bla \" bla"
 t_STRING_LITERAL = r'"([^"\\]|\\.)*"'
