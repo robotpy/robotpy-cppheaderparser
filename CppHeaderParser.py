@@ -49,7 +49,7 @@ import ply.lex as lex
 import os
 import sys
 
-__version__ = "1.02"
+__version__ = "1.03"
 
 tokens = [
     'NUMBER',
@@ -72,12 +72,14 @@ tokens = [
     'DIVIDE', 
     'CHAR_LITERAL', 
     'STRING_LITERAL',
-    'NEW_LINE'
+    'OPERATOR_DIVIDE_OVERLOAD', 
+    'NEW_LINE',
 ]
 
 t_ignore = " \t\r+~[].|!?%@"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_][A-Za-z0-9_]*'
+t_OPERATOR_DIVIDE_OVERLOAD = r'/='
 t_OPEN_PAREN = r'\('
 t_CLOSE_PAREN = r'\)'
 t_OPEN_BRACE = r'{'
@@ -455,6 +457,9 @@ class CppHeader:
     
     def evaluateClassStack(self):
         """Create a Class out of the name stack (but not its parts)"""
+        #dont support sub classes today
+        if self.braceDepth != 0:
+            return
         newClass = CppClass(self.nameStack)
         if len(newClass.keys()):
             self.curClass = newClass["name"]
