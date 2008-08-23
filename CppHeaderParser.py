@@ -49,7 +49,7 @@ import ply.lex as lex
 import os
 import sys
 
-__version__ = "1.03"
+__version__ = "1.04"
 
 tokens = [
     'NUMBER',
@@ -332,9 +332,19 @@ class CppEnum(dict):
             #An enum without any values is useless, dont bother existing
             return
         #Figure out if it has a name
-        enumNameStack = nameStack[nameStack.index("}") + 1:]
-        if len(enumNameStack):
-            self["name"] = " ".join(enumNameStack)
+        preBraceStack = nameStack[:nameStack.index("{")]
+        postBraceStack = nameStack[nameStack.index("}") + 1:]
+        if (len(preBraceStack) == 2 and "typedef" not in nameStack):
+            self["name"] = preBraceStack[1]           
+        elif len(postBraceStack) and "typedef" in nameStack:
+                self["name"] = " ".join(postBraceStack)
+        #See if there are instances of this
+        if "typedef" not in nameStack and len(postBraceStack):
+            self["instances"] = []
+            for var in postBraceStack:
+                if "," in var:
+                    continue
+                self["instances"].append(var)                
 
 class CppHeader:
     """Parsed C++ class header
@@ -484,6 +494,15 @@ class CppHeader:
         newEnum = CppEnum(self.nameStack)
         if len(newEnum.keys()):
             self.classes[self.curClass]["enums"][self.curAccessSpecifier].append(newEnum)
+            #This enum has instances, turn them into properties
+            if newEnum.has_key("instances"):
+                instanceType = "enum"
+                if newEnum.has_key("name"):
+                    instanceType = newEnum["name"]
+                for instance in newEnum["instances"]:
+                    self.nameStack = [instanceType,  instance]
+                    self.evaluatePropertyStack()
+                del newEnum["instances"]
 
     def __repr__(self):
         rtn = ""
