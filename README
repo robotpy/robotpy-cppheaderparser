@@ -1,0 +1,81 @@
+Python package "CppHeaderParser"
+
+Purpose: Parse C++ header files and generate a data structure representing the class
+
+Author: Jashua Cloutier (jashuac@bellsouth.net)
+
+Licence: BSD
+
+External modules required: PLY
+
+Quick start:
+SampleClass.h
+
+#include <vector>
+#include <string>
+using namespace std;
+class SampleClass
+{
+public:
+    SampleClass();
+    string meth1();
+    int meth2(int v1);
+    void meth3(const string & v1, vector<string> & v2);
+    unsigned int meth4();
+private:
+    void * meth4(){return NULL};
+    string prop1;
+    int prop5;
+};
+
+Python code
+
+#!/usr/bin/python
+import sys
+import CppHeaderParser
+try:
+    cppHeader = CppHeaderParser.CppHeader("SampleClass.h")
+except CppHeaderParser.CppParseError,  e:
+    print e
+    sys.exit(1)
+print "CppHeaderParser view of %s"%cppHeader
+sampleClass = cppHeader.classes["SampleClass"]
+print "Number of public methods %d"%(len(sampleClass["methods"]["public"]))
+print "Number of private properties %d"%(len(sampleClass["properties"]["private"]))
+meth3 = [m for m in sampleClass["methods"]["public"] if m["name"] == "meth3"][0] #get meth3
+meth3ParamTypes = [t["type"] for t in meth3["parameters"]] #get meth3s parameters
+print "Parameter Types for public method meth3 %s"%(meth3ParamTypes)
+
+Output
+
+CppHeaderParser view of class SampleClass
+Inherits:
+{
+public
+    // Method
+    {'name': 'SampleClass', 'parameters': [], 'rtnType': 'void'}
+    {'name': 'meth1', 'parameters': [], 'rtnType': 'string'}
+    {'name': 'meth2', 'parameters': [{'type': 'int', 'name': 'v1'}], 'rtnType': 'int'}
+    {'name': 'meth3', 'parameters': [{'type': 'const string &', 'name': 'v1'}, {'type': 'vector<string> &', 'name': 'v2'}], 'rtnType': 'void'}
+    {'name': 'meth4', 'parameters': [], 'rtnType': 'unsigned int'}
+protected
+private
+    // Properties
+    {'type': 'string', 'name': 'prop1'}
+    {'type': 'int', 'name': 'prop5'}
+    // Method
+    {'name': 'meth5', 'parameters': [], 'rtnType': 'void *'}
+}
+
+Number of public methods 5
+Number of private properties 2
+Parameter Types for public method meth3 ['const string &', 'vector <string> &']
+
+Installation:
+
+    * Any OS: Unzip the .zip file into a suitable directory, chdir to that directory, then do "python setup.py install".
+    * If os.sep != "/": make the appropriate adjustments.
+
+Documentation:
+
+Documentation can be found in the 'doc' directory of the CppHeaderParser package. If these aren't sufficient, please consult the code in the examples directory and the source code itself.
