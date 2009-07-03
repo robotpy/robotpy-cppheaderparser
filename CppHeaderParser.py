@@ -2,7 +2,7 @@
 #
 # Author: Jashua R. Cloutier (jashuac@bellsouth.com)
 #
-# Copyright (C) 2008, Jashua R. Cloutier
+# Copyright (C) 2009, Jashua R. Cloutier
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ import ply.lex as lex
 import os
 import sys
 
-__version__ = "1.04"
+__version__ = "1.05"
 
 tokens = [
     'NUMBER',
@@ -68,7 +68,8 @@ tokens = [
     'ASTERISK',
     'AMPERSTAND',
     'EQUALS',
-    'MINUS', 
+    'MINUS',
+    'PLUS',  
     'DIVIDE', 
     'CHAR_LITERAL', 
     'STRING_LITERAL',
@@ -76,7 +77,7 @@ tokens = [
     'NEW_LINE',
 ]
 
-t_ignore = " \t\r+~[].|!?%@"
+t_ignore = " \t\r~[].|!?%@"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_][A-Za-z0-9_]*'
 t_OPERATOR_DIVIDE_OVERLOAD = r'/='
@@ -92,6 +93,7 @@ t_PRECOMP_MACRO_CONT = r'.*\\\n'
 t_COMMENT_SINGLELINE = r'\/\/.*\n'
 t_ASTERISK = r'\*'
 t_MINUS = r'\-'
+t_PLUS = r'\+'
 t_DIVIDE = r'/[^/]'
 t_AMPERSTAND = r'&'
 t_EQUALS = r'='
@@ -414,6 +416,8 @@ class CppHeader:
                 elif (tok.type == 'NUMBER'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'MINUS'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'PLUS'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'STRING_LITERAL'):
                     self.nameStack.append(tok.value)
