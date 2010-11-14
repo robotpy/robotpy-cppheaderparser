@@ -9,8 +9,6 @@ Licence: BSD
 External modules required: PLY
 
 Quick start:
-SampleClass.h
-
 #include <vector>
 #include <string>
 using namespace std;
@@ -18,13 +16,38 @@ class SampleClass
 {
 public:
     SampleClass();
+    /*!
+     * Method 1
+     */
     string meth1();
+
+    ///
+    /// Method 2 description
+    ///
+    /// @param v1 Variable 1
+    ///
     int meth2(int v1);
+
+    /**
+     * Method 3 description
+     *
+     * \param v1 Variable 1
+     * \param v2 Variable 2
+     */
     void meth3(const string & v1, vector<string> & v2);
+
+    /**********************************
+     * Method 4 description
+     *
+     * @return Return value
+     *********************************/
     unsigned int meth4();
 private:
-    void * meth4(){return NULL};
+    void * meth5(){return NULL};
+
+    /// prop1 description
     string prop1;
+    //! prop5 description
     int prop5;
 };
 
@@ -46,35 +69,80 @@ meth3 = [m for m in sampleClass["methods"]["public"] if m["name"] == "meth3"][0]
 meth3ParamTypes = [t["type"] for t in meth3["parameters"]] #get meth3s parameters
 print "Parameter Types for public method meth3 %s"%(meth3ParamTypes)
 
+print "\nReturn type for meth1:"
+print cppHeader.classes["SampleClass"]["methods"]["public"][1]["rtnType"]
+
+print "\nDoxygen for meth2:"
+print cppHeader.classes["SampleClass"]["methods"]["public"][2]["doxygen"]
+
+print "\nParameters for meth3:"
+print cppHeader.classes["SampleClass"]["methods"]["public"][3]["parameters"]
+
+print "\nDoxygen for meth4:"
+print cppHeader.classes["SampleClass"]["methods"]["public"][4]["doxygen"]
+
+print "\nReturn type for meth5:"
+print cppHeader.classes["SampleClass"]["methods"]["private"][0]["rtnType"]
+
+print "\nDoxygen type for prop1:"
+print cppHeader.classes["SampleClass"]["properties"]["private"][0]["doxygen"]
+
+print "\nType for prop5:"
+print cppHeader.classes["SampleClass"]["properties"]["private"][1]["type"]
+
 Output
 
 CppHeaderParser view of class SampleClass
-Inherits:
+Inherits: 
 {
 public
     // Method
     {'name': 'SampleClass', 'parameters': [], 'rtnType': 'void'}
-    {'name': 'meth1', 'parameters': [], 'rtnType': 'string'}
-    {'name': 'meth2', 'parameters': [{'type': 'int', 'name': 'v1'}], 'rtnType': 'int'}
-    {'name': 'meth3', 'parameters': [{'type': 'const string &', 'name': 'v1'}, {'type': 'vector<string> &', 'name': 'v2'}], 'rtnType': 'void'}
-    {'name': 'meth4', 'parameters': [], 'rtnType': 'unsigned int'}
+    {'doxygen': '/*!\n* Method 1\n*/', 'name': 'meth1', 'parameters': [], 'rtnType': 'string'}
+    {'doxygen': '///\n/// Method 2 description\n///\n/// @param v1 Variable 1\n///', 'name': 'meth2', 'parameters': [{'type': 'int', 'name': 'v1', 'desc': 'Variable 1 Variable 1'}], 'rtnType': 'int'}
+    {'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'parameters': [{'type': 'const string &', 'name': 'v1', 'desc': 'Variable 1 Variable 1'}, {'type': 'vector<string> &', 'name': 'v2', 'desc': 'Variable 2 Variable 2'}], 'rtnType': 'void'}
+    {'doxygen': '/**********************************\n* Method 4 description\n*\n* @return Return value\n*********************************/', 'name': 'meth4', 'parameters': [], 'rtnType': 'unsigned int'}
 protected
 private
     // Properties
-    {'type': 'string', 'name': 'prop1'}
-    {'type': 'int', 'name': 'prop5'}
+    {'doxygen': '/// prop1 description', 'type': 'string', 'name': 'prop1'}
+    {'doxygen': '//! prop5 description', 'type': 'int', 'name': 'prop5'}
     // Method
     {'name': 'meth5', 'parameters': [], 'rtnType': 'void *'}
 }
 
 Number of public methods 5
 Number of private properties 2
-Parameter Types for public method meth3 ['const string &', 'vector <string> &']
+Parameter Types for public method meth3 ['const string &', 'vector<string> &']
 
-Installation:
+Return type for meth1:
+string
 
-    * Any OS: Unzip the .zip file into a suitable directory, chdir to that directory, then do "python setup.py install".
-    * If os.sep != "/": make the appropriate adjustments.
+Doxygen for meth2:
+///
+/// Method 2 description
+///
+/// @param v1 Variable 1
+///
+
+Parameters for meth3:
+[{'type': 'const string &', 'name': 'v1', 'desc': 'Variable 1 Variable 1'}, {'type': 'vector<string> &', 'name': 'v2', 'desc': 'Variable 2 Variable 2'}]
+
+Doxygen for meth4:
+/**********************************
+* Method 4 description
+*
+* @return Return value
+*********************************/
+
+Return type for meth5:
+void *
+
+Doxygen type for prop1:
+/// prop1 description
+
+Type for prop5:
+int
 
 Documentation:
 

@@ -10,7 +10,7 @@ DESCRIPTION = (
 
 LONG_DESCRIPTION = """\
 CppHeaderParser is a library intended for parsing C++ header files and
-generate a data structure representing the class hiarchies
+generate a data structure representing the class hierarchies
 """
 
 CLASSIFIERS = [
@@ -28,7 +28,7 @@ CLASSIFIERS = [
 
 setup(
     name = 'CppHeaderParser',
-    version = '1.05',
+    version = '1.1',
     author = 'Jashua Cloutier',
     author_email = 'jashuac@bellsouth.net',
     url = 'http://sourceforge.net/projects/cppheaderparser/',
