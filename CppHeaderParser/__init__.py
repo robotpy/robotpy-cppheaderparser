@@ -1,5 +1,5 @@
 # CppHeaderParser package
-# Author: Jashua Cloutier (jashuac@bellsouth.net_
+# Author: Jashua Cloutier (contact via sourceforge username:senexcanis)
 
 from CppHeaderParser import *
 

@@ -2,7 +2,7 @@
 #
 # Author: Jashua R. Cloutier (contact via sourceforge username:senexcanis)
 #
-# Copyright (C) 2009, Jashua R. Cloutier
+# Copyright (C) 2010, Jashua R. Cloutier
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@ representing the class
 import ply.lex as lex
 import os
 import sys
+import re
 
 __version__ = "1.1"
 version = "1.1"
@@ -93,8 +94,13 @@ t_PRECOMP_MACRO_CONT = r'.*\\\n'
 def t_COMMENT_SINGLELINE(t):
     r'\/\/.*\n'
     global doxygenCommentCache
-    if t.value.startswith("///"):
-        doxygenCommentCache += t.value
+    if t.value.startswith("///") or t.value.startswith("//!"):
+        if doxygenCommentCache:
+            doxygenCommentCache += "\n"
+        if t.value.endswith("\n"):
+            doxygenCommentCache += t.value[:-1]
+        else:
+            doxygenCommentCache += t.value
 t_ASTERISK = r'\*'
 t_MINUS = r'\-'
 t_PLUS = r'\+'
@@ -109,9 +115,12 @@ t_STRING_LITERAL = r'"([^"\\]|\\.)*"'
 def t_COMMENT_MULTILINE(t):
     r'/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/'
     global doxygenCommentCache
-    if t.value.startswith("/**"):
+    if t.value.startswith("/**") or t.value.startswith("/*!"):
         #not sure why, but get double new lines
-        doxygenCommentCache += t.value.replace("\n\n", "\n")
+        v = t.value.replace("\n\n", "\n")
+        #strip prefixing whitespace
+        v = re.sub("\n[\s]+\*", "\n*", v)
+        doxygenCommentCache += v
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
