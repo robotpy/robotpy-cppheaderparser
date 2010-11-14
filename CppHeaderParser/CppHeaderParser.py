@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Author: Jashua R. Cloutier (jashuac@bellsouth.com)
+# Author: Jashua R. Cloutier (contact via sourceforge username:senexcanis)
 #
 # Copyright (C) 2009, Jashua R. Cloutier
 # All rights reserved.
@@ -49,8 +49,8 @@ import ply.lex as lex
 import os
 import sys
 
-__version__ = "1.06"
-version = "1.06"
+__version__ = "1.1"
+version = "1.1"
 tokens = [
     'NUMBER',
     'NAME',
@@ -129,6 +129,14 @@ supportedAccessSpecifier = [
 ]
 
 doxygenCommentCache = ""
+
+def is_namespace(nameStack):
+    """Determines if a namespace is being specified"""
+    if len(nameStack) == 0:
+        return False
+    if nameStack[0] == "namespace":
+        return True
+    return False
 
 def is_enum_namestack(nameStack):
     """Determines if a namestack is an enum namestack"""
@@ -228,10 +236,11 @@ class CppClass(dict):
         self['methods'] = methodAccessSpecificList
         self['properties'] = propertyAccessSpecificList
         self['enums'] = enumAccessSpecificList
+        self['namespace'] = ""
 
     def __repr__(self):
         """Convert class to a string"""
-        rtn = "class %s\n"%(self["name"])
+        rtn = "class %s\n"%(self["namespace"] + self["name"])
         try:
             print self["doxygen"], 
         except: pass
@@ -337,6 +346,7 @@ class CppVariable(dict):
     Contains the following Keys:
     self['type'] - Type for the variable (ex. "const string &")
     self['name'] - Name of the variable (ex. "numItems")
+    self['namespace'] - Namespace containing the enum
     self['desc'] - Description of the variable if part of a method (optional)
     self['doxygen'] - Doxygen comments associated with the method if they exist
     self['defaltValue'] - Default value of the variable, this key will only
@@ -371,6 +381,7 @@ class CppEnum(dict):
     
     Contains the following Keys:
     self['name'] - Name of the enum (ex. "ItemState")
+    self['namespace'] - Namespace containing the enum
     self['values'] - List of values where the values are a dictionary of the
         form {"name": name of the key (ex. "PARSING_HEADER"),
                   "value": Specified value of the enum, this key will only exist
@@ -414,7 +425,8 @@ class CppEnum(dict):
             for var in postBraceStack:
                 if "," in var:
                     continue
-                self["instances"].append(var)                
+                self["instances"].append(var)
+        self["namespace"] = ""
 
 class CppHeader:
     """Parsed C++ class header
@@ -425,11 +437,11 @@ class CppHeader:
     """
     def __init__(self, headerFileName, argType = "file"):
         if (argType == "file"):
-            self.headerFileName = headerFileName
+            self.headerFileName = os.path.expandvars(headerFileName)
             self.mainClass = os.path.split(self.headerFileName)[1][:-2]
             headerFileStr = ""
-            if headerFileName[-2:] != ".h":
-                raise Exception("file must be a header file and end with .h")
+#            if headerFileName[-2:] != ".h":
+#                raise Exception("file must be a header file and end with .h")
         elif argType == "string":
             self.headerFileName = ""
             self.mainClass = "???"
@@ -438,7 +450,10 @@ class CppHeader:
             raise Exception("Arg type must be either file or string")
         self.curClass = ""
         self.classes = {}
+        self.enums = []
         self.nameStack = []
+        self.nameSpaces = []
+        self.nameSpaceDepth = 0
         self.curAccessSpecifier = 'private'
     
         if (len(self.headerFileName)):
@@ -457,15 +472,26 @@ class CppHeader:
                 curLine = tok.lineno
                 curChar = tok.lexpos
                 if (tok.type == 'OPEN_BRACE'):
+                    if len(self.nameStack) and is_namespace(self.nameStack):
+#                        print "Saw namespace %s depth %d"%(self.nameStack[1],self.braceDepth)
+                        self.nameSpaces.append(self.nameStack[1])
+                        self.nameSpaceDepth +=1
                     if len(self.nameStack) and not is_enum_namestack(self.nameStack):
                         self.evaluateStack()
                     else:
                         self.nameStack.append(tok.value)
                     self.braceDepth += 1
                 elif (tok.type == 'CLOSE_BRACE'):
+                    if self.braceDepth == 0:
+                        continue
+#                    print "Brace Depth %d Namespace depth %d"%(self.braceDepth,self.nameSpaceDepth)
+                    if (self.braceDepth == self.nameSpaceDepth):
+                        self.nameSpaceDepth -=1
+                        tmp = self.nameSpaces.pop()
+#                        print "Exiting namespace %s"%tmp
                     if len(self.nameStack) and is_enum_namestack(self.nameStack):
                         self.nameStack.append(tok.value)
-                    elif self.braceDepth < 2:
+                    elif self.braceDepth < 10:
                         self.evaluateStack()
                     else:
                         self.nameStack = []
@@ -502,7 +528,7 @@ class CppHeader:
                         continue
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'SEMI_COLON'):
-                    if (self.braceDepth < 2):
+                    if (self.braceDepth < 10):
                         self.evaluateStack()
         except:
             raise CppParseError("Not able to parse %s on line %d evaluating \"%s\"\nError around: %s"
@@ -522,6 +548,8 @@ class CppHeader:
             self.curAccessSpecifier = "public"
             self.evaluateClassStack()
         elif (len(self.curClass) == 0):
+            if is_enum_namestack(self.nameStack):
+                self.evaluateEnumStack()
             self.nameStack = []
             doxygenCommentCache = ""
             return
@@ -556,6 +584,7 @@ class CppHeader:
             self.classes[self.curClass] = newClass
         else:
             self.curClass = ""
+        newClass["namespace"] = self.cur_namespace()
 
     def evaluateMethodStack(self):
         """Create a method out of the name stack"""
@@ -573,7 +602,13 @@ class CppHeader:
         """Create an Enum out of the name stack"""
         newEnum = CppEnum(self.nameStack)
         if len(newEnum.keys()):
-            self.classes[self.curClass]["enums"][self.curAccessSpecifier].append(newEnum)
+            if len(self.curClass):
+                newEnum["namespace"] = self.cur_namespace() + self.curClass + "::"
+                self.classes[self.curClass]["enums"][self.curAccessSpecifier].append(newEnum)
+            else:
+                newEnum["namespace"] = self.cur_namespace()                            
+#                print "Adding global enum"
+                self.enums.append(newEnum)
             #This enum has instances, turn them into properties
             if newEnum.has_key("instances"):
                 instanceType = "enum"
@@ -584,6 +619,16 @@ class CppHeader:
                     self.evaluatePropertyStack()
                 del newEnum["instances"]
 
+    def cur_namespace(self):
+        rtn = ""
+        i = 0
+        while i < len(self.nameSpaces):
+            rtn += self.nameSpaces[i]
+            rtn += "::"
+            i+=1
+        return rtn
+    
+    
     def __repr__(self):
         rtn = ""
         for className in self.classes.keys():
