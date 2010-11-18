@@ -4,6 +4,14 @@ using namespace std;
 class SampleClass
 {
 public:
+	enum Elephant
+	{
+		EL_ONE = 1,
+		EL_TWO = 2,
+		EL_NINE = 9,
+		EL_TEN,
+	};
+
     SampleClass();
     /*!
      * Method 1
@@ -20,7 +28,8 @@ public:
     /**
      * Method 3 description
      *
-     * \param v1 Variable 1
+     * \param v1 Variable 1 with a really long
+     * wrapping description
      * \param v2 Variable 2
      */
     void meth3(const string & v1, vector<string> & v2);
@@ -49,6 +58,14 @@ namespace Alpha
     	void alphaMethod();
 
     	string alphaString;
+    protected:
+    	typedef enum
+    	{
+    		Z_A,
+    		Z_B = 0x2B,
+    		Z_C = 'j',//value will be skipped over as a current limitation
+			Z_D,
+    	} Zebra;
     };
 
     namespace Omega
@@ -59,6 +76,16 @@ namespace Alpha
 			OmegaClass();
 
 			string omegaString;
+		protected:
+			///
+			/// @brief Rino Numbers, not that that means anything
+			///
+			typedef enum
+			{
+				RI_ZERO,
+				RI_ONE,
+				RI_TWO
+			} Rino;
 		};
     };
 }

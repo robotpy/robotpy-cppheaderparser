@@ -17,7 +17,7 @@ sys.path = [".."] + sys.path
 import CppHeaderParser
 
 """
-    cppHeader = CppHeaderParser.CppHeader("SampleClass.h")
+    cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     for className, classInstance in cppHeader.classes.items():
         gen_test_cases_for_class(className, classInstance)
     
@@ -46,6 +46,12 @@ def gen_test_cases_for_class(className, classInstance):
         idx = 0
         for property in classInstance["properties"][propAccessor]:
             gen_test_case_for_property(className, classInstance, propAccessor, idx, property);
+            idx += 1
+    
+    for enumAccessor in classInstance["enums"].keys():
+        idx = 0
+        for enum in classInstance["enums"][enumAccessor]:
+            gen_test_case_for_enum(className, classInstance, enumAccessor, idx, enum);
             idx += 1
 
 def gen_test_case_for_method(className, classInstance, methAccessor, methIndex, method):
@@ -83,7 +89,7 @@ def gen_test_case_for_property(className, classInstance, propAccessor, propIndex
 class %s(unittest.TestCase):
 
     def setUp(self):
-        self.cppHeader = CppHeaderParser.CppHeader("SampleClass.h")
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
 """%testCaseClassName
     propString = """self.cppHeader.classes["%s"]["properties"]["%s"][%d]"""%(
@@ -97,11 +103,37 @@ class %s(unittest.TestCase):
 
 
 
+def gen_test_case_for_enum(className, classInstance, enumAccessor, enumIndex, enum):
+    global testScript
+    global testCaseClasses
+    testCaseClassName = "%s_%s_TestCase"%(className, enum["name"])
+    testCaseClasses.append(testCaseClassName)
+    testScript += """\
+
+
+class %s(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+"""%testCaseClassName
+    enumString = """self.cppHeader.classes["%s"]["enums"]["%s"][%d]"""%(
+         className, enumAccessor, enumIndex)
+    for key in ["name", "namespace", "doxygen", "values"]:
+        if key in enum.keys():
+            gen_test_equals(key, enumString + '["%s"]'%key, enum[key])
+        else:
+            gen_test_key_not_exist(key, enumString)
+
+
+
 def gen_test_equals(name, v1, v2):
     global testScript
     testScript += """\
     def test_%s(self):
-        self.assertEqual(%s, %s)
+        self.assertEqual(
+            %s,
+            %s)
 
 """%(name.lower(), v1, repr(v2))
 
@@ -109,7 +141,10 @@ def gen_test_key_not_exist(key, testObj):
     global testScript
     testScript += """\
     def test_%s(self):
-        self.assert_("%s" not in %s.keys())
+        self.assert_(
+        "%s"
+        not in %s.keys())
+
 """%(key.lower(), key, testObj)
 
 if __name__ == "__main__":
