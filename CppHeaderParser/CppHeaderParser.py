@@ -50,8 +50,15 @@ import os
 import sys
 import re
 
-__version__ = "1.1"
-version = "1.1"
+import inspect
+
+def lineno():
+    """Returns the current line number in our program."""
+    return inspect.currentframe().f_back.f_lineno
+
+
+__version__ = "1.8"
+version = "1.8"
 tokens = [
     'NUMBER',
     'NAME',
@@ -249,7 +256,9 @@ class CppClass(dict):
 
     def __repr__(self):
         """Convert class to a string"""
-        rtn = "class %s\n"%(self["namespace"] + self["name"])
+        namespace_prefix = ""
+        if self["namespace"]: namespace_prefix = self["namespace"] + "::"
+        rtn = "class %s\n"%(namespace_prefix + self["name"])
         try:
             print self["doxygen"], 
         except: pass
@@ -288,7 +297,7 @@ class CppMethod(dict):
     self['doxygen'] - Doxygen comments associated with the method if they exist
     self['parameters'] - List of CppVariables
     """
-    def __init__(self, nameStack):
+    def __init__(self, nameStack, curClass):
         if (debug): print "Method:   ",  nameStack
         global doxygenCommentCache
         if len(doxygenCommentCache):
@@ -300,7 +309,7 @@ class CppMethod(dict):
         else:
             self["rtnType"] = " ".join(nameStack[:nameStack.index('(') - 1])
             self["name"] = " ".join(nameStack[nameStack.index('(') - 1:nameStack.index('(')])
-        if len(self["rtnType"]) == 0:
+        if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
         paramsStack = nameStack[nameStack.index('(') + 1: ]
         #Remove things from the stack till we hit the last paren, this helps handle abstract and normal methods
@@ -462,7 +471,6 @@ class CppHeader:
         self.enums = []
         self.nameStack = []
         self.nameSpaces = []
-        self.nameSpaceDepth = 0
         self.curAccessSpecifier = 'private'
     
         if (len(self.headerFileName)):
@@ -482,9 +490,7 @@ class CppHeader:
                 curChar = tok.lexpos
                 if (tok.type == 'OPEN_BRACE'):
                     if len(self.nameStack) and is_namespace(self.nameStack):
-#                        print "Saw namespace %s depth %d"%(self.nameStack[1],self.braceDepth)
                         self.nameSpaces.append(self.nameStack[1])
-                        self.nameSpaceDepth +=1
                     if len(self.nameStack) and not is_enum_namestack(self.nameStack):
                         self.evaluateStack()
                     else:
@@ -493,11 +499,8 @@ class CppHeader:
                 elif (tok.type == 'CLOSE_BRACE'):
                     if self.braceDepth == 0:
                         continue
-#                    print "Brace Depth %d Namespace depth %d"%(self.braceDepth,self.nameSpaceDepth)
-                    if (self.braceDepth == self.nameSpaceDepth):
-                        self.nameSpaceDepth -=1
+                    if (self.braceDepth == len(self.nameSpaces)):
                         tmp = self.nameSpaces.pop()
-#                        print "Exiting namespace %s"%tmp
                     if len(self.nameStack) and is_enum_namestack(self.nameStack):
                         self.nameStack.append(tok.value)
                     elif self.braceDepth < 10:
@@ -527,7 +530,7 @@ class CppHeader:
                 elif (tok.type == 'NAME' or tok.type == 'AMPERSTAND' or tok.type == 'ASTERISK'):
                     if (tok.value == 'class'):
                         self.nameStack.append(tok.value)
-                    elif (tok.value in supportedAccessSpecifier and self.braceDepth == 1):
+                    elif (tok.value in supportedAccessSpecifier and self.braceDepth == len(self.nameSpaces) + 1):
                         self.curAccessSpecifier = tok.value
                     else:
                         self.nameStack.append(tok.value)
@@ -546,38 +549,51 @@ class CppHeader:
     def evaluateStack(self):
         """Evaluates the current name stack"""
         global doxygenCommentCache
+        if (debug): print "Evaluating stack %s at..."%self.nameStack
         if (len(self.curClass)):
             if (debug): print "%s (%s) "%(self.curClass, self.curAccessSpecifier), 
         if (len(self.nameStack) == 0):
+            if (debug): print "line ",lineno()
             if (debug): print "(Empty Stack)"
             return
+        elif (self.nameStack[0] == "namespace"):
+            #Taken care of outside of here
+            pass
         elif (self.nameStack[0] == "class"):
+            if (debug): print "line ",lineno()
             self.evaluateClassStack()
         elif (self.nameStack[0] == "struct"):
+            if (debug): print "line ",lineno()
             self.curAccessSpecifier = "public"
             self.evaluateClassStack()
         elif (len(self.curClass) == 0):
+            if (debug): print "line ",lineno()
             if is_enum_namestack(self.nameStack):
                 self.evaluateEnumStack()
             self.nameStack = []
             doxygenCommentCache = ""
             return
         elif (self.braceDepth < 1):
+            if (debug): print "line ",lineno()
             #Ignore global stuff for now
             if (debug): print "Global stuff: ",  self.nameStack
             self.nameStack = []
             doxygenCommentCache = ""
             return
-        elif (self.braceDepth > 1):
+        elif (self.braceDepth > len(self.nameSpaces) + 1):
+            if (debug): print "line ",lineno()
             self.nameStack = []
             doxygenCommentCache = ""
             return
         elif is_enum_namestack(self.nameStack):
+            if (debug): print "line ",lineno()
             #elif self.nameStack[0] == "enum":
             self.evaluateEnumStack()
         elif ('(' in self.nameStack):
+            if (debug): print "line ",lineno()
             self.evaluateMethodStack()
         else:
+            if (debug): print "line ",lineno()
             self.evaluatePropertyStack()
         self.nameStack = []
         doxygenCommentCache = ""
@@ -585,7 +601,7 @@ class CppHeader:
     def evaluateClassStack(self):
         """Create a Class out of the name stack (but not its parts)"""
         #dont support sub classes today
-        if self.braceDepth != 0:
+        if self.braceDepth != len(self.nameSpaces):
             return
         newClass = CppClass(self.nameStack)
         if len(newClass.keys()):
@@ -597,7 +613,7 @@ class CppHeader:
 
     def evaluateMethodStack(self):
         """Create a method out of the name stack"""
-        newMethod = CppMethod(self.nameStack)
+        newMethod = CppMethod(self.nameStack, self.curClass)
         if len(newMethod.keys()):
             self.classes[self.curClass]["methods"][self.curAccessSpecifier].append(newMethod)
     
@@ -612,7 +628,7 @@ class CppHeader:
         newEnum = CppEnum(self.nameStack)
         if len(newEnum.keys()):
             if len(self.curClass):
-                newEnum["namespace"] = self.cur_namespace() + self.curClass + "::"
+                newEnum["namespace"] = self.cur_namespace(True) + self.curClass + "::"
                 self.classes[self.curClass]["enums"][self.curAccessSpecifier].append(newEnum)
             else:
                 newEnum["namespace"] = self.cur_namespace()                            
@@ -628,12 +644,13 @@ class CppHeader:
                     self.evaluatePropertyStack()
                 del newEnum["instances"]
 
-    def cur_namespace(self):
+    def cur_namespace(self, add_double_colon = False):
         rtn = ""
         i = 0
         while i < len(self.nameSpaces):
             rtn += self.nameSpaces[i]
-            rtn += "::"
+            if add_double_colon or i < len(self.nameSpaces) - 1:
+                rtn += "::"
             i+=1
         return rtn
     
