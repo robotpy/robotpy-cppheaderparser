@@ -28,7 +28,7 @@ CLASSIFIERS = [
 
 setup(
     name = 'CppHeaderParser',
-    version = '1.1',
+    version = '1.8',
     author = 'Jashua Cloutier',
     author_email = 'jashuac@bellsouth.net',
     url = 'http://sourceforge.net/projects/cppheaderparser/',
