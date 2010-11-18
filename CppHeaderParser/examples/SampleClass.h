@@ -39,3 +39,26 @@ private:
     //! prop5 description
     int prop5;
 };
+namespace Alpha
+{
+    class AlphaClass
+    {
+    public:
+    	AlphaClass();
+
+    	void alphaMethod();
+
+    	string alphaString;
+    };
+
+    namespace Omega
+    {
+		class OmegaClass
+		{
+		public:
+			OmegaClass();
+
+			string omegaString;
+		};
+    };
+}
