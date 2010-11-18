@@ -332,7 +332,7 @@ class CppMethod(dict):
                         doxyVarDesc[var] = desc.strip()
                         lastParamDesc = var
                     except: pass
-                if " @return " in doxyLine or " \return " in doxyLine:
+                elif " @return " in doxyLine or " \return " in doxyLine:
                     lastParamDesc = ""
                     # not handled for now
                 elif lastParamDesc:
@@ -344,7 +344,7 @@ class CppMethod(dict):
                         doxyLine = doxyLine[doxyLine.find(" ") + 1:]
                         doxyVarDesc[lastParamDesc] += " " + doxyLine
                     except: pass
-                    
+        
         #Create the variable now
         while (len(paramsStack)):
             if (',' in paramsStack):
@@ -410,6 +410,10 @@ class CppEnum(dict):
         if len(nameStack) < 4 or "{" not in nameStack or "}" not in nameStack:
             #Not enough stuff for an enum
             return
+        global doxygenCommentCache
+        if len(doxygenCommentCache):
+            self["doxygen"] = doxygenCommentCache
+            doxygenCommentCache = ""
         valueList = []
         #Figure out what values it has
         valueStack = nameStack[nameStack.index('{') + 1: nameStack.index('}')]
@@ -425,6 +429,9 @@ class CppEnum(dict):
                 valueList.append({"name": tmpStack[0]})
             elif len(tmpStack) >= 3 and tmpStack[1] == "=":
                 valueList.append({"name": tmpStack[0], "value": " ".join(tmpStack[2:])})
+            elif len(tmpStack) == 2 and tmpStack[1] == "=":
+                if (debug): print "Missed value for %s"%tmpStack[0]
+                valueList.append({"name": tmpStack[0]})
         if len(valueList):
             self["values"] = valueList
         else:
@@ -492,7 +499,7 @@ class CppHeader:
                     if len(self.nameStack) and is_namespace(self.nameStack):
                         self.nameSpaces.append(self.nameStack[1])
                     if len(self.nameStack) and not is_enum_namestack(self.nameStack):
-                        self.evaluateStack()
+                        self.evaluate_stack()
                     else:
                         self.nameStack.append(tok.value)
                     self.braceDepth += 1
@@ -504,7 +511,7 @@ class CppHeader:
                     if len(self.nameStack) and is_enum_namestack(self.nameStack):
                         self.nameStack.append(tok.value)
                     elif self.braceDepth < 10:
-                        self.evaluateStack()
+                        self.evaluate_stack()
                     else:
                         self.nameStack = []
                     self.braceDepth -= 1
@@ -541,12 +548,12 @@ class CppHeader:
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'SEMI_COLON'):
                     if (self.braceDepth < 10):
-                        self.evaluateStack()
+                        self.evaluate_stack()
         except:
             raise CppParseError("Not able to parse %s on line %d evaluating \"%s\"\nError around: %s"
                                 % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
         
-    def evaluateStack(self):
+    def evaluate_stack(self):
         """Evaluates the current name stack"""
         global doxygenCommentCache
         if (debug): print "Evaluating stack %s at..."%self.nameStack
@@ -561,15 +568,15 @@ class CppHeader:
             pass
         elif (self.nameStack[0] == "class"):
             if (debug): print "line ",lineno()
-            self.evaluateClassStack()
+            self.evaluate_class_stack()
         elif (self.nameStack[0] == "struct"):
             if (debug): print "line ",lineno()
             self.curAccessSpecifier = "public"
-            self.evaluateClassStack()
+            self.evaluate_class_stack()
         elif (len(self.curClass) == 0):
             if (debug): print "line ",lineno()
             if is_enum_namestack(self.nameStack):
-                self.evaluateEnumStack()
+                self.evaluate_enum_stack()
             self.nameStack = []
             doxygenCommentCache = ""
             return
@@ -588,17 +595,17 @@ class CppHeader:
         elif is_enum_namestack(self.nameStack):
             if (debug): print "line ",lineno()
             #elif self.nameStack[0] == "enum":
-            self.evaluateEnumStack()
+            self.evaluate_enum_stack()
         elif ('(' in self.nameStack):
             if (debug): print "line ",lineno()
-            self.evaluateMethodStack()
+            self.evaluate_method_stack()
         else:
             if (debug): print "line ",lineno()
-            self.evaluatePropertyStack()
+            self.evaluate_property_stack()
         self.nameStack = []
         doxygenCommentCache = ""
     
-    def evaluateClassStack(self):
+    def evaluate_class_stack(self):
         """Create a Class out of the name stack (but not its parts)"""
         #dont support sub classes today
         if self.braceDepth != len(self.nameSpaces):
@@ -611,24 +618,24 @@ class CppHeader:
             self.curClass = ""
         newClass["namespace"] = self.cur_namespace()
 
-    def evaluateMethodStack(self):
+    def evaluate_method_stack(self):
         """Create a method out of the name stack"""
         newMethod = CppMethod(self.nameStack, self.curClass)
         if len(newMethod.keys()):
             self.classes[self.curClass]["methods"][self.curAccessSpecifier].append(newMethod)
     
-    def evaluatePropertyStack(self):
+    def evaluate_property_stack(self):
         """Create a Property out of the name stack"""
         newVar = CppVariable(self.nameStack)
         if len(newVar.keys()):
             self.classes[self.curClass]["properties"][self.curAccessSpecifier].append(newVar)
 
-    def evaluateEnumStack(self):
+    def evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""
         newEnum = CppEnum(self.nameStack)
         if len(newEnum.keys()):
             if len(self.curClass):
-                newEnum["namespace"] = self.cur_namespace(True) + self.curClass + "::"
+                newEnum["namespace"] = self.cur_namespace()
                 self.classes[self.curClass]["enums"][self.curAccessSpecifier].append(newEnum)
             else:
                 newEnum["namespace"] = self.cur_namespace()                            
@@ -641,7 +648,7 @@ class CppHeader:
                     instanceType = newEnum["name"]
                 for instance in newEnum["instances"]:
                     self.nameStack = [instanceType,  instance]
-                    self.evaluatePropertyStack()
+                    self.evaluate_property_stack()
                 del newEnum["instances"]
 
     def cur_namespace(self, add_double_colon = False):
