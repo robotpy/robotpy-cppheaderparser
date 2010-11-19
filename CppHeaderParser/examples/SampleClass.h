@@ -44,21 +44,21 @@ namespace Alpha
     class AlphaClass
     {
     public:
-    	AlphaClass();
+        AlphaClass();
 
-    	void alphaMethod();
+        void alphaMethod();
 
-    	string alphaString;
+        string alphaString;
     };
 
     namespace Omega
     {
-		class OmegaClass
-		{
-		public:
-			OmegaClass();
+        class OmegaClass
+        {
+        public:
+            OmegaClass();
 
-			string omegaString;
-		};
+            string omegaString;
+        };
     };
 }
