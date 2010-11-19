@@ -8,10 +8,6 @@ DESCRIPTION = (
     'representing the class'
     )
 
-LONG_DESCRIPTION = """\
-CppHeaderParser is a library intended for parsing C++ header files and
-generate a data structure representing the class hierarchies
-"""
 
 CLASSIFIERS = [
     'Operating System :: OS Independent',
@@ -33,7 +29,7 @@ setup(
     author_email = 'jashuac@bellsouth.net',
     url = 'http://sourceforge.net/projects/cppheaderparser/',
     description = DESCRIPTION,
-    long_description = LONG_DESCRIPTION,
+    long_description = open('README.txt').read(),
     license = 'BSD',
     platforms = 'Platform Independent',
     packages = ['CppHeaderParser'],

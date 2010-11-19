@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+sys.path = ["../"] + sys.path
 import CppHeaderParser
 try:
     cppHeader = CppHeaderParser.CppHeader("SampleClass.h")
