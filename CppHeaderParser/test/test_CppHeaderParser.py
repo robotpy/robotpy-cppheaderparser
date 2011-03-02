@@ -1,8 +1,14 @@
+# -*- coding: utf-8 -*-
 import unittest
-from test import test_support
 import sys
-sys.path = [".."] + sys.path
-import CppHeaderParser
+if sys.version_info[0] == 2:
+    from test import test_support
+    sys.path = [".."] + sys.path
+    import CppHeaderParser
+else:
+    import test.support as test_support
+    sys.path = ["..", "../python3-libs"] + sys.path
+    import CppHeaderParser3 as CppHeaderParser
 
 
 

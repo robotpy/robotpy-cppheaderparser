@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys, glob
 from distutils.core import setup
@@ -12,6 +13,8 @@ DESCRIPTION = (
 CLASSIFIERS = [
     'Operating System :: OS Independent',
     'Programming Language :: Python',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 3',
     'Programming Language :: C++',
     'License :: OSI Approved :: BSD License',
     'Development Status :: 5 - Production/Stable',
@@ -24,7 +27,7 @@ CLASSIFIERS = [
 
 setup(
     name = 'CppHeaderParser',
-    version = '1.8',
+    version = '1.9',
     author = 'Jashua Cloutier',
     author_email = 'jashuac@bellsouth.net',
     url = 'http://sourceforge.net/projects/cppheaderparser/',

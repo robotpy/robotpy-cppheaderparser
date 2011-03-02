@@ -57,8 +57,8 @@ def lineno():
     return inspect.currentframe().f_back.f_lineno
 
 
-__version__ = "1.8"
-version = "1.8"
+__version__ = "1.9"
+version = "1.9"
 tokens = [
     'NUMBER',
     'NAME',
