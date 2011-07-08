@@ -2,15 +2,18 @@
 import unittest
 import sys
 if sys.version_info[0] == 2:
-    from test import test_support
     sys.path = [".."] + sys.path
-    import CppHeaderParser
+    import CppHeaderParser as CppHeaderParser
 else:
-    import test.support as test_support
-    sys.path = ["..", "../python3-libs"] + sys.path
+    sys.path = ["..", "../python3-libs"] + sys.path    
     import CppHeaderParser3 as CppHeaderParser
 
-
+def filter_pameters(p):
+    "Reduce a list of dictionaries to the desired keys for function parameter testing"
+    rtn = []
+    for d in p:
+        rtn.append({'name': d['name'], 'desc': d['desc'], 'type': d['type']})
+    return rtn
 
 class SampleClass_SampleClass_TestCase(unittest.TestCase):
 
@@ -29,7 +32,7 @@ class SampleClass_SampleClass_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["methods"]["public"][0]["parameters"],
+            filter_pameters(self.cppHeader.classes["SampleClass"]["methods"]["public"][0]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -56,7 +59,7 @@ class SampleClass_meth1_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["methods"]["public"][1]["parameters"],
+            filter_pameters(self.cppHeader.classes["SampleClass"]["methods"]["public"][1]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -83,7 +86,7 @@ class SampleClass_meth2_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["methods"]["public"][2]["parameters"],
+            filter_pameters(self.cppHeader.classes["SampleClass"]["methods"]["public"][2]["parameters"]),
             [{'type': 'int', 'name': 'v1', 'desc': 'Variable 1'}])
 
     def test_doxygen(self):
@@ -110,7 +113,7 @@ class SampleClass_meth3_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["methods"]["public"][3]["parameters"],
+            filter_pameters(self.cppHeader.classes["SampleClass"]["methods"]["public"][3]["parameters"]),
             [{'type': 'const string &', 'name': 'v1', 'desc': 'Variable 1 with a really long wrapping description'}, {'type': 'vector<string> &', 'name': 'v2', 'desc': 'Variable 2'}])
 
     def test_doxygen(self):
@@ -137,7 +140,7 @@ class SampleClass_meth4_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["methods"]["public"][4]["parameters"],
+            filter_pameters(self.cppHeader.classes["SampleClass"]["methods"]["public"][4]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -164,7 +167,7 @@ class SampleClass_meth5_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["methods"]["private"][0]["parameters"],
+            filter_pameters(self.cppHeader.classes["SampleClass"]["methods"]["private"][0]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -241,7 +244,7 @@ class SampleClass_Elephant_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(
             self.cppHeader.classes["SampleClass"]["enums"]["public"][0]["values"],
-            [{'name': 'EL_ONE', 'value': '1'}, {'name': 'EL_TWO', 'value': '2'}, {'name': 'EL_NINE', 'value': '9'}, {'name': 'EL_TEN'}])
+            [{'name': 'EL_ONE', 'value': '1'}, {'name': 'EL_TWO', 'value': '2'}, {'name': 'EL_NINE', 'value': '9'}, {'name': 'EL_TEN', 'value': 10}])
 
 
 
@@ -262,7 +265,7 @@ class AlphaClass_AlphaClass_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["AlphaClass"]["methods"]["public"][0]["parameters"],
+            filter_pameters(self.cppHeader.classes["AlphaClass"]["methods"]["public"][0]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -289,7 +292,7 @@ class AlphaClass_alphaMethod_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["AlphaClass"]["methods"]["public"][1]["parameters"],
+            filter_pameters(self.cppHeader.classes["AlphaClass"]["methods"]["public"][1]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -344,7 +347,7 @@ class AlphaClass_Zebra_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(
             self.cppHeader.classes["AlphaClass"]["enums"]["protected"][0]["values"],
-            [{'name': 'Z_A'}, {'name': 'Z_B', 'value': '0x2B'}, {'name': 'Z_C'}, {'name': 'Z_D'}])
+            [{'name': 'Z_A', 'value': 0}, {'name': 'Z_B', 'value': '0x2B'}, {'name': 'Z_C', 'value': 'j'}, {'name': 'Z_D', 'value': 107}])
 
 
 
@@ -365,7 +368,7 @@ class OmegaClass_OmegaClass_TestCase(unittest.TestCase):
 
     def test_parameters(self):
         self.assertEqual(
-            self.cppHeader.classes["OmegaClass"]["methods"]["public"][0]["parameters"],
+            filter_pameters(self.cppHeader.classes["OmegaClass"]["methods"]["public"][0]["parameters"]),
             [])
 
     def test_doxygen(self):
@@ -420,30 +423,9 @@ class OmegaClass_Rino_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(
             self.cppHeader.classes["OmegaClass"]["enums"]["protected"][0]["values"],
-            [{'name': 'RI_ZERO'}, {'name': 'RI_ONE'}, {'name': 'RI_TWO'}])
-
-
-
-def test_main():
-    test_support.run_unittest(
-        SampleClass_SampleClass_TestCase,
-        SampleClass_meth1_TestCase,
-        SampleClass_meth2_TestCase,
-        SampleClass_meth3_TestCase,
-        SampleClass_meth4_TestCase,
-        SampleClass_meth5_TestCase,
-        SampleClass_prop1_TestCase,
-        SampleClass_prop5_TestCase,
-        SampleClass_Elephant_TestCase,
-        AlphaClass_AlphaClass_TestCase,
-        AlphaClass_alphaMethod_TestCase,
-        AlphaClass_alphaString_TestCase,
-        AlphaClass_Zebra_TestCase,
-        OmegaClass_OmegaClass_TestCase,
-        OmegaClass_omegaString_TestCase,
-        OmegaClass_Rino_TestCase)
+            [{'name': 'RI_ZERO', 'value': 0}, {'name': 'RI_ONE', 'value': 1}, {'name': 'RI_TWO', 'value': 2}])
 
 if __name__ == '__main__':
-    test_main()
+    unittest.main()
 
 
