@@ -41,7 +41,7 @@ public:
      *********************************/
     unsigned int meth4();
 private:
-    void * meth5(){return NULL};
+    void * meth5(){return NULL;}
 
     /// prop1 description
     string prop1;
@@ -63,7 +63,7 @@ namespace Alpha
     	{
     		Z_A,
     		Z_B = 0x2B,
-    		Z_C = 'j',//value will be skipped over as a current limitation
+    		Z_C = 'j',
 			Z_D,
     	} Zebra;
     };
