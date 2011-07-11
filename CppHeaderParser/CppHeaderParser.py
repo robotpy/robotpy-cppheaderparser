@@ -44,7 +44,6 @@
 """
 CppHeaderParser2.0: April 2011 - July 2011
 	by HartsAntler
-	bhartsho@yahoo.com
 	http://pyppet.blogspot.com
 
 	Quick Start - User API:
@@ -104,7 +103,6 @@ import inspect
 def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
-
 
 version = __version__ = "1.9.9a"
 
@@ -186,6 +184,10 @@ def t_error(v):
 
 lex.lex()
 debug = 0
+debug_trace = 0
+def trace_print(*arg):
+    global debug_trace
+    if debug_trace: print(arg)
 
 supportedAccessSpecifier = [
     'public',
@@ -403,6 +405,7 @@ class _CppMethod( dict ):
 	def _params_helper1( self, stack ):	
 		# new July 7th, deal with defaults that init: vec3(0,0,0)
 		# so that comma split still works later on parsing the parameters.
+
 		# also deal with "throw" keyword
 		if 'throw' in stack: stack = stack[ : stack.index('throw') ]
 
@@ -951,7 +954,7 @@ class Resolver(object):
 							var['ctypes_type'] = self.guess_ctypes_type( var['concrete_type'] )
 
 						elif tag in self.structs:
-							print( 'STRUCT', var )
+							trace_print( 'STRUCT', var )
 							var['struct'] = tag
 							var['ctypes_type'] = 'ctypes.c_void_p'
 							var['raw_type'] = self.structs[tag]['namespace'] + '::' + tag
@@ -979,13 +982,13 @@ class Resolver(object):
 
 
 						elif tag.count('::')==1:
-							print( 'trying to find nested something in', tag )
+							trace_print( 'trying to find nested something in', tag )
 							a = tag.split('::')[0]
 							b = tag.split('::')[-1]
 							if a in self.classes:	# a::b is most likely something nested in a class
 								klass = self.classes[ a ]
 								if b in klass._public_enums:
-									print( '...found nested enum', b )
+									trace_print( '...found nested enum', b )
 									enum = klass._public_enums[ b ]
 									if enum['type'] is int:
 										var['ctypes_type'] = 'ctypes.c_int'
@@ -1003,8 +1006,8 @@ class Resolver(object):
 							elif a in self.namespaces:	# a::b can also be a nested namespace
 								if b in self.global_enums:
 									enum = self.global_enums[ b ]
-									print(enum)
-								print(var)
+									trace_print(enum)
+								trace_print(var)
 								assert 0
 
 							elif b in self.global_enums:		# falling back, this is a big ugly
@@ -1019,9 +1022,9 @@ class Resolver(object):
 								var['fundamental'] = True
 
 							else:	# boost::gets::crazy
-								print('NAMESPACES', self.namespaces)
-								print( a, b )
-								print( '---- boost gets crazy ----' )
+								trace_print('NAMESPACES', self.namespaces)
+								trace_print( a, b )
+								trace_print( '---- boost gets crazy ----' )
 								var['ctypes_type'] = 'ctypes.c_void_p'
 								var['unresolved'] = True
 
@@ -1045,12 +1048,12 @@ class Resolver(object):
 
 						elif tag in self.SubTypedefs:	# TODO remove SubTypedefs
 							if 'property_of_class' in var or 'property_of_struct' in var:
-								print( 'class:', self.SubTypedefs[ tag ], 'tag:', tag )
+								trace_print( 'class:', self.SubTypedefs[ tag ], 'tag:', tag )
 								var['typedef'] = self.SubTypedefs[ tag ]	# class name
 								var['ctypes_type'] = 'ctypes.c_void_p'
 							else:
-								print( "WARN-this should almost never happen!" )
-								print( var ); print('-'*80)
+								trace_print( "WARN-this should almost never happen!" )
+								trace_print( var ); trace_print('-'*80)
 								var['unresolved'] = True
 
 						elif tag in self._template_typenames:
@@ -1064,7 +1067,7 @@ class Resolver(object):
 							var['unresolved'] = True
 
 						else:
-							print( 'WARN: unknown type', var )
+							trace_print( 'WARN: unknown type', var )
 							assert 'property_of_class' in var or 'property_of_struct'	# only allow this case
 							var['unresolved'] = True
 
@@ -1103,7 +1106,7 @@ class Resolver(object):
 						var['raw_type'] = var['namespace'] + var['raw_type']
 					elif '::' in var['raw_type'] and var['raw_type'].split('::')[0] in self.namespaces:
 						pass
-					else: print('-'*80); print(var); raise NotImplemented
+					else: trace_print('-'*80); trace_print(var); raise NotImplemented
 
 
 			## need full name space for classes in raw type ##
@@ -1152,7 +1155,7 @@ class _CppHeader( Resolver ):
 						meth['returns_fundamental'] = is_fundamental( con )
 
 					elif meth['returns'] in self.classes:
-						print( 'meth returns class:', meth['returns'] )
+						trace_print( 'meth returns class:', meth['returns'] )
 						meth['returns_class'] = True
 
 					elif meth['returns'] in self.SubTypedefs:
@@ -1174,7 +1177,7 @@ class _CppHeader( Resolver ):
 						else: meth['returns'] = 'char*'
 
 					elif meth['returns'].count('::')==1:
-						print( meth )
+						trace_print( meth )
 						a,b = meth['returns'].split('::')
 						if a in self.namespaces:
 							if b in self.classes:
@@ -1190,12 +1193,12 @@ class _CppHeader( Resolver ):
 								if enum['type'] == int: meth['returns'] = 'int'
 								else: meth['returns'] = 'char*'
 
-							else: print( a, b); print( meth); meth['returns_unknown'] = True	# +++
+							else: trace_print( a, b); trace_print( meth); meth['returns_unknown'] = True	# +++
 
 						elif a in self.classes:
 							klass = self.classes[ a ]
 							if b in klass._public_enums:
-								print( '...found nested enum', b )
+								trace_print( '...found nested enum', b )
 								enum = klass._public_enums[ b ]
 								meth['returns_enum'] = enum['type']
 								meth['returns_fundamental'] = True
@@ -1210,14 +1213,14 @@ class _CppHeader( Resolver ):
 								meth['returns_fundamental'] = is_fundamental( typedef )
 
 							else:
-								print( meth )	# should be a nested class, TODO fix me.
+								trace_print( meth )	# should be a nested class, TODO fix me.
 								meth['returns_unknown'] = True
 
 					elif '::' in meth['returns']:
-						print('TODO namespace or extra nested return:', meth)
+						trace_print('TODO namespace or extra nested return:', meth)
 						meth['returns_unknown'] = True
 					else:
-						print( 'WARN: UNKNOWN RETURN', meth['name'], meth['returns'])
+						trace_print( 'WARN: UNKNOWN RETURN', meth['name'], meth['returns'])
 						meth['returns_unknown'] = True
 
 		for cls in self.classes.values():
@@ -1227,12 +1230,12 @@ class _CppHeader( Resolver ):
 			for d in cls['inherits']:
 				c = d['class']
 				a = d['access']	# do not depend on this to be 'public'
-				print( 'PARENT CLASS:', c )
-				if c not in self.classes: print('WARN: parent class not found')
+				trace_print( 'PARENT CLASS:', c )
+				if c not in self.classes: trace_print('WARN: parent class not found')
 				if c in self.classes and self.classes[c]['abstract']:
 					p = self.classes[ c ]
 					for meth in p.get_all_methods():	#p["methods"]["public"]:
-						print( '\t\tmeth', meth['name'], 'pure virtual', meth['pure_virtual'] )
+						trace_print( '\t\tmeth', meth['name'], 'pure virtual', meth['pure_virtual'] )
 						if meth['pure_virtual'] and meth['name'] not in methnames: cls['abstract'] = True; break
 
 
@@ -1301,7 +1304,7 @@ class _CppHeader( Resolver ):
 	OPERATOR_MAP.update( PYTHON_OPERATOR_MAP )
 
 	def parse_method_type( self, stack ):
-		print( 'meth type info', stack )
+		trace_print( 'meth type info', stack )
 		if stack[0] in ':;': stack = stack[1:]
 		info = { 
 			'debug': ' '.join(stack), 
@@ -1320,7 +1323,7 @@ class _CppHeader( Resolver ):
 		if '{' in stack:
 			info['defined'] = True
 			self._method_body = self.braceDepth
-			print( 'NEW METHOD WITH BODY', self.braceDepth )
+			trace_print( 'NEW METHOD WITH BODY', self.braceDepth )
 		elif stack[-1] == ';':
 			info['defined'] = False
 			self._method_body = None	# not a great idea to be clearing here
@@ -1335,7 +1338,7 @@ class _CppHeader( Resolver ):
 			op = stack[ stack.index('operator')+1 : stack.index('(') ]
 			op = ''.join(op)
 			if not op:
-				print( 'TODO - parse [] and () operators' )
+				trace_print( 'TODO - parse [] and () operators' )
 				return None
 			else:
 				info['operator'] = op
@@ -1343,7 +1346,7 @@ class _CppHeader( Resolver ):
 					name = '__operator__' + self.OPERATOR_MAP[ op ]
 					a = stack[ : stack.index('operator') ]
 				else:
-					print('ERROR - not a C++ operator', op)
+					trace_print('ERROR - not a C++ operator', op)
 					return None
 
 		elif r:		# June 23 2011
@@ -1410,8 +1413,8 @@ class _CppHeader( Resolver ):
 		"""Create a method out of the name stack"""
 
 		if self.curStruct:
-			print( 'WARN - struct contains methods - skipping' )
-			print( self.stack )
+			trace_print( 'WARN - struct contains methods - skipping' )
+			trace_print( self.stack )
 			assert 0
 
 		info = self.parse_method_type( self.stack )
@@ -1433,7 +1436,7 @@ class _CppHeader( Resolver ):
 				else: newMethod['path'] = klass['name']
 
 		else:
-			print( 'free function?', self.nameStack )
+			trace_print( 'free function?', self.nameStack )
 
 		self.stack = []
 
@@ -1503,14 +1506,14 @@ class _CppHeader( Resolver ):
 		#print( 'eval class stack', self.nameStack )
 		parent = self.curClass
 		if self.braceDepth > len( self.nameSpaces) and parent:
-			print( 'HIT NESTED SUBCLASS' )
+			trace_print( 'HIT NESTED SUBCLASS' )
 		elif self.braceDepth != len(self.nameSpaces):
 			print( 'ERROR: WRONG BRACE DEPTH' )
 			return
 
 		self.curAccessSpecifier = 'private'		# private is default
 		newClass = CppClass(self.nameStack)
-		print( 'NEW CLASS', newClass['name'] )
+		trace_print( 'NEW CLASS', newClass['name'] )
 		self.classes_order.append( newClass )	# good idea to save ordering
 		self.stack = []		# fixes if class declared with ';' in closing brace
 		if parent:
@@ -1536,16 +1539,16 @@ class _CppHeader( Resolver ):
 			self._classes_brace_level[ newClass['name'] ] = self.braceDepth
 
 		if key in self.classes:
-			print( 'ERROR name collision:', key )
+			trace_print( 'ERROR name collision:', key )
 			self.classes[key].show()
-			print('-'*80)
+			trace_print('-'*80)
 			newClass.show()
 
 		assert key not in self.classes	# namespace collision
 		self.classes[ key ] = newClass
 
 	def evalute_forward_decl(self):
-		print( 'FORWARD DECL', self.nameStack )
+		trace_print( 'FORWARD DECL', self.nameStack )
 		assert self.nameStack[0] == 'class'
 		name = self.nameStack[-1]
 		if self.curClass:
@@ -1639,18 +1642,18 @@ class CppHeader( _CppHeader ):
                     if self.curClass and debug: print( 'CURBD', self._classes_brace_level[ self.curClass ] )
 
                     if (self.braceDepth == 0) or (self.curClass and self._classes_brace_level[self.curClass]==self.braceDepth):
-                        print( 'END OF CLASS DEF' )
+                        trace_print( 'END OF CLASS DEF' )
                         if self.curClass and self.classes[ self.curClass ]['parent']: self.curClass = self.classes[ self.curClass ]['parent']
                         else: self.curClass = ""; #self.curStruct = None
                         self.stack = []
 
                     #if self.curStruct: self.curStruct = None
                     if self.braceDepth == 0 or (self.curStruct and self._structs_brace_level[self.curStruct['type']]==self.braceDepth):
-                        print( 'END OF STRUCT DEF' )
+                        trace_print( 'END OF STRUCT DEF' )
                         self.curStruct = None
 
                     if self._method_body and self.braceDepth < self._method_body:
-                        self._method_body = None; self.stack = []; self.nameStack = []; print( 'FORCE CLEAR METHBODY' )
+                        self._method_body = None; self.stack = []; self.nameStack = []; trace_print( 'FORCE CLEAR METHBODY' )
                 
                 if (tok.type == 'OPEN_PAREN'):
                     self.nameStack.append(tok.value)
@@ -1685,8 +1688,8 @@ class CppHeader( _CppHeader ):
                 elif (tok.type == 'SEMI_COLON'):
                     if (self.braceDepth < 10): self.evaluate_stack( tok.type )
                     if not self.stack: continue
-                    if self.stack[0]=='typedef' and ( '{' not in self.stack or '}' in self.stack ): self.stack = []; print( "REAL CLEAR")
-                    elif self.stack[0] != 'typedef': self.stack = []; print('CLEAR STACK')
+                    if self.stack[0]=='typedef' and ( '{' not in self.stack or '}' in self.stack ): self.stack = []; trace_print( "REAL CLEAR")
+                    elif self.stack[0] != 'typedef': self.stack = []; trace_print('CLEAR STACK')
 
         #except:
         #    raise CppParseError("Not able to parse %s on line %d evaluating \"%s\"\nError around: %s"
@@ -1703,7 +1706,7 @@ class CppHeader( _CppHeader ):
 
         #if 'typedef' in self.nameStack: self.evaluate_typedef()		# allows nested typedefs, probably a bad idea
         if not self.curClass and 'typedef' in self.nameStack:
-            print('STACK', self.stack)
+            trace_print('STACK', self.stack)
             if token == 'SEMI_COLON' and ('{' not in self.stack or '}' in self.stack): self.evaluate_typedef()
             else: return
 
@@ -1720,7 +1723,7 @@ class CppHeader( _CppHeader ):
             if (debug): print( "line ",lineno() )
             self.evaluate_enum_stack()
 
-        elif self._method_body and self.braceDepth > self._method_body: print( 'INSIDE METHOD DEF' )
+        elif self._method_body and self.braceDepth > self._method_body: trace_print( 'INSIDE METHOD DEF' )
         elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:	# updated by hart
             if (debug): print( "line ",lineno() )
             self.evaluate_method_stack()
