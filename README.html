@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.7: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.8: http://docutils.sourceforge.net/" />
 <title></title>
 <style type="text/css">
 
@@ -46,6 +46,10 @@ blockquote.epigraph {
 
 dl.docutils dd {
   margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
 
 /* Uncomment (and remove this text!) to get bold-faced definition list terms
 dl.docutils dt {
@@ -185,7 +189,7 @@ img.align-center, .figure.align-center, object.align-center {
 
 /* reset inner alignment in figures */
 div.align-right {
-  text-align: left }
+  text-align: inherit }
 
 /* div.align-center * { */
 /*   text-align: left } */
@@ -245,7 +249,7 @@ pre.address {
   margin-top: 0 ;
   font: inherit }
 
-pre.literal-block, pre.doctest-block {
+pre.literal-block, pre.doctest-block, pre.math {
   margin-left: 2em ;
   margin-right: 2em }
 
@@ -447,48 +451,7 @@ print cppHeader.classes[&quot;AlphaClass&quot;][&quot;properties&quot;][&quot;pu
 </pre>
 <p><strong>Output</strong>:</p>
 <pre class="literal-block">
-CppHeaderParser view of class SampleClass
-Inherits:
-{
-public
-    // Method
-    {'name': 'SampleClass', 'parameters': [], 'rtnType': 'void'}
-    {'doxygen': '/*!\n* Method 1\n*/', 'name': 'meth1', 'parameters': [], 'rtnType': 'string'}
-    {'doxygen': '///\n/// Method 2 description\n///\n/// &#64;param v1 Variable 1\n///', 'name': 'meth2', 'parameters': [{'type': 'int', 'name': 'v1', 'desc': 'Variable 1'}], 'rtnType': 'int'}
-    {'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'parameters': [{'type': 'const string &amp;', 'name': 'v1', 'desc': 'Variable 1'}, {'type': 'vector&lt;string&gt; &amp;', 'name': 'v2', 'desc': 'Variable 2'}], 'rtnType': 'void'}
-    {'doxygen': '/**********************************\n* Method 4 description\n*\n* &#64;return Return value\n*********************************/', 'name': 'meth4', 'parameters': [], 'rtnType': 'unsigned int'}
-protected
-private
-    // Properties
-    {'doxygen': '/// prop1 description', 'type': 'string', 'name': 'prop1'}
-    {'doxygen': '//! prop5 description', 'type': 'int', 'name': 'prop5'}
-    // Method
-    {'name': 'meth5', 'parameters': [], 'rtnType': 'void *'}
-}
-class Alpha::AlphaClass
-Inherits:
-{
-public
-    // Properties
-    {'type': 'string', 'name': 'alphaString'}
-    // Method
-    {'name': 'AlphaClass', 'parameters': [], 'rtnType': 'void'}
-    {'name': 'alphaMethod', 'parameters': [], 'rtnType': 'void'}
-protected
-private
-}
-class Alpha::Omega::OmegaClass
-Inherits:
-{
-public
-    // Properties
-    {'type': 'string', 'name': 'omegaString'}
-    // Method
-    {'name': 'OmegaClass', 'parameters': [], 'rtnType': 'void'}
-protected
-private
-}
-
+CppHeaderParser view of &lt;CppHeaderParser.CppHeader object at 0x8671d0&gt;
 Number of public methods 5
 Number of private properties 2
 Parameter Types for public method meth3 ['const string &amp;', 'vector&lt;string&gt; &amp;']
@@ -504,7 +467,7 @@ Doxygen for meth2:
 ///
 
 Parameters for meth3:
-[{'type': 'const string &amp;', 'name': 'v1', 'desc': 'Variable 1'}, {'type': 'vector&lt;string&gt; &amp;', 'name': 'v2', 'desc': 'Variable 2'}]
+[{'typedef': None, 'unresolved': True, 'constant': 1, 'name': 'v1', 'parent': None, 'pointer': 0, 'namespace': '', 'raw_type': 'string', 'method': {'unresolved_parameters': True, 'parent': SampleClass, 'defined': False, 'namespace': '', 'operator': False, 'static': False, 'returns_fundamental': True, 'rtnType': 'void', 'extern': False, 'path': 'SampleClass', 'returns_pointer': 0, 'parameters': [...], 'class': None, 'returns_reference': False, 'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'pure_virtual': False, 'explicit': False, 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'constructor': False, 'debug': 'void meth3 ( const string &amp; v1 , vector &lt;string &gt; &amp; v2 ) ;', 'inline': False, 'friend': False, 'returns_class': False}, 'static': 0, 'fundamental': 0, 'mutable': False, 'typedefs': 0, 'desc': 'Variable 1', 'type': 'const string &amp;', 'class': 0, 'reference': 1, 'aliases': ['string']}, {'raw_type': 'vector&lt;string&gt;', 'typedef': None, 'unresolved': True, 'constant': 0, 'name': 'v2', 'parent': None, 'pointer': 0, 'ctypes_type': 'ctypes.c_void_p', 'namespace': '', 'template': 'vector&lt;string&gt;', 'method': {'unresolved_parameters': True, 'parent': SampleClass, 'defined': False, 'namespace': '', 'operator': False, 'static': False, 'returns_fundamental': True, 'rtnType': 'void', 'extern': False, 'path': 'SampleClass', 'returns_pointer': 0, 'parameters': [...], 'class': None, 'returns_reference': False, 'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'pure_virtual': False, 'explicit': False, 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'constructor': False, 'debug': 'void meth3 ( const string &amp; v1 , vector &lt;string &gt; &amp; v2 ) ;', 'inline': False, 'friend': False, 'returns_class': False}, 'static': 0, 'fundamental': 0, 'mutable': False, 'typedefs': 0, 'desc': 'Variable 2', 'type': 'vector&lt;string&gt; &amp;', 'class': 0, 'reference': 1, 'aliases': ['vector&lt;string&gt;']}]
 
 Doxygen for meth4:
 /**********************************
@@ -537,7 +500,8 @@ string
 </div>
 <div class="section" id="contributors">
 <h1>Contributors</h1>
-<p>Chris Love</p>
+<p>Chris Love
+hartsantler</p>
 </div>
 </div>
 </body>

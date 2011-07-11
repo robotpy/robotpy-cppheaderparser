@@ -24,3 +24,4 @@ Python package "CppHeaderParser"
 Contributors
 ------------
 Chris Love
+hartsantler

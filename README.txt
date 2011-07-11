@@ -132,48 +132,7 @@ Python package "CppHeaderParser"
 
 **Output**::
 
-    CppHeaderParser view of class SampleClass
-    Inherits: 
-    {
-    public
-        // Method
-        {'name': 'SampleClass', 'parameters': [], 'rtnType': 'void'}
-        {'doxygen': '/*!\n* Method 1\n*/', 'name': 'meth1', 'parameters': [], 'rtnType': 'string'}
-        {'doxygen': '///\n/// Method 2 description\n///\n/// @param v1 Variable 1\n///', 'name': 'meth2', 'parameters': [{'type': 'int', 'name': 'v1', 'desc': 'Variable 1'}], 'rtnType': 'int'}
-        {'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'parameters': [{'type': 'const string &', 'name': 'v1', 'desc': 'Variable 1'}, {'type': 'vector<string> &', 'name': 'v2', 'desc': 'Variable 2'}], 'rtnType': 'void'}
-        {'doxygen': '/**********************************\n* Method 4 description\n*\n* @return Return value\n*********************************/', 'name': 'meth4', 'parameters': [], 'rtnType': 'unsigned int'}
-    protected
-    private
-        // Properties
-        {'doxygen': '/// prop1 description', 'type': 'string', 'name': 'prop1'}
-        {'doxygen': '//! prop5 description', 'type': 'int', 'name': 'prop5'}
-        // Method
-        {'name': 'meth5', 'parameters': [], 'rtnType': 'void *'}
-    }
-    class Alpha::AlphaClass
-    Inherits: 
-    {
-    public
-        // Properties
-        {'type': 'string', 'name': 'alphaString'}
-        // Method
-        {'name': 'AlphaClass', 'parameters': [], 'rtnType': 'void'}
-        {'name': 'alphaMethod', 'parameters': [], 'rtnType': 'void'}
-    protected
-    private
-    }
-    class Alpha::Omega::OmegaClass
-    Inherits: 
-    {
-    public
-        // Properties
-        {'type': 'string', 'name': 'omegaString'}
-        // Method
-        {'name': 'OmegaClass', 'parameters': [], 'rtnType': 'void'}
-    protected
-    private
-    }
-    
+    CppHeaderParser view of <CppHeaderParser.CppHeader object at 0x8671d0>
     Number of public methods 5
     Number of private properties 2
     Parameter Types for public method meth3 ['const string &', 'vector<string> &']
@@ -189,7 +148,7 @@ Python package "CppHeaderParser"
     ///
     
     Parameters for meth3:
-    [{'type': 'const string &', 'name': 'v1', 'desc': 'Variable 1'}, {'type': 'vector<string> &', 'name': 'v2', 'desc': 'Variable 2'}]
+    [{'typedef': None, 'unresolved': True, 'constant': 1, 'name': 'v1', 'parent': None, 'pointer': 0, 'namespace': '', 'raw_type': 'string', 'method': {'unresolved_parameters': True, 'parent': SampleClass, 'defined': False, 'namespace': '', 'operator': False, 'static': False, 'returns_fundamental': True, 'rtnType': 'void', 'extern': False, 'path': 'SampleClass', 'returns_pointer': 0, 'parameters': [...], 'class': None, 'returns_reference': False, 'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'pure_virtual': False, 'explicit': False, 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'constructor': False, 'debug': 'void meth3 ( const string & v1 , vector <string > & v2 ) ;', 'inline': False, 'friend': False, 'returns_class': False}, 'static': 0, 'fundamental': 0, 'mutable': False, 'typedefs': 0, 'desc': 'Variable 1', 'type': 'const string &', 'class': 0, 'reference': 1, 'aliases': ['string']}, {'raw_type': 'vector<string>', 'typedef': None, 'unresolved': True, 'constant': 0, 'name': 'v2', 'parent': None, 'pointer': 0, 'ctypes_type': 'ctypes.c_void_p', 'namespace': '', 'template': 'vector<string>', 'method': {'unresolved_parameters': True, 'parent': SampleClass, 'defined': False, 'namespace': '', 'operator': False, 'static': False, 'returns_fundamental': True, 'rtnType': 'void', 'extern': False, 'path': 'SampleClass', 'returns_pointer': 0, 'parameters': [...], 'class': None, 'returns_reference': False, 'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'pure_virtual': False, 'explicit': False, 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'constructor': False, 'debug': 'void meth3 ( const string & v1 , vector <string > & v2 ) ;', 'inline': False, 'friend': False, 'returns_class': False}, 'static': 0, 'fundamental': 0, 'mutable': False, 'typedefs': 0, 'desc': 'Variable 2', 'type': 'vector<string> &', 'class': 0, 'reference': 1, 'aliases': ['vector<string>']}]
     
     Doxygen for meth4:
     /**********************************
@@ -224,3 +183,4 @@ Python package "CppHeaderParser"
 Contributors
 ------------
 Chris Love
+hartsantler
