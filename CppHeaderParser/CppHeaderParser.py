@@ -1805,7 +1805,7 @@ class CppHeader( _CppHeader ):
         newEnum = CppEnum(self.nameStack)
         if len(newEnum.keys()):
             if len(self.curClass):
-                newEnum["namespace"] = self.cur_namespace(True)
+                newEnum["namespace"] = self.cur_namespace(False)
                 klass = self.classes[self.curClass]
                 klass["enums"][self.curAccessSpecifier].append(newEnum)
                 if self.curAccessSpecifier == 'public' and 'name' in newEnum: klass._public_enums[ newEnum['name'] ] = newEnum
