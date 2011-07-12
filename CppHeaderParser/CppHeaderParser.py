@@ -43,52 +43,52 @@
 #
 """
 CppHeaderParser2.0: April 2011 - July 2011
-	by HartsAntler
-	http://pyppet.blogspot.com
+    by HartsAntler
+    http://pyppet.blogspot.com
 
-	Quick Start - User API:
-		h = CppHeaderParser.CppHeader("someheader.h")
-		for name in h.classes:
-			c = h.classes[name]
-			for method in c['methods']['public']:
-				print method['name']
-				print dir(method)		# view the rest of the API here.
+    Quick Start - User API:
+        h = CppHeaderParser.CppHeader("someheader.h")
+        for name in h.classes:
+            c = h.classes[name]
+            for method in c['methods']['public']:
+                print method['name']
+                print dir(method)        # view the rest of the API here.
 
-		... TODO document more ...
+        ... TODO document more ...
 
 
 
-	New Features by Hart:
-		should be able to parse all c++ files, not just headers
-		parsing global typedefs with resolution
-		parsing global structs
-		fixes nested struct in class changes accessor type
-		parsing if class is abstract
-		parsing more info about variables
-		save ordering of classes, structs, and typedefs
-		handle forward decl of class in a class
-		handle mutable, static, and other variable types
-		handle 1D arrays
-		handle throw keyword and function prefix __attribute__((__const__))
-		handle nameless parameters "void method(void);"
+    New Features by Hart:
+        should be able to parse all c++ files, not just headers
+        parsing global typedefs with resolution
+        parsing global structs
+        fixes nested struct in class changes accessor type
+        parsing if class is abstract
+        parsing more info about variables
+        save ordering of classes, structs, and typedefs
+        handle forward decl of class in a class
+        handle mutable, static, and other variable types
+        handle 1D arrays
+        handle throw keyword and function prefix __attribute__((__const__))
+        handle nameless parameters "void method(void);"
 
-	Internal Developer Notes:
+    Internal Developer Notes:
 
-		1. in method['rtnType'] is not recommended, instead use: 'returns', 'returns_pointer', 'returns_reference', 'returns_fundamental'
-			(camelCase may become deprecated in the future for the dict lookup keys)
+        1. in method['rtnType'] is not recommended, instead use: 'returns', 'returns_pointer', 'returns_reference', 'returns_fundamental'
+            (camelCase may become deprecated in the future for the dict lookup keys)
 
-		2. double name stacks:
-			. the main stack is self.nameStack, this stack is simpler and easy to get hints from
-			. the secondary stack is self.stack is the full name stack, required for parsing somethings
-			. each stack maybe cleared at different points, since they are used to detect different things
-			. it looks ugly but it works :)
+        2. double name stacks:
+            . the main stack is self.nameStack, this stack is simpler and easy to get hints from
+            . the secondary stack is self.stack is the full name stack, required for parsing somethings
+            . each stack maybe cleared at different points, since they are used to detect different things
+            . it looks ugly but it works :)
 
-		3. Tabs vs Spaces:
-			This file now contains tabs and spaces, the tabb'ed code is the new stuff,
-			in the future this should be made consistent, one way or the other.
+        3. Tabs vs Spaces:
+            This file now contains tabs and spaces, the tabb'ed code is the new stuff,
+            in the future this should be made consistent, one way or the other.
 
-		4. Had to make the __repr__ methods simple because some of these dicts are interlinked.
-			For nice printing, call something.show()
+        4. Had to make the __repr__ methods simple because some of these dicts are interlinked.
+            For nice printing, call something.show()
 
 
 """
@@ -132,7 +132,7 @@ tokens = [
     'NEW_LINE',
 ]
 
-t_ignore = " \t\r[].|!?%@'^\\"		# harts hack (litteral backslash is a bad idea?) - old version: " \t\r[].|!?%@"
+t_ignore = " \t\r[].|!?%@'^\\"        # harts hack (litteral backslash is a bad idea?) - old version: " \t\r[].|!?%@"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
 t_OPERATOR_DIVIDE_OVERLOAD = r'/='
@@ -195,6 +195,7 @@ supportedAccessSpecifier = [
     'private'
 ]
 
+enumMaintianValueFormat = False
 doxygenCommentCache = ""
 
 def is_namespace(nameStack):
@@ -269,12 +270,12 @@ class CppClass(dict):
 
     def get_all_method_names( self ):
         r = []
-        for typ in 'public protected private'.split(): r += self.get_method_names(typ)		# returns list
+        for typ in 'public protected private'.split(): r += self.get_method_names(typ)        # returns list
         return r
 
     def get_all_pure_virtual_methods( self ):
         r = {}
-        for typ in 'public protected private'.split(): r.update(self.get_pure_virtual_methods(typ))		# returns dict
+        for typ in 'public protected private'.split(): r.update(self.get_pure_virtual_methods(typ))        # returns dict
         return r
 
 
@@ -308,13 +309,13 @@ class CppClass(dict):
         inheritList = []
 
         if ":" in nameStack:
-            self['name'] = nameStack[ nameStack.index(':') - 1 ]	# harts hack - fixes:  class __something__ classname
+            self['name'] = nameStack[ nameStack.index(':') - 1 ]    # harts hack - fixes:  class __something__ classname
 
         if nameStack.count(':') == 1:
             nameStack = nameStack[nameStack.index(":") + 1:]
             while len(nameStack):
                 tmpStack = []
-                tmpInheritClass = {"access":"private"}	# shouldn't public be default?
+                tmpInheritClass = {"access":"private"}    # shouldn't public be default?
                 if "," in nameStack:
                     tmpStack = nameStack[:nameStack.index(",")]
                     nameStack = nameStack[nameStack.index(",") + 1:]
@@ -330,14 +331,14 @@ class CppClass(dict):
                     tmpInheritClass["class"] = tmpStack[1]
                 else:
                     print( "Warning: can not parse inheriting class %s"%(" ".join(tmpStack)))
-                    if '>' in tmpStack: pass	# allow skip templates for now
+                    if '>' in tmpStack: pass    # allow skip templates for now
                     else: raise NotImplemented
 
                 if 'class' in tmpInheritClass: inheritList.append(tmpInheritClass)
 
         elif nameStack.count(':') == 2: self['parent'] = self['name']; self['name'] = nameStack[-1]
 
-        elif nameStack.count(':') > 2: print('ERROR can not parse', nameStack)	# TODO
+        elif nameStack.count(':') > 2: print('ERROR can not parse', nameStack)    # TODO
 
         self['inherits'] = inheritList
 
@@ -369,7 +370,7 @@ class CppClass(dict):
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
         rtn = "class %s"%(namespace_prefix + self["name"])
-        if self['abstract']: rtn += '	(abstract)\n'
+        if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
         if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
@@ -382,81 +383,81 @@ class CppClass(dict):
             rtn += "\n"
         rtn += "  {\n"
         for accessSpecifier in supportedAccessSpecifier:
-            rtn += "	%s\n"%(accessSpecifier)
+            rtn += "    %s\n"%(accessSpecifier)
             #Enums
             if (len(self["enums"][accessSpecifier])):
-                rtn += "		<Enums>\n"
+                rtn += "        <Enums>\n"
             for enum in self["enums"][accessSpecifier]:
-                rtn += "			%s\n"%(repr(enum))
+                rtn += "            %s\n"%(repr(enum))
             #Properties
             if (len(self["properties"][accessSpecifier])):
-                rtn += "		<Properties>\n"
+                rtn += "        <Properties>\n"
             for property in self["properties"][accessSpecifier]:
-                rtn += "			%s\n"%(repr(property))
+                rtn += "            %s\n"%(repr(property))
             #Methods
             if (len(self["methods"][accessSpecifier])):
-                rtn += "		<Methods>\n"
+                rtn += "        <Methods>\n"
             for method in self["methods"][accessSpecifier]:
                 rtn += "\t\t" + method.show() + '\n'
         rtn += "  }\n"
         print( rtn )
 
 class _CppMethod( dict ):
-	def _params_helper1( self, stack ):	
-		# new July 7th, deal with defaults that init: vec3(0,0,0)
-		# so that comma split still works later on parsing the parameters.
+    def _params_helper1( self, stack ):    
+        # new July 7th, deal with defaults that init: vec3(0,0,0)
+        # so that comma split still works later on parsing the parameters.
 
-		# also deal with "throw" keyword
-		if 'throw' in stack: stack = stack[ : stack.index('throw') ]
+        # also deal with "throw" keyword
+        if 'throw' in stack: stack = stack[ : stack.index('throw') ]
 
-		## remove GCC keyword __attribute__(...) and preserve returns ##
-		cleaned = []
-		hit = False; hitOpen = 0; hitClose = 0
-		for a in stack:
-			if a == '__attribute__': hit = True
-			if hit:
-				if a == '(': hitOpen += 1
-				elif a == ')': hitClose += 1
-				if a==')' and hitOpen == hitClose:
-					hit = False
-			else:
-				cleaned.append( a )
-		stack = cleaned
+        ## remove GCC keyword __attribute__(...) and preserve returns ##
+        cleaned = []
+        hit = False; hitOpen = 0; hitClose = 0
+        for a in stack:
+            if a == '__attribute__': hit = True
+            if hit:
+                if a == '(': hitOpen += 1
+                elif a == ')': hitClose += 1
+                if a==')' and hitOpen == hitClose:
+                    hit = False
+            else:
+                cleaned.append( a )
+        stack = cleaned
 
-		# also deal with attribute((const)) function prefix #
-		# TODO this needs to be better #
-		if len(stack) > 5:
-			a = ''.join(stack)
-			if a.startswith('((__const__))'): stack = stack[ 5 : ]
-			elif a.startswith('__attribute__((__const__))'): stack = stack[ 6 : ]
+        # also deal with attribute((const)) function prefix #
+        # TODO this needs to be better #
+        if len(stack) > 5:
+            a = ''.join(stack)
+            if a.startswith('((__const__))'): stack = stack[ 5 : ]
+            elif a.startswith('__attribute__((__const__))'): stack = stack[ 6 : ]
 
-		stack = stack[stack.index('(') + 1: ]
-		if not stack: return []
-		if len(stack)>=3 and stack[0]==')' and stack[1]==':':	# is this always a constructor?
-			self['constructor'] = True
-			return []
+        stack = stack[stack.index('(') + 1: ]
+        if not stack: return []
+        if len(stack)>=3 and stack[0]==')' and stack[1]==':':    # is this always a constructor?
+            self['constructor'] = True
+            return []
 
-		stack.reverse(); _end_ = stack.index(')'); stack.reverse()
-		stack = stack[ : len(stack)-(_end_+1) ]
-		if '(' not in stack: return stack	# safe to return, no defaults that init a class
+        stack.reverse(); _end_ = stack.index(')'); stack.reverse()
+        stack = stack[ : len(stack)-(_end_+1) ]
+        if '(' not in stack: return stack    # safe to return, no defaults that init a class
 
-		# transforms ['someclass', '(', '0', '0', '0', ')'] into "someclass(0,0,0)'"
-		r = []; hit=False
-		for a in stack:
-			if a == '(': hit=True
-			elif a == ')': hit=False
-			if hit or a == ')': r[-1] = r[-1] + a
-			else: r.append( a )
-		return r
+        # transforms ['someclass', '(', '0', '0', '0', ')'] into "someclass(0,0,0)'"
+        r = []; hit=False
+        for a in stack:
+            if a == '(': hit=True
+            elif a == ')': hit=False
+            if hit or a == ')': r[-1] = r[-1] + a
+            else: r.append( a )
+        return r
 
-	def _params_helper2( self, params ):
-		for p in params:
-			p['method'] = self		# save reference in variable to parent method
-			if '::' in p['type']:
-				ns = p['type'].split('::')[0]
-				if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
-					p['type'] = self['namespace'] + p['type']
-			else: p['namespace'] = self[ 'namespace' ]
+    def _params_helper2( self, params ):
+        for p in params:
+            p['method'] = self        # save reference in variable to parent method
+            if '::' in p['type']:
+                ns = p['type'].split('::')[0]
+                if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
+                    p['type'] = self['namespace'] + p['type']
+            else: p['namespace'] = self[ 'namespace' ]
 
 class CppMethod( _CppMethod ):
     """Takes a name stack and turns it into a method
@@ -491,12 +492,12 @@ class CppMethod( _CppMethod ):
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
 
-        self.update( methinfo )	# harts hack
+        self.update( methinfo )    # harts hack
 
         paramsStack = self._params_helper1( nameStack )
             
         #Remove things from the stack till we hit the last paren, this helps handle abstract and normal methods
-        #if paramsStack:	# harts hacks - this is a bug caused by change to line 88?
+        #if paramsStack:    # harts hacks - this is a bug caused by change to line 88?
         #    while paramsStack[-1]  != ")": paramsStack.pop()
         #    paramsStack.pop()
 
@@ -542,32 +543,32 @@ class CppMethod( _CppMethod ):
 
 
         self["parameters"] = params
-        self._params_helper2( params )	# mods params inplace
+        self._params_helper2( params )    # mods params inplace
 
 
 class _CppVariable(dict):
-	def _name_stack_helper( self, stack ):
-		stack = list(stack)
-		if '=' not in stack:		# TODO refactor me
-			# check for array[n] and deal with funny array syntax: "int myvar:99"
-			array = []
-			while stack and stack[-1].isdigit(): array.append( stack.pop() )
-			if array: array.reverse(); self['array'] = int(''.join(array))
-			if stack and stack[-1].endswith(':'): stack[-1] = stack[-1][:-1]	# fixed June 23, BulletPhysics
+    def _name_stack_helper( self, stack ):
+        stack = list(stack)
+        if '=' not in stack:        # TODO refactor me
+            # check for array[n] and deal with funny array syntax: "int myvar:99"
+            array = []
+            while stack and stack[-1].isdigit(): array.append( stack.pop() )
+            if array: array.reverse(); self['array'] = int(''.join(array))
+            if stack and stack[-1].endswith(':'): stack[-1] = stack[-1][:-1]    # fixed June 23, BulletPhysics
 
-		while stack and not stack[-1]: stack.pop()			# can be empty
-		return stack
+        while stack and not stack[-1]: stack.pop()            # can be empty
+        return stack
 
-	def init(self):
-		#assert self['name']	# allow unnamed variables, methods like this: "void func(void);"
-		a = []
-		self['aliases'] = []; self['parent'] = None; self['typedef'] = None
-		for key in 'constant reference pointer static typedefs class fundamental unresolved'.split():
-			self[ key ] = 0
-		for b in self['type'].split():
-			if b == '__const__': b = 'const'
-			a.append( b )
-		self['type'] = ' '.join( a )
+    def init(self):
+        #assert self['name']    # allow unnamed variables, methods like this: "void func(void);"
+        a = []
+        self['aliases'] = []; self['parent'] = None; self['typedef'] = None
+        for key in 'constant reference pointer static typedefs class fundamental unresolved'.split():
+            self[ key ] = 0
+        for b in self['type'].split():
+            if b == '__const__': b = 'const'
+            a.append( b )
+        self['type'] = ' '.join( a )
 
 
 class CppVariable( _CppVariable ):
@@ -593,21 +594,21 @@ class CppVariable( _CppVariable ):
 
         if (debug): print( "Variable: ",  nameStack )
 
-        if (len(nameStack) < 2):	# +++
+        if (len(nameStack) < 2):    # +++
             if len(nameStack) == 1: self['type'] = nameStack[0]; self['name'] = ''
             else: print(_stack_); assert 0
 
         elif ("=" in nameStack):
             self["type"] = " ".join(nameStack[:nameStack.index("=") - 1])
             self["name"] = nameStack[nameStack.index("=") - 1]
-            self["defaltValue"] = " ".join(nameStack[nameStack.index("=") + 1:])	# deprecate camelCase in dicts
+            self["defaltValue"] = " ".join(nameStack[nameStack.index("=") + 1:])    # deprecate camelCase in dicts
             self['default'] = " ".join(nameStack[nameStack.index("=") + 1:])
 
-        elif nameStack[-1] == '*':		# rare case - function param is an unnamed pointer: "void somemethod( SomeObject* )"
+        elif nameStack[-1] == '*':        # rare case - function param is an unnamed pointer: "void somemethod( SomeObject* )"
             self['type'] = ' '.join(nameStack)
             self['name'] = ''
 
-        else:	# common case
+        else:    # common case
             self["type"] = " ".join(nameStack[:-1])
             self["name"] = nameStack[-1]
 
@@ -621,27 +622,47 @@ class CppVariable( _CppVariable ):
         except: pass
 
         self.init()
-        CppVariable.Vars.append( self )		# save and resolve later
+        CppVariable.Vars.append( self )        # save and resolve later
 
 class _CppEnum(dict):
-	def resolve_enum_values( self, values ):
-		t = int; i = 0
-		names = [ v['name'] for v in values ]
-		for v in values:
-			if 'value' in v:
-				a = v['value'].strip()
-				if a.isdigit(): i = a = int( a )
-				elif a in names:
-					for other in values:
-						if other['name'] == a:
-							v['value'] = other['value']
-							break
+    def resolve_enum_values( self, values ):
+        """Evaluates the values list of dictionaries passed in and figures out what the enum value
+        for each enum is editing in place:
+        
+        Example:
+        From: [{'name': 'ORANGE'},
+               {'name': 'RED'},
+               {'name': 'GREEN', 'value': '8'}]
+        To:   [{'name': 'ORANGE', 'value': 0},
+               {'name': 'RED', 'value': 1},
+               {'name': 'GREEN', 'value': 8}]
+        """
+        t = int; i = 0
+        names = [ v['name'] for v in values ]
+        for v in values:
+            if 'value' in v:
+                a = v['value'].strip()
+                if a.lower().startswith("0x"):
+                    try:
+                        i = a = int(a , 16)
+                    except:pass
+                elif a.isdigit():
+                    i = a = int( a )
+                elif a in names:
+                    for other in values:
+                        if other['name'] == a:
+                            v['value'] = other['value']
+                            break
 
-				elif '"' in a or "'" in a: t = str	# only if there are quotes it this a string enum
-
-			else: v['value'] = i
-			i += 1
-		return t
+                elif '"' in a or "'" in a: t = str # only if there are quotes it this a string enum
+                else:
+                    try:
+                        a = i = ord(a)
+                    except: pass
+                if not enumMaintianValueFormat: v['value'] = a
+            else: v['value'] = i
+            i += 1
+        return t
 
 class CppEnum(_CppEnum):
     """Takes a name stack and turns it into an Enum
@@ -685,7 +706,7 @@ class CppEnum(_CppEnum):
             if d: valueList.append( d )
 
         if len(valueList):
-            self['type'] = self.resolve_enum_values( valueList )	# returns int for standard enum
+            self['type'] = self.resolve_enum_values( valueList )    # returns int for standard enum
             self["values"] = valueList
         else:
             print( 'WARN-enum: empty enum', nameStack )
@@ -708,854 +729,854 @@ class CppEnum(_CppEnum):
         self["namespace"] = ""
 
 def is_fundamental(s):
-	for a in s.split():
-		if a not in 'size_t struct union unsigned signed bool char short int float double long void *': return False
-	return True
+    for a in s.split():
+        if a not in 'size_t struct union unsigned signed bool char short int float double long void *': return False
+    return True
 
 def is_method_namestack(stack):
-	r = False
-	if '(' not in stack: r = False
-	elif stack[0] == 'typedef': r = False	# TODO deal with typedef function prototypes
-	#elif '=' in stack and stack.index('=') < stack.index('(') and stack[stack.index('=')-1] != 'operator': r = False	#disabled July6th - allow all operators
-	elif 'operator' in stack: r = True	# allow all operators
-	elif '{' in stack and stack.index('{') < stack.index('('): r = False	# struct that looks like a method/class
-	elif '(' in stack and ')' in stack:
-		if '{' in stack and '}' in stack: r = True
-		elif stack[-1] == ';': r = True
-		elif '{' in stack: r = True	# ideally we catch both braces... TODO
-	else: r = False
-	return r
+    r = False
+    if '(' not in stack: r = False
+    elif stack[0] == 'typedef': r = False    # TODO deal with typedef function prototypes
+    #elif '=' in stack and stack.index('=') < stack.index('(') and stack[stack.index('=')-1] != 'operator': r = False    #disabled July6th - allow all operators
+    elif 'operator' in stack: r = True    # allow all operators
+    elif '{' in stack and stack.index('{') < stack.index('('): r = False    # struct that looks like a method/class
+    elif '(' in stack and ')' in stack:
+        if '{' in stack and '}' in stack: r = True
+        elif stack[-1] == ';': r = True
+        elif '{' in stack: r = True    # ideally we catch both braces... TODO
+    else: r = False
+    return r
 
 
 class CppStruct(dict):
-	Structs = []
-	def __init__(self, nameStack):
-		if len(nameStack) >= 2: self['type'] = nameStack[1]
-		else: self['type'] = None
-		self['fields'] = []
-		self.Structs.append( self )
+    Structs = []
+    def __init__(self, nameStack):
+        if len(nameStack) >= 2: self['type'] = nameStack[1]
+        else: self['type'] = None
+        self['fields'] = []
+        self.Structs.append( self )
 
 C99_NONSTANDARD = {
-	'int8' : 'signed char',
-	'int16' : 'short int',
-	'int32' : 'int',
-	'int64' : 'int64_t',		# this can be: long int (64bit), or long long int (32bit)
-	'uint' : 'unsigned int',
-	'uint8' : 'unsigned char',
-	'uint16' : 'unsigned short int',
-	'uint32' : 'unsigned int',
-	'uint64' : 'uint64_t',	# depends on host bits
+    'int8' : 'signed char',
+    'int16' : 'short int',
+    'int32' : 'int',
+    'int64' : 'int64_t',        # this can be: long int (64bit), or long long int (32bit)
+    'uint' : 'unsigned int',
+    'uint8' : 'unsigned char',
+    'uint16' : 'unsigned short int',
+    'uint32' : 'unsigned int',
+    'uint64' : 'uint64_t',    # depends on host bits
 }
 
 
 def standardize_fundamental( s ):
-	if s in C99_NONSTANDARD: return C99_NONSTANDARD[ s ]
-	else: return s
+    if s in C99_NONSTANDARD: return C99_NONSTANDARD[ s ]
+    else: return s
 
 
 class Resolver(object):
-	C_FUNDAMENTAL = 'size_t unsigned signed bool char wchar short int float double long void'.split()
-	C_FUNDAMENTAL += 'struct union enum'.split()
+    C_FUNDAMENTAL = 'size_t unsigned signed bool char wchar short int float double long void'.split()
+    C_FUNDAMENTAL += 'struct union enum'.split()
 
 
-	SubTypedefs = {}		# TODO deprecate?
-	NAMESPACES = []
-	CLASSES = {}
-	STRUCTS = {}
+    SubTypedefs = {}        # TODO deprecate?
+    NAMESPACES = []
+    CLASSES = {}
+    STRUCTS = {}
 
-	def initextra(self):
-		self.typedefs = {}
-		self.typedefs_order = []
-		self.classes_order = []
-		self.structs = Resolver.STRUCTS
-		self.structs_order = []
-		self.namespaces = Resolver.NAMESPACES		# save all namespaces
-		self.curStruct = None
-		self.stack = []	# full name stack, good idea to keep both stacks? (simple stack and full stack)
-		self._classes_brace_level = {}	# class name : level
-		self._structs_brace_level = {}		# struct type : level
-		self._method_body = None
-		self._forward_decls = []
-		self._template_typenames = []	# template<typename XXX>
+    def initextra(self):
+        self.typedefs = {}
+        self.typedefs_order = []
+        self.classes_order = []
+        self.structs = Resolver.STRUCTS
+        self.structs_order = []
+        self.namespaces = Resolver.NAMESPACES        # save all namespaces
+        self.curStruct = None
+        self.stack = []    # full name stack, good idea to keep both stacks? (simple stack and full stack)
+        self._classes_brace_level = {}    # class name : level
+        self._structs_brace_level = {}        # struct type : level
+        self._method_body = None
+        self._forward_decls = []
+        self._template_typenames = []    # template<typename XXX>
 
-	def current_namespace(self): return self.cur_namespace(True)
+    def current_namespace(self): return self.cur_namespace(True)
 
-	def cur_namespace(self, add_double_colon=False):
-		rtn = ""
-		i = 0
-		while i < len(self.nameSpaces):
-			rtn += self.nameSpaces[i]
-			if add_double_colon or i < len(self.nameSpaces) - 1: rtn += "::"
-			i+=1
-		return rtn
-
-
-	def guess_ctypes_type( self, string ):
-		pointers = string.count('*')
-		string = string.replace('*','')
-
-		a = string.split()
-		if 'unsigned' in a: u = 'u'
-		else: u = ''
-		if 'long' in a and 'double' in a: b = 'longdouble'	# there is no ctypes.c_ulongdouble (this is a 64bit float?)
-		elif a.count('long') == 2 and 'int' in a: b = '%sint64' %u
-		elif a.count('long') == 2: b = '%slonglong' %u
-		elif 'long' in a: b = '%slong' %u
-		elif 'double' in a: b = 'double'	# no udouble in ctypes
-		elif 'short' in a: b = '%sshort' %u
-		elif 'char' in a: b = '%schar' %u
-		elif 'wchar' in a: b = 'wchar'
-		elif 'bool' in a: b = 'bool'
-		elif 'float' in a: b = 'float'
-
-		elif 'int' in a: b = '%sint' %u
-		elif 'int8' in a: b = 'int8'
-		elif 'int16' in a: b = 'int16'
-		elif 'int32' in a: b = 'int32'
-		elif 'int64' in a: b = 'int64'
-
-		elif 'uint' in a: b = 'uint'
-		elif 'uint8' in a: b = 'uint8'
-		elif 'uint16' in a: b = 'uint16'
-		elif 'uint32' in a: b = 'uint32'
-		elif 'uint64' in a: b = 'uint64'
-
-		elif 'size_t' in a: b = 'size_t'
-		elif 'void' in a: b = 'void_p'
-
-		elif string in 'struct union'.split(): b = 'void_p'	# what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
-		else: b = 'void_p'
-
-		if not pointers: return 'ctypes.c_%s' %b
-		else:
-			x = ''
-			for i in range(pointers): x += 'ctypes.POINTER('
-			x += 'ctypes.c_%s' %b
-			x += ')' * pointers
-			return x
-
-	def resolve_type( self, string, result ):	# recursive
-		'''
-		keeps track of useful things like: how many pointers, number of typedefs, is fundamental or a class, etc...
-		'''
-		## be careful with templates, what is inside <something*> can be a pointer but the overall type is not a pointer
-		## these come before a template
-		s = string.split('<')[0]
-		result[ 'constant' ] += s.split().count('const')
-		result[ 'static' ] += s.split().count('static')
-		result[ 'mutable' ] = 'mutable' in s.split()
-
-		## these come after a template
-		s = string.split('>')[-1]
-		result[ 'pointer' ] += s.count('*')
-		result[ 'reference' ] += s.count('&')
+    def cur_namespace(self, add_double_colon=False):
+        rtn = ""
+        i = 0
+        while i < len(self.nameSpaces):
+            rtn += self.nameSpaces[i]
+            if add_double_colon or i < len(self.nameSpaces) - 1: rtn += "::"
+            i+=1
+        return rtn
 
 
-		x = string; alias = False
-		for a in '* & const static mutable'.split(): x = x.replace(a,'')
-		for y in x.split():
-			if y not in self.C_FUNDAMENTAL: alias = y; break
+    def guess_ctypes_type( self, string ):
+        pointers = string.count('*')
+        string = string.replace('*','')
 
-		#if alias == 'class':
-		#	result['class'] = result['name']	# forward decl of class
-		#	result['forward_decl'] = True
-		if alias == '__extension__': result['fundamental_extension'] = True
-		elif alias:
-			result['aliases'].append( alias )
-			if alias in C99_NONSTANDARD:
-				result['type'] = C99_NONSTANDARD[ alias ]
-				result['typedef'] = alias
-				result['typedefs'] += 1
-			elif alias in self.typedefs:
-				result['typedefs'] += 1
-				result['typedef'] = alias
-				self.resolve_type( self.typedefs[alias], result )
-			elif alias in self.classes:
-				klass = self.classes[alias]; result['fundamental'] = False
-				result['class'] = klass
-				result['unresolved'] = False
-			else: result['unresolved'] = True
-		else:
-			result['fundamental'] = True
-			result['unresolved'] = False
+        a = string.split()
+        if 'unsigned' in a: u = 'u'
+        else: u = ''
+        if 'long' in a and 'double' in a: b = 'longdouble'    # there is no ctypes.c_ulongdouble (this is a 64bit float?)
+        elif a.count('long') == 2 and 'int' in a: b = '%sint64' %u
+        elif a.count('long') == 2: b = '%slonglong' %u
+        elif 'long' in a: b = '%slong' %u
+        elif 'double' in a: b = 'double'    # no udouble in ctypes
+        elif 'short' in a: b = '%sshort' %u
+        elif 'char' in a: b = '%schar' %u
+        elif 'wchar' in a: b = 'wchar'
+        elif 'bool' in a: b = 'bool'
+        elif 'float' in a: b = 'float'
 
+        elif 'int' in a: b = '%sint' %u
+        elif 'int8' in a: b = 'int8'
+        elif 'int16' in a: b = 'int16'
+        elif 'int32' in a: b = 'int32'
+        elif 'int64' in a: b = 'int64'
 
-	def finalize_vars(self):
-		for s in CppStruct.Structs:	# vars within structs can be ignored if they do not resolve
-			for var in s['fields']: var['parent'] = s['type']
-		#for c in self.classes.values():
-		#	for var in c.get_all_properties(): var['parent'] = c['name']
+        elif 'uint' in a: b = 'uint'
+        elif 'uint8' in a: b = 'uint8'
+        elif 'uint16' in a: b = 'uint16'
+        elif 'uint32' in a: b = 'uint32'
+        elif 'uint64' in a: b = 'uint64'
 
-		## RESOLVE ##
-		for var in CppVariable.Vars:
-			self.resolve_type( var['type'], var )
-			#if 'method' in var and var['method']['name'] ==  '_notifyCurrentCamera': print(var); assert 0
+        elif 'size_t' in a: b = 'size_t'
+        elif 'void' in a: b = 'void_p'
 
-		# then find concrete type and best guess ctypes type #
-		for var in CppVariable.Vars:	
-			if not var['aliases']:	#var['fundamental']:
-				var['ctypes_type'] = self.guess_ctypes_type( var['type'] )
-			else:
-				var['unresolved'] = False	# below may test to True
-				if var['class']:
-					var['ctypes_type'] = 'ctypes.c_void_p'
-				else:
-					assert var['aliases']
-					tag = var['aliases'][0]
+        elif string in 'struct union'.split(): b = 'void_p'    # what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
+        else: b = 'void_p'
 
-					klass = None
-					nestedEnum = None
-					nestedStruct = None
-					nestedTypedef = None
-					if 'method' in var:
-						klass = var['method']['parent']
-						if tag in var['method']['parent']._public_enums:
-							nestedEnum = var['method']['parent']._public_enums[ tag ]
-						elif tag in var['method']['parent']._public_structs:
-							nestedStruct = var['method']['parent']._public_structs[ tag ]
-						elif tag in var['method']['parent']._public_typedefs:
-							nestedTypedef = var['method']['parent']._public_typedefs[ tag ]
+        if not pointers: return 'ctypes.c_%s' %b
+        else:
+            x = ''
+            for i in range(pointers): x += 'ctypes.POINTER('
+            x += 'ctypes.c_%s' %b
+            x += ')' * pointers
+            return x
+
+    def resolve_type( self, string, result ):    # recursive
+        '''
+        keeps track of useful things like: how many pointers, number of typedefs, is fundamental or a class, etc...
+        '''
+        ## be careful with templates, what is inside <something*> can be a pointer but the overall type is not a pointer
+        ## these come before a template
+        s = string.split('<')[0]
+        result[ 'constant' ] += s.split().count('const')
+        result[ 'static' ] += s.split().count('static')
+        result[ 'mutable' ] = 'mutable' in s.split()
+
+        ## these come after a template
+        s = string.split('>')[-1]
+        result[ 'pointer' ] += s.count('*')
+        result[ 'reference' ] += s.count('&')
 
 
-					if '<' in tag:	# should also contain '>'
-						var['template'] = tag		# do not resolve templates
-						var['ctypes_type'] = 'ctypes.c_void_p'
-						var['unresolved'] = True
+        x = string; alias = False
+        for a in '* & const static mutable'.split(): x = x.replace(a,'')
+        for y in x.split():
+            if y not in self.C_FUNDAMENTAL: alias = y; break
 
-					elif nestedEnum:
-						enum = nestedEnum
-						if enum['type'] is int:
-							var['ctypes_type'] = 'ctypes.c_int'
-							var['raw_type'] = 'int'
-
-						elif enum['type'] is str:
-							var['ctypes_type'] = 'ctypes.c_char_p'
-							var['raw_type'] = 'char*'
-
-						var['enum'] = var['method']['path'] + '::' + enum['name']
-						var['fundamental'] = True
-
-					elif nestedStruct:
-						var['ctypes_type'] = 'ctypes.c_void_p'
-						var['raw_type'] = var['method']['path'] + '::' + nestedStruct['type']
-						var['fundamental'] = False
-
-					elif nestedTypedef:
-						var['fundamental'] = is_fundamental( nestedTypedef )
-						if not var['fundamental']:
-							var['raw_type'] = var['method']['path'] + '::' + tag
-
-					else:
-						_tag = tag
-						if '::' in tag and tag.split('::')[0] in self.namespaces: tag = tag.split('::')[-1]
-						con = self.concrete_typedef( _tag )
-						if con:
-							var['concrete_type'] = con
-							var['ctypes_type'] = self.guess_ctypes_type( var['concrete_type'] )
-
-						elif tag in self.structs:
-							trace_print( 'STRUCT', var )
-							var['struct'] = tag
-							var['ctypes_type'] = 'ctypes.c_void_p'
-							var['raw_type'] = self.structs[tag]['namespace'] + '::' + tag
-
-						elif tag in self._forward_decls:
-							var['forward_declared'] = tag
-							var['ctypes_type'] = 'ctypes.c_void_p'
-
-						elif tag in self.global_enums:
-							enum = self.global_enums[ tag ]
-							if enum['type'] is int:
-								var['ctypes_type'] = 'ctypes.c_int'
-								var['raw_type'] = 'int'
-							elif enum['type'] is str:
-								var['ctypes_type'] = 'ctypes.c_char_p'
-								var['raw_type'] = 'char*'
-							var['enum'] = enum['namespace'] + enum['name']
-							var['fundamental'] = True
+        #if alias == 'class':
+        #    result['class'] = result['name']    # forward decl of class
+        #    result['forward_decl'] = True
+        if alias == '__extension__': result['fundamental_extension'] = True
+        elif alias:
+            result['aliases'].append( alias )
+            if alias in C99_NONSTANDARD:
+                result['type'] = C99_NONSTANDARD[ alias ]
+                result['typedef'] = alias
+                result['typedefs'] += 1
+            elif alias in self.typedefs:
+                result['typedefs'] += 1
+                result['typedef'] = alias
+                self.resolve_type( self.typedefs[alias], result )
+            elif alias in self.classes:
+                klass = self.classes[alias]; result['fundamental'] = False
+                result['class'] = klass
+                result['unresolved'] = False
+            else: result['unresolved'] = True
+        else:
+            result['fundamental'] = True
+            result['unresolved'] = False
 
 
-						elif var['parent']:
-							print( 'WARN unresolved', _tag)
-							var['ctypes_type'] = 'ctypes.c_void_p'
-							var['unresolved'] = True
+    def finalize_vars(self):
+        for s in CppStruct.Structs:    # vars within structs can be ignored if they do not resolve
+            for var in s['fields']: var['parent'] = s['type']
+        #for c in self.classes.values():
+        #    for var in c.get_all_properties(): var['parent'] = c['name']
+
+        ## RESOLVE ##
+        for var in CppVariable.Vars:
+            self.resolve_type( var['type'], var )
+            #if 'method' in var and var['method']['name'] ==  '_notifyCurrentCamera': print(var); assert 0
+
+        # then find concrete type and best guess ctypes type #
+        for var in CppVariable.Vars:    
+            if not var['aliases']:    #var['fundamental']:
+                var['ctypes_type'] = self.guess_ctypes_type( var['type'] )
+            else:
+                var['unresolved'] = False    # below may test to True
+                if var['class']:
+                    var['ctypes_type'] = 'ctypes.c_void_p'
+                else:
+                    assert var['aliases']
+                    tag = var['aliases'][0]
+
+                    klass = None
+                    nestedEnum = None
+                    nestedStruct = None
+                    nestedTypedef = None
+                    if 'method' in var:
+                        klass = var['method']['parent']
+                        if tag in var['method']['parent']._public_enums:
+                            nestedEnum = var['method']['parent']._public_enums[ tag ]
+                        elif tag in var['method']['parent']._public_structs:
+                            nestedStruct = var['method']['parent']._public_structs[ tag ]
+                        elif tag in var['method']['parent']._public_typedefs:
+                            nestedTypedef = var['method']['parent']._public_typedefs[ tag ]
 
 
-						elif tag.count('::')==1:
-							trace_print( 'trying to find nested something in', tag )
-							a = tag.split('::')[0]
-							b = tag.split('::')[-1]
-							if a in self.classes:	# a::b is most likely something nested in a class
-								klass = self.classes[ a ]
-								if b in klass._public_enums:
-									trace_print( '...found nested enum', b )
-									enum = klass._public_enums[ b ]
-									if enum['type'] is int:
-										var['ctypes_type'] = 'ctypes.c_int'
-										var['raw_type'] = 'int'
-									elif enum['type'] is str:
-										var['ctypes_type'] = 'ctypes.c_char_p'
-										var['raw_type'] = 'char*'
-									if 'method' in var: var['enum'] = var['method']['path'] + '::' + enum['name']
-									else:	# class property
-										var['unresolved'] = True
-									var['fundamental'] = True
+                    if '<' in tag:    # should also contain '>'
+                        var['template'] = tag        # do not resolve templates
+                        var['ctypes_type'] = 'ctypes.c_void_p'
+                        var['unresolved'] = True
 
-								else: var['unresolved'] = True	# TODO klass._public_xxx
+                    elif nestedEnum:
+                        enum = nestedEnum
+                        if enum['type'] is int:
+                            var['ctypes_type'] = 'ctypes.c_int'
+                            var['raw_type'] = 'int'
 
-							elif a in self.namespaces:	# a::b can also be a nested namespace
-								if b in self.global_enums:
-									enum = self.global_enums[ b ]
-									trace_print(enum)
-								trace_print(var)
-								assert 0
+                        elif enum['type'] is str:
+                            var['ctypes_type'] = 'ctypes.c_char_p'
+                            var['raw_type'] = 'char*'
 
-							elif b in self.global_enums:		# falling back, this is a big ugly
-								enum = self.global_enums[ b ]
-								assert a in enum['namespace'].split('::')
-								if enum['type'] is int:
-									var['ctypes_type'] = 'ctypes.c_int'
-									var['raw_type'] = 'int'
-								elif enum['type'] is str:
-									var['ctypes_type'] = 'ctypes.c_char_p'
-									var['raw_type'] = 'char*'
-								var['fundamental'] = True
+                        var['enum'] = var['method']['path'] + '::' + enum['name']
+                        var['fundamental'] = True
 
-							else:	# boost::gets::crazy
-								trace_print('NAMESPACES', self.namespaces)
-								trace_print( a, b )
-								trace_print( '---- boost gets crazy ----' )
-								var['ctypes_type'] = 'ctypes.c_void_p'
-								var['unresolved'] = True
+                    elif nestedStruct:
+                        var['ctypes_type'] = 'ctypes.c_void_p'
+                        var['raw_type'] = var['method']['path'] + '::' + nestedStruct['type']
+                        var['fundamental'] = False
 
+                    elif nestedTypedef:
+                        var['fundamental'] = is_fundamental( nestedTypedef )
+                        if not var['fundamental']:
+                            var['raw_type'] = var['method']['path'] + '::' + tag
 
-						elif 'namespace' in var and self.concrete_typedef(var['namespace']+tag):
-							#print( 'TRYING WITH NS', var['namespace'] )
-							con = self.concrete_typedef( var['namespace']+tag )
-							if con:
-								var['typedef'] = var['namespace']+tag
-								var['type'] = con
-								if 'struct' in con.split():
-									var['raw_type'] = var['typedef']
-									var['ctypes_type'] = 'ctypes.c_void_p'
-								else:
-									self.resolve_type( var['type'], var )
-									var['ctypes_type'] = self.guess_ctypes_type( var['type'] )
+                    else:
+                        _tag = tag
+                        if '::' in tag and tag.split('::')[0] in self.namespaces: tag = tag.split('::')[-1]
+                        con = self.concrete_typedef( _tag )
+                        if con:
+                            var['concrete_type'] = con
+                            var['ctypes_type'] = self.guess_ctypes_type( var['concrete_type'] )
 
-						elif '::' in var:
-							var['ctypes_type'] = 'ctypes.c_void_p'
-							var['unresolved'] = True
+                        elif tag in self.structs:
+                            trace_print( 'STRUCT', var )
+                            var['struct'] = tag
+                            var['ctypes_type'] = 'ctypes.c_void_p'
+                            var['raw_type'] = self.structs[tag]['namespace'] + '::' + tag
 
-						elif tag in self.SubTypedefs:	# TODO remove SubTypedefs
-							if 'property_of_class' in var or 'property_of_struct' in var:
-								trace_print( 'class:', self.SubTypedefs[ tag ], 'tag:', tag )
-								var['typedef'] = self.SubTypedefs[ tag ]	# class name
-								var['ctypes_type'] = 'ctypes.c_void_p'
-							else:
-								trace_print( "WARN-this should almost never happen!" )
-								trace_print( var ); trace_print('-'*80)
-								var['unresolved'] = True
+                        elif tag in self._forward_decls:
+                            var['forward_declared'] = tag
+                            var['ctypes_type'] = 'ctypes.c_void_p'
 
-						elif tag in self._template_typenames:
-							var['typename'] = tag
-							var['ctypes_type'] = 'ctypes.c_void_p'
-							var['unresolved'] = True	# TODO, how to deal with templates?
-
-						elif tag.startswith('_'):	# assume starting with underscore is not important for wrapping
-							print( 'WARN unresolved', _tag)
-							var['ctypes_type'] = 'ctypes.c_void_p'
-							var['unresolved'] = True
-
-						else:
-							trace_print( 'WARN: unknown type', var )
-							assert 'property_of_class' in var or 'property_of_struct'	# only allow this case
-							var['unresolved'] = True
+                        elif tag in self.global_enums:
+                            enum = self.global_enums[ tag ]
+                            if enum['type'] is int:
+                                var['ctypes_type'] = 'ctypes.c_int'
+                                var['raw_type'] = 'int'
+                            elif enum['type'] is str:
+                                var['ctypes_type'] = 'ctypes.c_char_p'
+                                var['raw_type'] = 'char*'
+                            var['enum'] = enum['namespace'] + enum['name']
+                            var['fundamental'] = True
 
 
-					## if not resolved and is a method param, not going to wrap these methods  ##
-					if var['unresolved'] and 'method' in var: var['method']['unresolved_parameters'] = True
+                        elif var['parent']:
+                            print( 'WARN unresolved', _tag)
+                            var['ctypes_type'] = 'ctypes.c_void_p'
+                            var['unresolved'] = True
 
 
-		# create stripped raw_type #
-		p = '* & const static mutable'.split()		# +++ new July7: "mutable"
-		for var in CppVariable.Vars:
-			if 'raw_type' not in var:
-				raw = []
-				for x in var['type'].split():
-					if x not in p: raw.append( x )
-				var['raw_type'] = ' '.join( raw )
+                        elif tag.count('::')==1:
+                            trace_print( 'trying to find nested something in', tag )
+                            a = tag.split('::')[0]
+                            b = tag.split('::')[-1]
+                            if a in self.classes:    # a::b is most likely something nested in a class
+                                klass = self.classes[ a ]
+                                if b in klass._public_enums:
+                                    trace_print( '...found nested enum', b )
+                                    enum = klass._public_enums[ b ]
+                                    if enum['type'] is int:
+                                        var['ctypes_type'] = 'ctypes.c_int'
+                                        var['raw_type'] = 'int'
+                                    elif enum['type'] is str:
+                                        var['ctypes_type'] = 'ctypes.c_char_p'
+                                        var['raw_type'] = 'char*'
+                                    if 'method' in var: var['enum'] = var['method']['path'] + '::' + enum['name']
+                                    else:    # class property
+                                        var['unresolved'] = True
+                                    var['fundamental'] = True
 
-				#if 'AutoConstantEntry' in var['raw_type']: print(var); assert 0
-				if var['class']:
-					if '::' not in var['raw_type']:
-						if not var['class']['parent']:
-							var['raw_type'] = var['class']['namespace'] + '::' + var['raw_type']
-						elif var['class']['parent'] in self.classes:
-							parent = self.classes[ var['class']['parent'] ]
-							var['raw_type'] = parent['namespace'] + '::' + var['class']['name'] + '::' + var['raw_type']
-						else:
-							var['unresolved'] = True
+                                else: var['unresolved'] = True    # TODO klass._public_xxx
 
-					elif '::' in var['raw_type'] and var['raw_type'].split('::')[0] not in self.namespaces:
-						var['raw_type'] = var['class']['namespace'] + '::' + var['raw_type']
-					else:
-						var['unresolved'] = True
+                            elif a in self.namespaces:    # a::b can also be a nested namespace
+                                if b in self.global_enums:
+                                    enum = self.global_enums[ b ]
+                                    trace_print(enum)
+                                trace_print(var)
+                                assert 0
 
-				elif 'forward_declared' in var and 'namespace' in var:
-					if '::' not in var['raw_type']:
-						var['raw_type'] = var['namespace'] + var['raw_type']
-					elif '::' in var['raw_type'] and var['raw_type'].split('::')[0] in self.namespaces:
-						pass
-					else: trace_print('-'*80); trace_print(var); raise NotImplemented
+                            elif b in self.global_enums:        # falling back, this is a big ugly
+                                enum = self.global_enums[ b ]
+                                assert a in enum['namespace'].split('::')
+                                if enum['type'] is int:
+                                    var['ctypes_type'] = 'ctypes.c_int'
+                                    var['raw_type'] = 'int'
+                                elif enum['type'] is str:
+                                    var['ctypes_type'] = 'ctypes.c_char_p'
+                                    var['raw_type'] = 'char*'
+                                var['fundamental'] = True
+
+                            else:    # boost::gets::crazy
+                                trace_print('NAMESPACES', self.namespaces)
+                                trace_print( a, b )
+                                trace_print( '---- boost gets crazy ----' )
+                                var['ctypes_type'] = 'ctypes.c_void_p'
+                                var['unresolved'] = True
 
 
-			## need full name space for classes in raw type ##
-			if var['raw_type'].startswith( '::' ):
-				#print(var)
-				#print('NAMESPACE', var['class']['namespace'])
-				#print( 'PARENT NS', var['class']['parent']['namespace'] )
-				#assert 0
-				var['unresolved'] = True
-				if 'method' in var: var['method']['unresolved_parameters'] = True
-				#var['raw_type'] = var['raw_type'][2:]
+                        elif 'namespace' in var and self.concrete_typedef(var['namespace']+tag):
+                            #print( 'TRYING WITH NS', var['namespace'] )
+                            con = self.concrete_typedef( var['namespace']+tag )
+                            if con:
+                                var['typedef'] = var['namespace']+tag
+                                var['type'] = con
+                                if 'struct' in con.split():
+                                    var['raw_type'] = var['typedef']
+                                    var['ctypes_type'] = 'ctypes.c_void_p'
+                                else:
+                                    self.resolve_type( var['type'], var )
+                                    var['ctypes_type'] = self.guess_ctypes_type( var['type'] )
 
-	def concrete_typedef( self, key ):
-		if key not in self.typedefs:
-			#print( 'FAILED typedef', key )
-			return None
-		while key in self.typedefs:
-			prev = key
-			key = self.typedefs[ key ]
-			if '<' in key or '>' in key: return prev		# stop at template
-			if key.startswith('std::'): return key		# stop at std lib
-		return key
+                        elif '::' in var:
+                            var['ctypes_type'] = 'ctypes.c_void_p'
+                            var['unresolved'] = True
+
+                        elif tag in self.SubTypedefs:    # TODO remove SubTypedefs
+                            if 'property_of_class' in var or 'property_of_struct' in var:
+                                trace_print( 'class:', self.SubTypedefs[ tag ], 'tag:', tag )
+                                var['typedef'] = self.SubTypedefs[ tag ]    # class name
+                                var['ctypes_type'] = 'ctypes.c_void_p'
+                            else:
+                                trace_print( "WARN-this should almost never happen!" )
+                                trace_print( var ); trace_print('-'*80)
+                                var['unresolved'] = True
+
+                        elif tag in self._template_typenames:
+                            var['typename'] = tag
+                            var['ctypes_type'] = 'ctypes.c_void_p'
+                            var['unresolved'] = True    # TODO, how to deal with templates?
+
+                        elif tag.startswith('_'):    # assume starting with underscore is not important for wrapping
+                            print( 'WARN unresolved', _tag)
+                            var['ctypes_type'] = 'ctypes.c_void_p'
+                            var['unresolved'] = True
+
+                        else:
+                            trace_print( 'WARN: unknown type', var )
+                            assert 'property_of_class' in var or 'property_of_struct'    # only allow this case
+                            var['unresolved'] = True
+
+
+                    ## if not resolved and is a method param, not going to wrap these methods  ##
+                    if var['unresolved'] and 'method' in var: var['method']['unresolved_parameters'] = True
+
+
+        # create stripped raw_type #
+        p = '* & const static mutable'.split()        # +++ new July7: "mutable"
+        for var in CppVariable.Vars:
+            if 'raw_type' not in var:
+                raw = []
+                for x in var['type'].split():
+                    if x not in p: raw.append( x )
+                var['raw_type'] = ' '.join( raw )
+
+                #if 'AutoConstantEntry' in var['raw_type']: print(var); assert 0
+                if var['class']:
+                    if '::' not in var['raw_type']:
+                        if not var['class']['parent']:
+                            var['raw_type'] = var['class']['namespace'] + '::' + var['raw_type']
+                        elif var['class']['parent'] in self.classes:
+                            parent = self.classes[ var['class']['parent'] ]
+                            var['raw_type'] = parent['namespace'] + '::' + var['class']['name'] + '::' + var['raw_type']
+                        else:
+                            var['unresolved'] = True
+
+                    elif '::' in var['raw_type'] and var['raw_type'].split('::')[0] not in self.namespaces:
+                        var['raw_type'] = var['class']['namespace'] + '::' + var['raw_type']
+                    else:
+                        var['unresolved'] = True
+
+                elif 'forward_declared' in var and 'namespace' in var:
+                    if '::' not in var['raw_type']:
+                        var['raw_type'] = var['namespace'] + var['raw_type']
+                    elif '::' in var['raw_type'] and var['raw_type'].split('::')[0] in self.namespaces:
+                        pass
+                    else: trace_print('-'*80); trace_print(var); raise NotImplemented
+
+
+            ## need full name space for classes in raw type ##
+            if var['raw_type'].startswith( '::' ):
+                #print(var)
+                #print('NAMESPACE', var['class']['namespace'])
+                #print( 'PARENT NS', var['class']['parent']['namespace'] )
+                #assert 0
+                var['unresolved'] = True
+                if 'method' in var: var['method']['unresolved_parameters'] = True
+                #var['raw_type'] = var['raw_type'][2:]
+
+    def concrete_typedef( self, key ):
+        if key not in self.typedefs:
+            #print( 'FAILED typedef', key )
+            return None
+        while key in self.typedefs:
+            prev = key
+            key = self.typedefs[ key ]
+            if '<' in key or '>' in key: return prev        # stop at template
+            if key.startswith('std::'): return key        # stop at std lib
+        return key
 
 
 class _CppHeader( Resolver ):
-	def finalize(self):
-		self.finalize_vars()
-		# finalize classes and method returns types
-		for cls in self.classes.values():
-			for meth in cls.get_all_methods():
-				if meth['pure_virtual']: cls['abstract'] = True
+    def finalize(self):
+        self.finalize_vars()
+        # finalize classes and method returns types
+        for cls in self.classes.values():
+            for meth in cls.get_all_methods():
+                if meth['pure_virtual']: cls['abstract'] = True
 
-				if not meth['returns_fundamental'] and meth['returns'] in C99_NONSTANDARD:
-					meth['returns'] = C99_NONSTANDARD[meth['returns']]
-					meth['returns_fundamental'] = True
+                if not meth['returns_fundamental'] and meth['returns'] in C99_NONSTANDARD:
+                    meth['returns'] = C99_NONSTANDARD[meth['returns']]
+                    meth['returns_fundamental'] = True
 
-				elif not meth['returns_fundamental']:	# describe the return type
-					con = None
-					if cls['namespace'] and '::' not in meth['returns']:
-						con = self.concrete_typedef( cls['namespace'] + '::' + meth['returns'] )
-					else: con = self.concrete_typedef( meth['returns'] )
-
-
-					if con:
-						meth['returns_concrete'] = con
-						meth['returns_fundamental'] = is_fundamental( con )
-
-					elif meth['returns'] in self.classes:
-						trace_print( 'meth returns class:', meth['returns'] )
-						meth['returns_class'] = True
-
-					elif meth['returns'] in self.SubTypedefs:
-						meth['returns_class'] = True
-						meth['returns_nested'] = self.SubTypedefs[ meth['returns'] ]
-
-					elif meth['returns'] in cls._public_enums:
-						enum = cls._public_enums[ meth['returns'] ]
-						meth['returns_enum'] = enum['type']
-						meth['returns_fundamental'] = True
-						if enum['type'] == int: meth['returns'] = 'int'
-						else: meth['returns'] = 'char*'
-
-					elif meth['returns'] in self.global_enums:
-						enum = self.global_enums[ meth['returns'] ]
-						meth['returns_enum'] = enum['type']
-						meth['returns_fundamental'] = True
-						if enum['type'] == int: meth['returns'] = 'int'
-						else: meth['returns'] = 'char*'
-
-					elif meth['returns'].count('::')==1:
-						trace_print( meth )
-						a,b = meth['returns'].split('::')
-						if a in self.namespaces:
-							if b in self.classes:
-								klass = self.classes[ b ]
-								meth['returns_class'] = a + '::' + b
-							elif '<' in b and '>' in b:
-								print( 'WARN-can not return template:', b )
-								meth['returns_unknown'] = True
-							elif b in self.global_enums:
-								enum = self.global_enums[ b ]
-								meth['returns_enum'] = enum['type']
-								meth['returns_fundamental'] = True
-								if enum['type'] == int: meth['returns'] = 'int'
-								else: meth['returns'] = 'char*'
-
-							else: trace_print( a, b); trace_print( meth); meth['returns_unknown'] = True	# +++
-
-						elif a in self.classes:
-							klass = self.classes[ a ]
-							if b in klass._public_enums:
-								trace_print( '...found nested enum', b )
-								enum = klass._public_enums[ b ]
-								meth['returns_enum'] = enum['type']
-								meth['returns_fundamental'] = True
-								if enum['type'] == int: meth['returns'] = 'int'
-								else: meth['returns'] = 'char*'
-
-							elif b in klass._public_forward_declares:
-								meth['returns_class'] = True
-
-							elif b in klass._public_typedefs:
-								typedef = klass._public_typedefs[ b ]
-								meth['returns_fundamental'] = is_fundamental( typedef )
-
-							else:
-								trace_print( meth )	# should be a nested class, TODO fix me.
-								meth['returns_unknown'] = True
-
-					elif '::' in meth['returns']:
-						trace_print('TODO namespace or extra nested return:', meth)
-						meth['returns_unknown'] = True
-					else:
-						trace_print( 'WARN: UNKNOWN RETURN', meth['name'], meth['returns'])
-						meth['returns_unknown'] = True
-
-		for cls in self.classes.values():
-			methnames = cls.get_all_method_names()
-			pvm = cls.get_all_pure_virtual_methods()
-
-			for d in cls['inherits']:
-				c = d['class']
-				a = d['access']	# do not depend on this to be 'public'
-				trace_print( 'PARENT CLASS:', c )
-				if c not in self.classes: trace_print('WARN: parent class not found')
-				if c in self.classes and self.classes[c]['abstract']:
-					p = self.classes[ c ]
-					for meth in p.get_all_methods():	#p["methods"]["public"]:
-						trace_print( '\t\tmeth', meth['name'], 'pure virtual', meth['pure_virtual'] )
-						if meth['pure_virtual'] and meth['name'] not in methnames: cls['abstract'] = True; break
+                elif not meth['returns_fundamental']:    # describe the return type
+                    con = None
+                    if cls['namespace'] and '::' not in meth['returns']:
+                        con = self.concrete_typedef( cls['namespace'] + '::' + meth['returns'] )
+                    else: con = self.concrete_typedef( meth['returns'] )
 
 
+                    if con:
+                        meth['returns_concrete'] = con
+                        meth['returns_fundamental'] = is_fundamental( con )
+
+                    elif meth['returns'] in self.classes:
+                        trace_print( 'meth returns class:', meth['returns'] )
+                        meth['returns_class'] = True
+
+                    elif meth['returns'] in self.SubTypedefs:
+                        meth['returns_class'] = True
+                        meth['returns_nested'] = self.SubTypedefs[ meth['returns'] ]
+
+                    elif meth['returns'] in cls._public_enums:
+                        enum = cls._public_enums[ meth['returns'] ]
+                        meth['returns_enum'] = enum['type']
+                        meth['returns_fundamental'] = True
+                        if enum['type'] == int: meth['returns'] = 'int'
+                        else: meth['returns'] = 'char*'
+
+                    elif meth['returns'] in self.global_enums:
+                        enum = self.global_enums[ meth['returns'] ]
+                        meth['returns_enum'] = enum['type']
+                        meth['returns_fundamental'] = True
+                        if enum['type'] == int: meth['returns'] = 'int'
+                        else: meth['returns'] = 'char*'
+
+                    elif meth['returns'].count('::')==1:
+                        trace_print( meth )
+                        a,b = meth['returns'].split('::')
+                        if a in self.namespaces:
+                            if b in self.classes:
+                                klass = self.classes[ b ]
+                                meth['returns_class'] = a + '::' + b
+                            elif '<' in b and '>' in b:
+                                print( 'WARN-can not return template:', b )
+                                meth['returns_unknown'] = True
+                            elif b in self.global_enums:
+                                enum = self.global_enums[ b ]
+                                meth['returns_enum'] = enum['type']
+                                meth['returns_fundamental'] = True
+                                if enum['type'] == int: meth['returns'] = 'int'
+                                else: meth['returns'] = 'char*'
+
+                            else: trace_print( a, b); trace_print( meth); meth['returns_unknown'] = True    # +++
+
+                        elif a in self.classes:
+                            klass = self.classes[ a ]
+                            if b in klass._public_enums:
+                                trace_print( '...found nested enum', b )
+                                enum = klass._public_enums[ b ]
+                                meth['returns_enum'] = enum['type']
+                                meth['returns_fundamental'] = True
+                                if enum['type'] == int: meth['returns'] = 'int'
+                                else: meth['returns'] = 'char*'
+
+                            elif b in klass._public_forward_declares:
+                                meth['returns_class'] = True
+
+                            elif b in klass._public_typedefs:
+                                typedef = klass._public_typedefs[ b ]
+                                meth['returns_fundamental'] = is_fundamental( typedef )
+
+                            else:
+                                trace_print( meth )    # should be a nested class, TODO fix me.
+                                meth['returns_unknown'] = True
+
+                    elif '::' in meth['returns']:
+                        trace_print('TODO namespace or extra nested return:', meth)
+                        meth['returns_unknown'] = True
+                    else:
+                        trace_print( 'WARN: UNKNOWN RETURN', meth['name'], meth['returns'])
+                        meth['returns_unknown'] = True
+
+        for cls in self.classes.values():
+            methnames = cls.get_all_method_names()
+            pvm = cls.get_all_pure_virtual_methods()
+
+            for d in cls['inherits']:
+                c = d['class']
+                a = d['access']    # do not depend on this to be 'public'
+                trace_print( 'PARENT CLASS:', c )
+                if c not in self.classes: trace_print('WARN: parent class not found')
+                if c in self.classes and self.classes[c]['abstract']:
+                    p = self.classes[ c ]
+                    for meth in p.get_all_methods():    #p["methods"]["public"]:
+                        trace_print( '\t\tmeth', meth['name'], 'pure virtual', meth['pure_virtual'] )
+                        if meth['pure_virtual'] and meth['name'] not in methnames: cls['abstract'] = True; break
 
 
 
-	def evaluate_struct_stack(self):
-		"""Create a Struct out of the name stack (but not its parts)"""
-		#print( 'eval struct stack', self.nameStack )
-		#if self.braceDepth != len(self.nameSpaces): return
-		struct = CppStruct(self.nameStack)
-		struct["namespace"] = self.cur_namespace()
-		self.structs[ struct['type'] ] = struct
-		self.structs_order.append( struct )
-		if self.curClass:
-			struct['parent'] = self.curClass
-			klass = self.classes[ self.curClass ]
-			klass['structs'][self.curAccessSpecifier].append( struct )
-			if self.curAccessSpecifier == 'public': klass._public_structs[ struct['type'] ] = struct
-		self.curStruct = struct
-		self._structs_brace_level[ struct['type'] ] = self.braceDepth
-
-	## python style ##
-	PYTHON_OPERATOR_MAP = {
-		'()' : '__call__',
-		'[]' : '__getitem__',
-		'<'	:	'__lt__',
-		'<='	:	'__le__',
-		'=='	:	'__eq__',
-		'!='	:	'__ne__',
-		'>'	:	'__gt__',
-		'>='	:	'__ge__',
-		'+'	:	'__add__',
-		'-'	:	'__sub__',
-		'*'	:	'__mul__',
-		'%'	:	'__divmod__',
-		'**'	:	'__pow__',
-		'>>'	:	'__lshift__',
-		'<<'	:	'__rshift__',
-		'&'	:	'__and__',
-		'^'	:	'__xor__',
-		'|'	:	'__or__',
-		'+='	:	'__iadd__',
-		'-='	:	'__isub__',
-		'*='	:	'__imult__',
-		'/='	:	'__idiv__',
-		'%='	:	'__imod__',
-		'**='	:	'__ipow__',
-		'<<='	:	'__ilshift__',
-		'>>='	:	'__irshift__',
-		'&='	:	'__iand__',
-		'^='	:	'__ixor__',
-		'|='	:	'__ior__',
-		#__neg__ __pos__ __abs__; what are these in c++?
-		'~'	:	'__invert__',
-		'.'	:	'__getattr__',
-	}
-	OPERATOR_MAP = {	# do not use double under-scores so no conflicts with python #
-		'='	:	'_assignment_',
-		'->'	:	'_select_member_',
-		'++'	:	'_increment_',
-		'--'	:	'_deincrement_',
-		'new'	:	'_new_',
-		'delete' :	'_delete_',
-	}
-	OPERATOR_MAP.update( PYTHON_OPERATOR_MAP )
-
-	def parse_method_type( self, stack ):
-		trace_print( 'meth type info', stack )
-		if stack[0] in ':;': stack = stack[1:]
-		info = { 
-			'debug': ' '.join(stack), 
-			'class':None, 
-			'namespace':self.cur_namespace(add_double_colon=True),
-		}
-
-		for tag in 'defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class'.split(): info[tag]=False
-		header = stack[ : stack.index('(') ]
-		header = ' '.join( header )
-		header = header.replace(' : : ', '::' )
-		header = header.replace(' < ', '<' )
-		header = header.replace(' > ', '> ' )
-		header = header.strip()
-
-		if '{' in stack:
-			info['defined'] = True
-			self._method_body = self.braceDepth
-			trace_print( 'NEW METHOD WITH BODY', self.braceDepth )
-		elif stack[-1] == ';':
-			info['defined'] = False
-			self._method_body = None	# not a great idea to be clearing here
-		else: assert 0
-
-		if len(stack) > 3 and stack[-1] == ';' and stack[-2] == '0' and stack[-3] == '=':
-			info['pure_virtual'] = True
-
-		r = header.split()
-		name = None
-		if 'operator' in stack:	# rare case op overload defined outside of class
-			op = stack[ stack.index('operator')+1 : stack.index('(') ]
-			op = ''.join(op)
-			if not op:
-				trace_print( 'TODO - parse [] and () operators' )
-				return None
-			else:
-				info['operator'] = op
-				if op in self.OPERATOR_MAP:
-					name = '__operator__' + self.OPERATOR_MAP[ op ]
-					a = stack[ : stack.index('operator') ]
-				else:
-					trace_print('ERROR - not a C++ operator', op)
-					return None
-
-		elif r:		# June 23 2011
-			name = r[-1]
-			a = r[ : -1 ]	# strip name
-
-		if name is None: return None
-		#if name.startswith('~'): name = name[1:]
-
-		while a and a[0] == '}':	# strip - can have multiple } }
-			a = a[1:]	# july3rd
 
 
-		if '::' in name:
-			#klass,name = name.split('::')	# methods can be defined outside of class
-			klass = name[ : name.rindex('::') ]
-			name = name.split('::')[-1]
-			info['class'] = klass
-		#	info['name'] = name
-		#else: info['name'] = name
+    def evaluate_struct_stack(self):
+        """Create a Struct out of the name stack (but not its parts)"""
+        #print( 'eval struct stack', self.nameStack )
+        #if self.braceDepth != len(self.nameSpaces): return
+        struct = CppStruct(self.nameStack)
+        struct["namespace"] = self.cur_namespace()
+        self.structs[ struct['type'] ] = struct
+        self.structs_order.append( struct )
+        if self.curClass:
+            struct['parent'] = self.curClass
+            klass = self.classes[ self.curClass ]
+            klass['structs'][self.curAccessSpecifier].append( struct )
+            if self.curAccessSpecifier == 'public': klass._public_structs[ struct['type'] ] = struct
+        self.curStruct = struct
+        self._structs_brace_level[ struct['type'] ] = self.braceDepth
 
-		if name.startswith('~'):
-			info['destructor'] = True
-			name = name[1:]
-		elif not a:
-			info['constructor'] = True
+    ## python style ##
+    PYTHON_OPERATOR_MAP = {
+        '()' : '__call__',
+        '[]' : '__getitem__',
+        '<'    :    '__lt__',
+        '<='    :    '__le__',
+        '=='    :    '__eq__',
+        '!='    :    '__ne__',
+        '>'    :    '__gt__',
+        '>='    :    '__ge__',
+        '+'    :    '__add__',
+        '-'    :    '__sub__',
+        '*'    :    '__mul__',
+        '%'    :    '__divmod__',
+        '**'    :    '__pow__',
+        '>>'    :    '__lshift__',
+        '<<'    :    '__rshift__',
+        '&'    :    '__and__',
+        '^'    :    '__xor__',
+        '|'    :    '__or__',
+        '+='    :    '__iadd__',
+        '-='    :    '__isub__',
+        '*='    :    '__imult__',
+        '/='    :    '__idiv__',
+        '%='    :    '__imod__',
+        '**='    :    '__ipow__',
+        '<<='    :    '__ilshift__',
+        '>>='    :    '__irshift__',
+        '&='    :    '__iand__',
+        '^='    :    '__ixor__',
+        '|='    :    '__ior__',
+        #__neg__ __pos__ __abs__; what are these in c++?
+        '~'    :    '__invert__',
+        '.'    :    '__getattr__',
+    }
+    OPERATOR_MAP = {    # do not use double under-scores so no conflicts with python #
+        '='    :    '_assignment_',
+        '->'    :    '_select_member_',
+        '++'    :    '_increment_',
+        '--'    :    '_deincrement_',
+        'new'    :    '_new_',
+        'delete' :    '_delete_',
+    }
+    OPERATOR_MAP.update( PYTHON_OPERATOR_MAP )
 
-		info['name'] = name
+    def parse_method_type( self, stack ):
+        trace_print( 'meth type info', stack )
+        if stack[0] in ':;': stack = stack[1:]
+        info = { 
+            'debug': ' '.join(stack), 
+            'class':None, 
+            'namespace':self.cur_namespace(add_double_colon=True),
+        }
 
-		for tag in 'extern virtual static explicit inline friend'.split():
-			if tag in a: info[ tag ] = True; a.remove( tag )	# inplace
-		if 'template' in a:
-			a.remove('template')
-			b = ' '.join( a )
-			if '>' in b:
-				info['template'] = b[ : b.index('>')+1 ]
-				info['returns'] = b[ b.index('>')+1 : ]	# find return type, could be incorrect... TODO
-				if '<typename' in info['template'].split():
-					typname = info['template'].split()[-1]
-					typname = typname[ : -1 ]	# strip '>'
-					if typname not in self._template_typenames: self._template_typenames.append( typname )
-			else: info['returns'] = ' '.join( a )
-		else: info['returns'] = ' '.join( a )
-		info['returns'] = info['returns'].replace(' <', '<').strip()
+        for tag in 'defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class'.split(): info[tag]=False
+        header = stack[ : stack.index('(') ]
+        header = ' '.join( header )
+        header = header.replace(' : : ', '::' )
+        header = header.replace(' < ', '<' )
+        header = header.replace(' > ', '> ' )
+        header = header.strip()
 
-		## be careful with templates, do not count pointers inside template
-		info['returns_pointer'] = info['returns'].split('>')[-1].count('*')
-		if info['returns_pointer']: info['returns'] = info['returns'].replace('*','').strip()
+        if '{' in stack:
+            info['defined'] = True
+            self._method_body = self.braceDepth
+            trace_print( 'NEW METHOD WITH BODY', self.braceDepth )
+        elif stack[-1] == ';':
+            info['defined'] = False
+            self._method_body = None    # not a great idea to be clearing here
+        else: assert 0
 
-		info['returns_reference'] = '&' in info['returns']
-		if info['returns']: info['returns'] = info['returns'].replace('&','').strip()
+        if len(stack) > 3 and stack[-1] == ';' and stack[-2] == '0' and stack[-3] == '=':
+            info['pure_virtual'] = True
 
-		a = []
-		for b in info['returns'].split():
-			if b == '__const__': info['returns_const'] = True
-			elif b == 'const': info['returns_const'] = True
-			else: a.append( b )
-		info['returns'] = ' '.join( a )
+        r = header.split()
+        name = None
+        if 'operator' in stack:    # rare case op overload defined outside of class
+            op = stack[ stack.index('operator')+1 : stack.index('(') ]
+            op = ''.join(op)
+            if not op:
+                trace_print( 'TODO - parse [] and () operators' )
+                return None
+            else:
+                info['operator'] = op
+                if op in self.OPERATOR_MAP:
+                    name = '__operator__' + self.OPERATOR_MAP[ op ]
+                    a = stack[ : stack.index('operator') ]
+                else:
+                    trace_print('ERROR - not a C++ operator', op)
+                    return None
 
-		info['returns_fundamental'] = is_fundamental( info['returns'] )
-		return info
+        elif r:        # June 23 2011
+            name = r[-1]
+            a = r[ : -1 ]    # strip name
 
-	def evaluate_method_stack(self):
-		"""Create a method out of the name stack"""
+        if name is None: return None
+        #if name.startswith('~'): name = name[1:]
 
-		if self.curStruct:
-			trace_print( 'WARN - struct contains methods - skipping' )
-			trace_print( self.stack )
-			assert 0
-
-		info = self.parse_method_type( self.stack )
-		if info:
-			if info[ 'class' ] and info['class'] in self.classes:	 # case where methods are defined outside of class
-				newMethod = CppMethod(self.nameStack, info['name'], info)
-				klass = self.classes[ info['class'] ]
-				klass[ 'methods' ][ 'public' ].append( newMethod )
-				newMethod['parent'] = klass
-				if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
-				else: newMethod['path'] = klass['name']
-
-			elif self.curClass:	# normal case
-				newMethod = CppMethod(self.nameStack, self.curClass, info)
-				klass = self.classes[self.curClass]
-				klass['methods'][self.curAccessSpecifier].append(newMethod)
-				newMethod['parent'] = klass
-				if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
-				else: newMethod['path'] = klass['name']
-
-		else:
-			trace_print( 'free function?', self.nameStack )
-
-		self.stack = []
-
-	def _parse_typedef( self, stack, namespace='' ):
-		if not stack or 'typedef' not in stack: return
-		stack = list( stack )	# copy just to be safe
-		if stack[-1] == ';': stack.pop()
-
-		while stack and stack[-1].isdigit(): stack.pop()	# throw away array size for now
-
-		idx = stack.index('typedef')
-		name = namespace + stack[-1]
-		s = ''
-		for a in stack[idx+1:-1]:
-			if a == '{': break
-			if not s or s[-1] in ':<>' or a in ':<>': s += a	# keep compact
-			else: s += ' ' + a	# spacing
-
-		r = {'name':name, 'raw':s, 'type':s}
-		if not is_fundamental(s):
-			if 'struct' in s.split(): pass		# TODO is this right? "struct ns::something"
-			elif '::' not in s: s = namespace + s 		# only add the current name space if no namespace given
-			#elif '::' in s:
-			#	ns = s.split('::')[0]
-			#	if ns not in self.namespaces:
-			r['type'] = s
-		if s: return r
-
-
-	def evaluate_typedef(self):
-		ns = self.cur_namespace(add_double_colon=True)
-		res = self._parse_typedef( self.stack, ns )
-		if res:
-			name = res['name']
-			self.typedefs[ name ] = res['type']
-			if name not in self.typedefs_order: self.typedefs_order.append( name )
+        while a and a[0] == '}':    # strip - can have multiple } }
+            a = a[1:]    # july3rd
 
 
-	def evaluate_property_stack(self):
-		"""Create a Property out of the name stack"""
-		assert self.stack[-1] == ';'
-		if self.nameStack[0] == 'typedef':
-			if self.curClass:
-				typedef = self._parse_typedef( self.stack )
-				name = typedef['name']
-				klass = self.classes[ self.curClass ]
-				klass[ 'typedefs' ][ self.curAccessSpecifier ].append( name )
-				if self.curAccessSpecifier == 'public': klass._public_typedefs[ name ] = typedef['type']
-				Resolver.SubTypedefs[ name ] = self.curClass
-			else: assert 0
-		elif self.curStruct or self.curClass:
-			newVar = CppVariable(self.nameStack)
-			newVar['namespace'] = self.current_namespace()
-			if self.curStruct:
-				self.curStruct[ 'fields' ].append( newVar )
-				newVar['property_of_struct'] = self.curStruct
-			elif self.curClass:
-				klass = self.classes[self.curClass]
-				klass["properties"][self.curAccessSpecifier].append(newVar)
-				newVar['property_of_class'] = klass['name']
+        if '::' in name:
+            #klass,name = name.split('::')    # methods can be defined outside of class
+            klass = name[ : name.rindex('::') ]
+            name = name.split('::')[-1]
+            info['class'] = klass
+        #    info['name'] = name
+        #else: info['name'] = name
 
-		self.stack = []		# CLEAR STACK
+        if name.startswith('~'):
+            info['destructor'] = True
+            name = name[1:]
+        elif not a:
+            info['constructor'] = True
 
-	def evaluate_class_stack(self):
-		"""Create a Class out of the name stack (but not its parts)"""
-		#dont support sub classes today
-		#print( 'eval class stack', self.nameStack )
-		parent = self.curClass
-		if self.braceDepth > len( self.nameSpaces) and parent:
-			trace_print( 'HIT NESTED SUBCLASS' )
-		elif self.braceDepth != len(self.nameSpaces):
-			print( 'ERROR: WRONG BRACE DEPTH' )
-			return
+        info['name'] = name
 
-		self.curAccessSpecifier = 'private'		# private is default
-		newClass = CppClass(self.nameStack)
-		trace_print( 'NEW CLASS', newClass['name'] )
-		self.classes_order.append( newClass )	# good idea to save ordering
-		self.stack = []		# fixes if class declared with ';' in closing brace
-		if parent:
-			newClass["namespace"] = self.classes[ parent ]['namespace'] + '::' + parent
-			newClass['parent'] = parent
-			self.classes[ parent ]['nested_classes'].append( newClass )
-			## supports nested classes with the same name ##
-			self.curClass = key = parent+'::'+newClass['name']
-			self._classes_brace_level[ key ] = self.braceDepth
+        for tag in 'extern virtual static explicit inline friend'.split():
+            if tag in a: info[ tag ] = True; a.remove( tag )    # inplace
+        if 'template' in a:
+            a.remove('template')
+            b = ' '.join( a )
+            if '>' in b:
+                info['template'] = b[ : b.index('>')+1 ]
+                info['returns'] = b[ b.index('>')+1 : ]    # find return type, could be incorrect... TODO
+                if '<typename' in info['template'].split():
+                    typname = info['template'].split()[-1]
+                    typname = typname[ : -1 ]    # strip '>'
+                    if typname not in self._template_typenames: self._template_typenames.append( typname )
+            else: info['returns'] = ' '.join( a )
+        else: info['returns'] = ' '.join( a )
+        info['returns'] = info['returns'].replace(' <', '<').strip()
 
-		elif newClass['parent']:		# nested class defined outside of parent.  A::B {...}
-			parent = newClass['parent']
-			newClass["namespace"] = self.classes[ parent ]['namespace'] + '::' + parent
-			self.classes[ parent ]['nested_classes'].append( newClass )
-			## supports nested classes with the same name ##
-			self.curClass = key = parent+'::'+newClass['name']
-			self._classes_brace_level[ key ] = self.braceDepth
+        ## be careful with templates, do not count pointers inside template
+        info['returns_pointer'] = info['returns'].split('>')[-1].count('*')
+        if info['returns_pointer']: info['returns'] = info['returns'].replace('*','').strip()
 
-		else:
-			newClass["namespace"] = self.cur_namespace()
-			key = newClass['name']
-			self.curClass = newClass["name"]
-			self._classes_brace_level[ newClass['name'] ] = self.braceDepth
+        info['returns_reference'] = '&' in info['returns']
+        if info['returns']: info['returns'] = info['returns'].replace('&','').strip()
 
-		if key in self.classes:
-			trace_print( 'ERROR name collision:', key )
-			self.classes[key].show()
-			trace_print('-'*80)
-			newClass.show()
+        a = []
+        for b in info['returns'].split():
+            if b == '__const__': info['returns_const'] = True
+            elif b == 'const': info['returns_const'] = True
+            else: a.append( b )
+        info['returns'] = ' '.join( a )
 
-		assert key not in self.classes	# namespace collision
-		self.classes[ key ] = newClass
+        info['returns_fundamental'] = is_fundamental( info['returns'] )
+        return info
 
-	def evalute_forward_decl(self):
-		trace_print( 'FORWARD DECL', self.nameStack )
-		assert self.nameStack[0] == 'class'
-		name = self.nameStack[-1]
-		if self.curClass:
-			klass = self.classes[ self.curClass ]
-			klass['forward_declares'][self.curAccessSpecifier].append( name )
-			if self.curAccessSpecifier == 'public': klass._public_forward_declares.append( name )
-		else: self._forward_decls.append( name )
+    def evaluate_method_stack(self):
+        """Create a method out of the name stack"""
+
+        if self.curStruct:
+            trace_print( 'WARN - struct contains methods - skipping' )
+            trace_print( self.stack )
+            assert 0
+
+        info = self.parse_method_type( self.stack )
+        if info:
+            if info[ 'class' ] and info['class'] in self.classes:     # case where methods are defined outside of class
+                newMethod = CppMethod(self.nameStack, info['name'], info)
+                klass = self.classes[ info['class'] ]
+                klass[ 'methods' ][ 'public' ].append( newMethod )
+                newMethod['parent'] = klass
+                if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
+                else: newMethod['path'] = klass['name']
+
+            elif self.curClass:    # normal case
+                newMethod = CppMethod(self.nameStack, self.curClass, info)
+                klass = self.classes[self.curClass]
+                klass['methods'][self.curAccessSpecifier].append(newMethod)
+                newMethod['parent'] = klass
+                if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
+                else: newMethod['path'] = klass['name']
+
+        else:
+            trace_print( 'free function?', self.nameStack )
+
+        self.stack = []
+
+    def _parse_typedef( self, stack, namespace='' ):
+        if not stack or 'typedef' not in stack: return
+        stack = list( stack )    # copy just to be safe
+        if stack[-1] == ';': stack.pop()
+
+        while stack and stack[-1].isdigit(): stack.pop()    # throw away array size for now
+
+        idx = stack.index('typedef')
+        name = namespace + stack[-1]
+        s = ''
+        for a in stack[idx+1:-1]:
+            if a == '{': break
+            if not s or s[-1] in ':<>' or a in ':<>': s += a    # keep compact
+            else: s += ' ' + a    # spacing
+
+        r = {'name':name, 'raw':s, 'type':s}
+        if not is_fundamental(s):
+            if 'struct' in s.split(): pass        # TODO is this right? "struct ns::something"
+            elif '::' not in s: s = namespace + s         # only add the current name space if no namespace given
+            #elif '::' in s:
+            #    ns = s.split('::')[0]
+            #    if ns not in self.namespaces:
+            r['type'] = s
+        if s: return r
+
+
+    def evaluate_typedef(self):
+        ns = self.cur_namespace(add_double_colon=True)
+        res = self._parse_typedef( self.stack, ns )
+        if res:
+            name = res['name']
+            self.typedefs[ name ] = res['type']
+            if name not in self.typedefs_order: self.typedefs_order.append( name )
+
+
+    def evaluate_property_stack(self):
+        """Create a Property out of the name stack"""
+        assert self.stack[-1] == ';'
+        if self.nameStack[0] == 'typedef':
+            if self.curClass:
+                typedef = self._parse_typedef( self.stack )
+                name = typedef['name']
+                klass = self.classes[ self.curClass ]
+                klass[ 'typedefs' ][ self.curAccessSpecifier ].append( name )
+                if self.curAccessSpecifier == 'public': klass._public_typedefs[ name ] = typedef['type']
+                Resolver.SubTypedefs[ name ] = self.curClass
+            else: assert 0
+        elif self.curStruct or self.curClass:
+            newVar = CppVariable(self.nameStack)
+            newVar['namespace'] = self.current_namespace()
+            if self.curStruct:
+                self.curStruct[ 'fields' ].append( newVar )
+                newVar['property_of_struct'] = self.curStruct
+            elif self.curClass:
+                klass = self.classes[self.curClass]
+                klass["properties"][self.curAccessSpecifier].append(newVar)
+                newVar['property_of_class'] = klass['name']
+
+        self.stack = []        # CLEAR STACK
+
+    def evaluate_class_stack(self):
+        """Create a Class out of the name stack (but not its parts)"""
+        #dont support sub classes today
+        #print( 'eval class stack', self.nameStack )
+        parent = self.curClass
+        if self.braceDepth > len( self.nameSpaces) and parent:
+            trace_print( 'HIT NESTED SUBCLASS' )
+        elif self.braceDepth != len(self.nameSpaces):
+            print( 'ERROR: WRONG BRACE DEPTH' )
+            return
+
+        self.curAccessSpecifier = 'private'        # private is default
+        newClass = CppClass(self.nameStack)
+        trace_print( 'NEW CLASS', newClass['name'] )
+        self.classes_order.append( newClass )    # good idea to save ordering
+        self.stack = []        # fixes if class declared with ';' in closing brace
+        if parent:
+            newClass["namespace"] = self.classes[ parent ]['namespace'] + '::' + parent
+            newClass['parent'] = parent
+            self.classes[ parent ]['nested_classes'].append( newClass )
+            ## supports nested classes with the same name ##
+            self.curClass = key = parent+'::'+newClass['name']
+            self._classes_brace_level[ key ] = self.braceDepth
+
+        elif newClass['parent']:        # nested class defined outside of parent.  A::B {...}
+            parent = newClass['parent']
+            newClass["namespace"] = self.classes[ parent ]['namespace'] + '::' + parent
+            self.classes[ parent ]['nested_classes'].append( newClass )
+            ## supports nested classes with the same name ##
+            self.curClass = key = parent+'::'+newClass['name']
+            self._classes_brace_level[ key ] = self.braceDepth
+
+        else:
+            newClass["namespace"] = self.cur_namespace()
+            key = newClass['name']
+            self.curClass = newClass["name"]
+            self._classes_brace_level[ newClass['name'] ] = self.braceDepth
+
+        if key in self.classes:
+            trace_print( 'ERROR name collision:', key )
+            self.classes[key].show()
+            trace_print('-'*80)
+            newClass.show()
+
+        assert key not in self.classes    # namespace collision
+        self.classes[ key ] = newClass
+
+    def evalute_forward_decl(self):
+        trace_print( 'FORWARD DECL', self.nameStack )
+        assert self.nameStack[0] == 'class'
+        name = self.nameStack[-1]
+        if self.curClass:
+            klass = self.classes[ self.curClass ]
+            klass['forward_declares'][self.curAccessSpecifier].append( name )
+            if self.curAccessSpecifier == 'public': klass._public_forward_declares.append( name )
+        else: self._forward_decls.append( name )
 
 class CppHeader( _CppHeader ):
     """Parsed C++ class header
@@ -1569,7 +1590,14 @@ class CppHeader( _CppHeader ):
     def show(self):
         for className in self.classes.keys(): self.classes[className].show()
 
-    def __init__(self, headerFileName, argType="file"):
+    def __init__(self, headerFileName, argType="file", **kwargs):
+        """Create the parsed C++ header file parse tree
+        
+        headerFileName - Name of the file to parse OR actual file contents (depends on argType)
+        argType - Indicates how to interpret headerFileName as a file string or file name
+        kwargs - Supports the following keywords
+         "enumMaintianValueFormat" - Set to true for enum values to maintain the original format ('j' will not convert to 106)
+        """
         ## reset global state ##
         global doxygenCommentCache
         doxygenCommentCache = ""
@@ -1587,6 +1615,12 @@ class CppHeader( _CppHeader ):
         else:
             raise Exception("Arg type must be either file or string")
         self.curClass = ""
+        
+        global enumMaintianValueFormat
+        if kwargs.has_key("enumMaintianValueFormat"):
+            enumMaintianValueFormat = kwargs["enumMaintianValueFormat"]
+        else:
+            enumMaintianValueFormat = False
 
         # nested classes have parent::nested, but no extra namespace,
         # this keeps the API compatible, TODO proper namespace for everything. 
@@ -1597,8 +1631,8 @@ class CppHeader( _CppHeader ):
         self.global_enums = {}
         self.nameStack = []
         self.nameSpaces = []
-        self.curAccessSpecifier = 'private'	# private is default
-        self.initextra()	# harts hack
+        self.curAccessSpecifier = 'private'    # private is default
+        self.initextra()    # harts hack
     
         if (len(self.headerFileName)):
             headerFileStr = "\n".join(open(self.headerFileName).readlines())
@@ -1606,7 +1640,7 @@ class CppHeader( _CppHeader ):
         lex.input(headerFileStr)
         curLine = 0
         curChar = 0
-        if 1:	#try:
+        if 1:    #try:
             while True:
                 tok = lex.token()
                 if not tok: break
@@ -1615,7 +1649,7 @@ class CppHeader( _CppHeader ):
                 curLine = tok.lineno
                 curChar = tok.lexpos
                 if (tok.type == 'OPEN_BRACE'):
-                    if len(self.nameStack) >= 2 and is_namespace(self.nameStack):	# namespace {} with no name used in boost, this sets default?
+                    if len(self.nameStack) >= 2 and is_namespace(self.nameStack):    # namespace {} with no name used in boost, this sets default?
                         self.nameSpaces.append(self.nameStack[1])
                         ns = self.cur_namespace(); self.stack = []
                         if ns not in self.namespaces: self.namespaces.append( ns )
@@ -1630,7 +1664,7 @@ class CppHeader( _CppHeader ):
                         continue
                     if (self.braceDepth == len(self.nameSpaces)):
                         tmp = self.nameSpaces.pop()
-                        self.stack = []	# clear stack when namespace ends?
+                        self.stack = []    # clear stack when namespace ends?
                     if len(self.nameStack) and is_enum_namestack(self.nameStack):
                         self.nameStack.append(tok.value)
                     elif self.braceDepth < 10:
@@ -1638,7 +1672,7 @@ class CppHeader( _CppHeader ):
                     else:
                         self.nameStack = []
                     self.braceDepth -= 1
-                    #self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)	# June29 2011
+                    #self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)    # June29 2011
                     if self.curClass and debug: print( 'CURBD', self._classes_brace_level[ self.curClass ] )
 
                     if (self.braceDepth == 0) or (self.curClass and self._classes_brace_level[self.curClass]==self.braceDepth):
@@ -1704,7 +1738,7 @@ class CppHeader( _CppHeader ):
         if (len(self.curClass)):
             if (debug): print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
 
-        #if 'typedef' in self.nameStack: self.evaluate_typedef()		# allows nested typedefs, probably a bad idea
+        #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
         if not self.curClass and 'typedef' in self.nameStack:
             trace_print('STACK', self.stack)
             if token == 'SEMI_COLON' and ('{' not in self.stack or '}' in self.stack): self.evaluate_typedef()
@@ -1717,21 +1751,21 @@ class CppHeader( _CppHeader ):
         elif (self.nameStack[0] == "namespace"):
             #Taken care of outside of here
             pass
-        elif len(self.nameStack) >= 2 and self.nameStack[0] == 'using' and self.nameStack[1] == 'namespace': pass	# TODO
+        elif len(self.nameStack) >= 2 and self.nameStack[0] == 'using' and self.nameStack[1] == 'namespace': pass    # TODO
 
         elif is_enum_namestack(self.nameStack):
             if (debug): print( "line ",lineno() )
             self.evaluate_enum_stack()
 
         elif self._method_body and self.braceDepth > self._method_body: trace_print( 'INSIDE METHOD DEF' )
-        elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:	# updated by hart
+        elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:    # updated by hart
             if (debug): print( "line ",lineno() )
             self.evaluate_method_stack()
         elif '(' not in self.nameStack and ')' not in self.nameStack and self.stack[-1] == ';':
             if (debug): print( "line ",lineno() )
             if self.nameStack[0]=='class': self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
-            else: self.evaluate_property_stack()	# catches class props and structs in a namespace
+            else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 
         elif (self.nameStack[0] == "class"):
             if (debug): print( "line ",lineno() )
@@ -1739,13 +1773,13 @@ class CppHeader( _CppHeader ):
         elif (self.nameStack[0] == "struct"):
             if (debug): print( "line ",lineno() )
             ##this causes a bug when structs are nested in protected or private##self.curAccessSpecifier = "public"
-            self.evaluate_struct_stack()	# hart's hack - do structs properly
+            self.evaluate_struct_stack()    # hart's hack - do structs properly
 
 
         elif not self.curClass:
             if (debug): print( "line ",lineno() )
             if is_enum_namestack(self.nameStack): self.evaluate_enum_stack()
-            elif self.curStruct and self.stack[-1] == ';': self.evaluate_property_stack()	# this catches fields of global structs
+            elif self.curStruct and self.stack[-1] == ';': self.evaluate_property_stack()    # this catches fields of global structs
             self.nameStack = []
             doxygenCommentCache = ""
             return
@@ -1762,7 +1796,7 @@ class CppHeader( _CppHeader ):
             doxygenCommentCache = ""
             return
 
-        self.nameStack = []		# its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
+        self.nameStack = []        # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         doxygenCommentCache = ""
     
 
@@ -1789,6 +1823,5 @@ class CppHeader( _CppHeader ):
                     self.nameStack = [instanceType,  instance]
                     self.evaluate_property_stack()
                 del newEnum["instances"]
-
 
 

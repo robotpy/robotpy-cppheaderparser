@@ -244,7 +244,7 @@ class SampleClass_Elephant_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(
             self.cppHeader.classes["SampleClass"]["enums"]["public"][0]["values"],
-            [{'name': 'EL_ONE', 'value': '1'}, {'name': 'EL_TWO', 'value': '2'}, {'name': 'EL_NINE', 'value': '9'}, {'name': 'EL_TEN', 'value': 10}])
+            [{'name': 'EL_ONE', 'value': 1}, {'name': 'EL_TWO', 'value': 2}, {'name': 'EL_NINE', 'value': 9}, {'name': 'EL_TEN', 'value': 10}])
 
 
 
@@ -347,7 +347,7 @@ class AlphaClass_Zebra_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(
             self.cppHeader.classes["AlphaClass"]["enums"]["protected"][0]["values"],
-            [{'name': 'Z_A', 'value': 0}, {'name': 'Z_B', 'value': '0x2B'}, {'name': 'Z_C', 'value': 'j'}, {'name': 'Z_D', 'value': 107}])
+            [{'name': 'Z_A', 'value': 0}, {'name': 'Z_B', 'value': 43}, {'name': 'Z_C', 'value': 106}, {'name': 'Z_D', 'value': 107}])
 
 
 
