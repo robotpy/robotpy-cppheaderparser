@@ -2,7 +2,7 @@
 #
 # Author: Jashua R. Cloutier (contact via sourceforge username:senexcanis)
 #
-# Copyright (C) 2010, Jashua R. Cloutier
+# Copyright (C) 2011, Jashua R. Cloutier
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
