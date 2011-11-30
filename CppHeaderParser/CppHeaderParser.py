@@ -41,56 +41,8 @@
 #
 #   http://www.opensource.org/licenses/bsd-license.php
 #
-"""
-CppHeaderParser2.0: April 2011 - July 2011
-    by HartsAntler
-    http://pyppet.blogspot.com
-
-    Quick Start - User API:
-        h = CppHeaderParser.CppHeader("someheader.h")
-        for name in h.classes:
-            c = h.classes[name]
-            for method in c['methods']['public']:
-                print method['name']
-                print dir(method)        # view the rest of the API here.
-
-        ... TODO document more ...
-
-
-
-    New Features by Hart:
-        should be able to parse all c++ files, not just headers
-        parsing global typedefs with resolution
-        parsing global structs
-        fixes nested struct in class changes accessor type
-        parsing if class is abstract
-        parsing more info about variables
-        save ordering of classes, structs, and typedefs
-        handle forward decl of class in a class
-        handle mutable, static, and other variable types
-        handle 1D arrays
-        handle throw keyword and function prefix __attribute__((__const__))
-        handle nameless parameters "void method(void);"
-
-    Internal Developer Notes:
-
-        1. in method['rtnType'] is not recommended, instead use: 'returns', 'returns_pointer', 'returns_reference', 'returns_fundamental'
-            (camelCase may become deprecated in the future for the dict lookup keys)
-
-        2. double name stacks:
-            . the main stack is self.nameStack, this stack is simpler and easy to get hints from
-            . the secondary stack is self.stack is the full name stack, required for parsing somethings
-            . each stack maybe cleared at different points, since they are used to detect different things
-            . it looks ugly but it works :)
-
-        3. Tabs vs Spaces:
-            This file now contains tabs and spaces, the tabb'ed code is the new stuff,
-            in the future this should be made consistent, one way or the other.
-
-        4. Had to make the __repr__ methods simple because some of these dicts are interlinked.
-            For nice printing, call something.show()
-
-
+"""Parse C++ header files and generate a data structure
+representing the class
 """
 
 import ply.lex as lex
