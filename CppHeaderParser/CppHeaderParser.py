@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
-# Author: Jashua R. Cloutier (contact via sourceforge username:senexcanis)
+# Author: Jashua R. Cloutier (contact via https://bitbucket.org/senex)
+# Project: http://senexcanis.com/open-source/cppheaderparser/
 #
 # Copyright (C) 2011, Jashua R. Cloutier
 # All rights reserved.
@@ -19,7 +20,9 @@
 #
 # * Neither the name of Jashua R. Cloutier nor the names of its
 #   contributors may be used to endorse or promote products derived from
-#   this software without specific prior written permission.
+#   this software without specific prior written permission.  Stories,
+#   blog entries etc making reference to this project may mention the
+#   name Jashua R. Cloutier in terms of project originator/creator etc.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
