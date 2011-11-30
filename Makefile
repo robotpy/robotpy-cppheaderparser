@@ -8,6 +8,13 @@ test: gen
 	@echo -e "\n\nTesting Python 2.x"
 	@(cd CppHeaderParser/test; python test_CppHeaderParser.py)
 	@echo -e "\n\nTesting Python 3.x"
+	@if [ ! -e CppHeaderParser/python3-libs ]; \
+	then \
+	    echo "Can't test python3 version without CppHeaderParser/python3-libs containing"; \
+	    echo " * ply"; \
+	    echo " * unittest"; \
+	    exit 1; \
+	fi;
 	@(cd CppHeaderParser/test; python3 test_CppHeaderParser3.py)
 
 package: doc gen
