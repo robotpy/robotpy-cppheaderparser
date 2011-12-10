@@ -216,7 +216,7 @@ class CppClass(dict):
         }
     }
     """
-    def __repr__( self ): return self['name']
+#    def __repr__( self ): return self['name']
 
     def get_all_methods(self):
         r = []
@@ -355,7 +355,44 @@ class CppClass(dict):
             for method in self["methods"][accessSpecifier]:
                 rtn += "\t\t" + method.show() + '\n'
         rtn += "  }\n"
-        print( rtn )
+        print rtn
+    
+    def __repr__(self):
+        """Convert class to a string"""
+        namespace_prefix = ""
+        if self["namespace"]: namespace_prefix = self["namespace"] + "::"
+        rtn = "class %s"%(namespace_prefix + self["name"])
+        if self['abstract']: rtn += '    (abstract)\n'
+        else: rtn += '\n'
+
+        if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
+        if 'parent' in self.keys() and self['parent']: rtn += 'parent class:' + self['parent'] + '\n'
+
+        if "inherits" in self.keys() and len(self["inherits"]):
+            rtn += "Inherits: "
+            for inheritClass in self["inherits"]:
+                rtn += "%s %s, "%(inheritClass["access"], inheritClass["class"])
+            rtn += "\n"
+        rtn += "{\n"
+        for accessSpecifier in supportedAccessSpecifier:
+            rtn += "%s\n"%(accessSpecifier)
+            #Enums
+            if (len(self["enums"][accessSpecifier])):
+                rtn += "    // Enums\n"
+            for enum in self["enums"][accessSpecifier]:
+                rtn += "    %s\n"%(repr(enum))
+            #Properties
+            if (len(self["properties"][accessSpecifier])):
+                rtn += "    // Properties\n"
+            for property in self["properties"][accessSpecifier]:
+                rtn += "    %s\n"%(repr(property))
+            #Methods
+            if (len(self["methods"][accessSpecifier])):
+                rtn += "    // Methods\n"
+            for method in self["methods"][accessSpecifier]:
+                rtn += "   %s\n"%(repr(method))
+        rtn += "}\n"
+        return rtn
 
 class _CppMethod( dict ):
     def _params_helper1( self, stack ):    
@@ -413,6 +450,8 @@ class _CppMethod( dict ):
                 if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
                     p['type'] = self['namespace'] + p['type']
             else: p['namespace'] = self[ 'namespace' ]
+    
+#    def base_repr(self): return self.__repr__()
 
 class CppMethod( _CppMethod ):
     """Takes a name stack and turns it into a method
@@ -500,6 +539,12 @@ class CppMethod( _CppMethod ):
         self["parameters"] = params
         self._params_helper2( params )    # mods params inplace
 
+    def __repr__(self):
+        filter_keys = ("parent", "defined", "operator", "returns_reference"
+            )
+        cpy = dict((k,v) for (k,v) in self.items() if k not in filter_keys)
+        return "%s"%cpy
+
 
 class _CppVariable(dict):
     def _name_stack_helper( self, stack ):
@@ -578,6 +623,11 @@ class CppVariable( _CppVariable ):
 
         self.init()
         CppVariable.Vars.append( self )        # save and resolve later
+    
+    def __repr__(self):
+        keys_white_list = ['constant','name','reference','type','static','pointer','desc']
+        cpy = dict((k,v) for (k,v) in self.items() if k in keys_white_list)
+        return "%s"%cpy
 
 class _CppEnum(dict):
     def resolve_enum_values( self, values ):
@@ -1541,9 +1591,9 @@ class CppHeader( _CppHeader ):
         key is the name of the class
     """
     IGNORE_NAMES = '__extension__'.split()
-    
+   
     def show(self):
-        for className in self.classes.keys(): self.classes[className].show()
+        for className in self.classes.keys():self.classes[className].show()
 
     def __init__(self, headerFileName, argType="file", **kwargs):
         """Create the parsed C++ header file parse tree
@@ -1780,3 +1830,9 @@ class CppHeader( _CppHeader ):
                 del newEnum["instances"]
 
 
+    def __repr__(self):
+        rtn = ""
+        for className in self.classes.keys():
+            rtn += "%s\n"%self.classes[className]
+            #rtn += repr(self.classes[className]) + "--CLOUTIER--\n"
+        return rtn

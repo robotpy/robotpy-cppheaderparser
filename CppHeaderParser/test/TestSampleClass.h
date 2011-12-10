@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 using namespace std;
-class SampleClass
+class SampleClass: public BaseSampleClass
 {
 public:
 	enum Elephant
