@@ -215,21 +215,20 @@ class CppClass(dict):
         }
     }
     """
-#    def __repr__( self ): return self['name']
 
     def get_all_methods(self):
         r = []
-        for typ in 'public protected private'.split(): r += self['methods'][typ]
+        for typ in supportedAccessSpecifier: r += self['methods'][typ]
         return r
 
     def get_all_method_names( self ):
         r = []
-        for typ in 'public protected private'.split(): r += self.get_method_names(typ)        # returns list
+        for typ in supportedAccessSpecifier: r += self.get_method_names(typ)        # returns list
         return r
 
     def get_all_pure_virtual_methods( self ):
         r = {}
-        for typ in 'public protected private'.split(): r.update(self.get_pure_virtual_methods(typ))        # returns dict
+        for typ in supportedAccessSpecifier: r.update(self.get_pure_virtual_methods(typ))        # returns dict
         return r
 
 
@@ -263,13 +262,13 @@ class CppClass(dict):
         inheritList = []
 
         if ":" in nameStack:
-            self['name'] = nameStack[ nameStack.index(':') - 1 ]    # harts hack - fixes:  class __something__ classname
+            self['name'] = nameStack[ nameStack.index(':') - 1 ]
 
         if nameStack.count(':') == 1:
             nameStack = nameStack[nameStack.index(":") + 1:]
             while len(nameStack):
                 tmpStack = []
-                tmpInheritClass = {"access":"private"}    # shouldn't public be default?
+                tmpInheritClass = {"access":"private"}
                 if "," in nameStack:
                     tmpStack = nameStack[:nameStack.index(",")]
                     nameStack = nameStack[nameStack.index(",") + 1:]
@@ -394,11 +393,8 @@ class CppClass(dict):
         return rtn
 
 class _CppMethod( dict ):
-    def _params_helper1( self, stack ):    
-        # new July 7th, deal with defaults that init: vec3(0,0,0)
-        # so that comma split still works later on parsing the parameters.
-
-        # also deal with "throw" keyword
+    def _params_helper1( self, stack ):
+        # deal with "throw" keyword
         if 'throw' in stack: stack = stack[ : stack.index('throw') ]
 
         ## remove GCC keyword __attribute__(...) and preserve returns ##
@@ -449,8 +445,6 @@ class _CppMethod( dict ):
                 if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
                     p['type'] = self['namespace'] + p['type']
             else: p['namespace'] = self[ 'namespace' ]
-    
-#    def base_repr(self): return self.__repr__()
 
 class CppMethod( _CppMethod ):
     """Takes a name stack and turns it into a method
@@ -485,19 +479,14 @@ class CppMethod( _CppMethod ):
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
 
-        self.update( methinfo )    # harts hack
+        self.update( methinfo )
 
         paramsStack = self._params_helper1( nameStack )
-            
-        #Remove things from the stack till we hit the last paren, this helps handle abstract and normal methods
-        #if paramsStack:    # harts hacks - this is a bug caused by change to line 88?
-        #    while paramsStack[-1]  != ")": paramsStack.pop()
-        #    paramsStack.pop()
 
         params = []
         #See if there is a doxygen comment for the variable
         doxyVarDesc = {}
-        #TODO: Put this into a class
+        
         if self.has_key("doxygen"):
             doxyLines = self["doxygen"].split("\n")
             lastParamDesc = ""
@@ -539,8 +528,7 @@ class CppMethod( _CppMethod ):
         self._params_helper2( params )    # mods params inplace
 
     def __repr__(self):
-        filter_keys = ("parent", "defined", "operator", "returns_reference"
-            )
+        filter_keys = ("parent", "defined", "operator", "returns_reference")
         cpy = dict((k,v) for (k,v) in self.items() if k not in filter_keys)
         return "%s"%cpy
 
@@ -553,7 +541,7 @@ class _CppVariable(dict):
             array = []
             while stack and stack[-1].isdigit(): array.append( stack.pop() )
             if array: array.reverse(); self['array'] = int(''.join(array))
-            if stack and stack[-1].endswith(':'): stack[-1] = stack[-1][:-1]    # fixed June 23, BulletPhysics
+            if stack and stack[-1].endswith(':'): stack[-1] = stack[-1][:-1]
 
         while stack and not stack[-1]: stack.pop()            # can be empty
         return stack
@@ -1377,7 +1365,7 @@ class _CppHeader( Resolver ):
                     trace_print('ERROR - not a C++ operator', op)
                     return None
 
-        elif r:        # June 23 2011
+        elif r:
             name = r[-1]
             a = r[ : -1 ]    # strip name
 
@@ -1385,7 +1373,7 @@ class _CppHeader( Resolver ):
         #if name.startswith('~'): name = name[1:]
 
         while a and a[0] == '}':    # strip - can have multiple } }
-            a = a[1:]    # july3rd
+            a = a[1:]
 
 
         if '::' in name:
@@ -1487,9 +1475,6 @@ class _CppHeader( Resolver ):
         if not is_fundamental(s):
             if 'struct' in s.split(): pass        # TODO is this right? "struct ns::something"
             elif '::' not in s: s = namespace + s         # only add the current name space if no namespace given
-            #elif '::' in s:
-            #    ns = s.split('::')[0]
-            #    if ns not in self.namespaces:
             r['type'] = s
         if s: return r
 
@@ -1632,7 +1617,7 @@ class CppHeader( _CppHeader ):
         self.nameStack = []
         self.nameSpaces = []
         self.curAccessSpecifier = 'private'    # private is default
-        self.initextra()    # harts hack
+        self.initextra()
     
         if (len(self.headerFileName)):
             headerFileStr = "\n".join(open(self.headerFileName).readlines())
@@ -1640,7 +1625,7 @@ class CppHeader( _CppHeader ):
         lex.input(headerFileStr)
         curLine = 0
         curChar = 0
-        if 1:    #try:
+        try:
             while True:
                 tok = lex.token()
                 if not tok: break
@@ -1672,7 +1657,7 @@ class CppHeader( _CppHeader ):
                     else:
                         self.nameStack = []
                     self.braceDepth -= 1
-                    #self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)    # June29 2011
+                    #self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)
                     if self.curClass and debug: print( 'CURBD', self._classes_brace_level[ self.curClass ] )
 
                     if (self.braceDepth == 0) or (self.curClass and self._classes_brace_level[self.curClass]==self.braceDepth):
@@ -1725,9 +1710,9 @@ class CppHeader( _CppHeader ):
                     if self.stack[0]=='typedef' and ( '{' not in self.stack or '}' in self.stack ): self.stack = []; trace_print( "REAL CLEAR")
                     elif self.stack[0] != 'typedef': self.stack = []; trace_print('CLEAR STACK')
 
-        #except:
-        #    raise CppParseError("Not able to parse %s on line %d evaluating \"%s\"\nError around: %s"
-        #                        % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
+        except:
+            raise CppParseError("Not able to parse %s on line %d evaluating \"%s\"\nError around: %s"
+                                % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
 
         self.finalize()
 
@@ -1758,7 +1743,7 @@ class CppHeader( _CppHeader ):
             self.evaluate_enum_stack()
 
         elif self._method_body and self.braceDepth > self._method_body: trace_print( 'INSIDE METHOD DEF' )
-        elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:    # updated by hart
+        elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:
             if (debug): print( "line ",lineno() )
             self.evaluate_method_stack()
         elif '(' not in self.nameStack and ')' not in self.nameStack and self.stack[-1] == ';':
@@ -1773,7 +1758,7 @@ class CppHeader( _CppHeader ):
         elif (self.nameStack[0] == "struct"):
             if (debug): print( "line ",lineno() )
             ##this causes a bug when structs are nested in protected or private##self.curAccessSpecifier = "public"
-            self.evaluate_struct_stack()    # hart's hack - do structs properly
+            self.evaluate_struct_stack()
 
 
         elif not self.curClass:
@@ -1829,5 +1814,4 @@ class CppHeader( _CppHeader ):
         rtn = ""
         for className in self.classes.keys():
             rtn += "%s\n"%self.classes[className]
-            #rtn += repr(self.classes[className]) + "--CLOUTIER--\n"
         return rtn
