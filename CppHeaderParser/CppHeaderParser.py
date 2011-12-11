@@ -150,7 +150,6 @@ supportedAccessSpecifier = [
     'private'
 ]
 
-enumMaintianValueFormat = False
 doxygenCommentCache = ""
 
 def is_namespace(nameStack):
@@ -664,7 +663,10 @@ class _CppEnum(dict):
                     try:
                         a = i = ord(a)
                     except: pass
-                if not enumMaintianValueFormat: v['value'] = a
+                #Allow access of what is in the file pre-convert if converted
+                if v['value'] != str(a):
+                    v['raw_value'] = v['value']
+                v['value'] = a
             else: v['value'] = i
             i += 1
         return t
@@ -1601,7 +1603,6 @@ class CppHeader( _CppHeader ):
         headerFileName - Name of the file to parse OR actual file contents (depends on argType)
         argType - Indicates how to interpret headerFileName as a file string or file name
         kwargs - Supports the following keywords
-         "enumMaintianValueFormat" - Set to true for enum values to maintain the original format ('j' will not convert to 106)
         """
         ## reset global state ##
         global doxygenCommentCache
@@ -1621,12 +1622,6 @@ class CppHeader( _CppHeader ):
             raise Exception("Arg type must be either file or string")
         self.curClass = ""
         
-        global enumMaintianValueFormat
-        if kwargs.has_key("enumMaintianValueFormat"):
-            enumMaintianValueFormat = kwargs["enumMaintianValueFormat"]
-        else:
-            enumMaintianValueFormat = False
-
         # nested classes have parent::nested, but no extra namespace,
         # this keeps the API compatible, TODO proper namespace for everything. 
         Resolver.CLASSES = {}

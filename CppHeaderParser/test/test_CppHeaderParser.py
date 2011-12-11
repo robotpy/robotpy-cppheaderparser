@@ -347,7 +347,10 @@ class AlphaClass_Zebra_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(
             self.cppHeader.classes["AlphaClass"]["enums"]["protected"][0]["values"],
-            [{'name': 'Z_A', 'value': 0}, {'name': 'Z_B', 'value': 43}, {'name': 'Z_C', 'value': 106}, {'name': 'Z_D', 'value': 107}])
+            [{'name': 'Z_A', 'value': 0},
+             {'name': 'Z_B', 'raw_value': '0x2B', 'value': 43}, 
+             {'name': 'Z_C', 'raw_value': 'j', 'value': 106},
+             {'name': 'Z_D', 'value': 107}])
 
 
 
