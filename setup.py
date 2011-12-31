@@ -27,10 +27,10 @@ CLASSIFIERS = [
 
 setup(
     name = 'CppHeaderParser',
-    version = '1.9',
+    version = '2.0',
     author = 'Jashua Cloutier',
     author_email = 'jashuac@bellsouth.net',
-    url = 'http://sourceforge.net/projects/cppheaderparser/',
+    url = 'http://senexcanis.com/open-source/cppheaderparser/',
     description = DESCRIPTION,
     long_description = open('README.txt').read(),
     license = 'BSD',

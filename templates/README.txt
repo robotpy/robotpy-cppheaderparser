@@ -2,7 +2,7 @@ Python package "CppHeaderParser"
 --------------------------------
 **Purpose:** Parse C++ header files and generate a data structure representing the class
 
-**Author:** Jashua Cloutier (jashuac@bellsouth.net)
+**Author:** Jashua Cloutier
 
 **Licence:** BSD
 
@@ -24,4 +24,4 @@ Python package "CppHeaderParser"
 Contributors
 ------------
 * Chris Love
-* hartsantler
+* HartsAntler
