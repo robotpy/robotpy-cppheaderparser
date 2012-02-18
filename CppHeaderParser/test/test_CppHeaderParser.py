@@ -36,7 +36,7 @@ class SampleClass_SampleClass_TestCase(unittest.TestCase):
             [])
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["SampleClass"]["methods"]["public"][0].keys())
 
@@ -171,7 +171,7 @@ class SampleClass_meth5_TestCase(unittest.TestCase):
             [])
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["SampleClass"]["methods"]["private"][0].keys())
 
@@ -237,7 +237,7 @@ class SampleClass_Elephant_TestCase(unittest.TestCase):
             '')
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["SampleClass"]["enums"]["public"][0].keys())
 
@@ -269,7 +269,7 @@ class AlphaClass_AlphaClass_TestCase(unittest.TestCase):
             [])
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["AlphaClass"]["methods"]["public"][0].keys())
 
@@ -296,7 +296,7 @@ class AlphaClass_alphaMethod_TestCase(unittest.TestCase):
             [])
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["AlphaClass"]["methods"]["public"][1].keys())
 
@@ -318,7 +318,7 @@ class AlphaClass_alphaString_TestCase(unittest.TestCase):
             'string')
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["AlphaClass"]["properties"]["public"][0].keys())
 
@@ -340,7 +340,7 @@ class AlphaClass_Zebra_TestCase(unittest.TestCase):
             'Alpha')
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["AlphaClass"]["enums"]["protected"][0].keys())
 
@@ -375,7 +375,7 @@ class OmegaClass_OmegaClass_TestCase(unittest.TestCase):
             [])
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["OmegaClass"]["methods"]["public"][0].keys())
 
@@ -397,7 +397,7 @@ class OmegaClass_omegaString_TestCase(unittest.TestCase):
             'string')
 
     def test_doxygen(self):
-        self.assert_(
+        self.assertTrue(
         "doxygen"
         not in self.cppHeader.classes["OmegaClass"]["properties"]["public"][0].keys())
 
@@ -427,6 +427,22 @@ class OmegaClass_Rino_TestCase(unittest.TestCase):
         self.assertEqual(
             self.cppHeader.classes["OmegaClass"]["enums"]["protected"][0]["values"],
             [{'name': 'RI_ZERO', 'value': 0}, {'name': 'RI_ONE', 'value': 1}, {'name': 'RI_TWO', 'value': 2}])
+
+
+class Bug3488053_TestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_public(self):
+        self.assertEqual(len(self.cppHeader.classes["Bug_3488053::Bug_3488053_Nested"]["properties"]["public"]), 1)
+    
+    def test_private(self):
+        self.assertEqual(len(self.cppHeader.classes["Bug_3488053::Bug_3488053_Nested"]["properties"]["private"]), 0)
+    
+    def test_protected(self):
+        self.assertEqual(len(self.cppHeader.classes["Bug_3488053::Bug_3488053_Nested"]["properties"]["protected"]), 0)
+    
 
 if __name__ == '__main__':
     unittest.main()

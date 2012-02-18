@@ -89,3 +89,14 @@ namespace Alpha
 		};
     };
 }
+
+//Sample class for bug 3488053
+class Bug_3488053
+{
+	public:
+	class Bug_3488053_Nested
+	{
+	public:
+		int x;
+	};
+};

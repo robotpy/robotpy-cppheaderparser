@@ -140,9 +140,13 @@ def t_error(v):
 lex.lex()
 debug = 0
 debug_trace = 0
+def debug_print(arg):
+    global debug
+    if debug: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+
 def trace_print(*arg):
     global debug_trace
-    if debug_trace: print(arg)
+    if debug_trace: print("[%s] %s"%(inspect.currentframe().f_back.f_lineno, arg))
 
 supportedAccessSpecifier = [
     'public',
@@ -250,7 +254,7 @@ class CppClass(dict):
         self._public_forward_declares = []
         self['namespace'] = ""
 
-        if (debug): print( "Class:   ",  nameStack )
+        debug_print( "Class:   %s"%nameStack )
         if (len(nameStack) < 2):
             print( "Error detecting class" )
             return
@@ -465,7 +469,7 @@ class CppMethod( _CppMethod ):
         return '\n\t\t  '.join( r )
 
     def __init__(self, nameStack, curClass, methinfo):
-        if (debug): print( "Method:   ",  nameStack )
+        debug_print( "Method:   %s"%nameStack )
         global doxygenCommentCache
         if len(doxygenCommentCache):
             self["doxygen"] = doxygenCommentCache
@@ -579,7 +583,7 @@ class CppVariable( _CppVariable ):
             self["doxygen"] = doxygenCommentCache
             doxygenCommentCache = ""
 
-        if (debug): print( "Variable: ",  nameStack )
+        debug_print( "Variable: %s"%nameStack )
 
         if (len(nameStack) < 2):    # +++
             if len(nameStack) == 1: self['type'] = nameStack[0]; self['name'] = ''
@@ -695,7 +699,7 @@ class CppEnum(_CppEnum):
             elif len(tmpStack) >= 3 and tmpStack[1] == "=":
                 d["name"] = tmpStack[0]; d["value"] = " ".join(tmpStack[2:])
             elif len(tmpStack) == 2 and tmpStack[1] == "=":
-                if (debug): print( "WARN-enum: parser missed value for %s"%tmpStack[0] )
+                debug_print( "WARN-enum: parser missed value for %s"%tmpStack[0] )
                 d["name"] = tmpStack[0]
 
             if d: valueList.append( d )
@@ -1525,6 +1529,7 @@ class _CppHeader( Resolver ):
             return
 
         self.curAccessSpecifier = 'private'        # private is default
+        debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         newClass = CppClass(self.nameStack)
         trace_print( 'NEW CLASS', newClass['name'] )
         self.classes_order.append( newClass )    # good idea to save ordering
@@ -1617,10 +1622,13 @@ class CppHeader( _CppHeader ):
         self.nameStack = []
         self.nameSpaces = []
         self.curAccessSpecifier = 'private'    # private is default
+        debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         self.initextra()
     
         if (len(self.headerFileName)):
-            headerFileStr = "\n".join(open(self.headerFileName).readlines())
+            fd = open(self.headerFileName)
+            headerFileStr = "\n".join(fd.readlines())
+            fd.close()                                      
         self.braceDepth = 0
         lex.input(headerFileStr)
         curLine = 0
@@ -1658,7 +1666,7 @@ class CppHeader( _CppHeader ):
                         self.nameStack = []
                     self.braceDepth -= 1
                     #self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)
-                    if self.curClass and debug: print( 'CURBD', self._classes_brace_level[ self.curClass ] )
+                    if self.curClass: debug_print( 'CURBD %s'%self._classes_brace_level[ self.curClass ] )
 
                     if (self.braceDepth == 0) or (self.curClass and self._classes_brace_level[self.curClass]==self.braceDepth):
                         trace_print( 'END OF CLASS DEF' )
@@ -1694,7 +1702,9 @@ class CppHeader( _CppHeader ):
                     if (tok.value == 'class'):
                         self.nameStack.append(tok.value)
                     elif tok.value in supportedAccessSpecifier:
-                        if self.braceDepth == len(self.nameSpaces) + 1: self.curAccessSpecifier = tok.value; 
+                        if self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == len(self.curClass.split("::")):
+                            self.curAccessSpecifier = tok.value;
+                            debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier) 
                         self.stack = []
                     else:
                         self.nameStack.append(tok.value)
@@ -1719,9 +1729,9 @@ class CppHeader( _CppHeader ):
     def evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
         global doxygenCommentCache
-        if (debug): print( "Evaluating stack %s\nBraceDepth: %s" %(self.nameStack,self.braceDepth))
+        debug_print( "Evaluating stack %s\n       BraceDepth: %s" %(self.nameStack,self.braceDepth))
         if (len(self.curClass)):
-            if (debug): print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
+            debug_print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
 
         #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
         if not self.curClass and 'typedef' in self.nameStack:
@@ -1730,8 +1740,8 @@ class CppHeader( _CppHeader ):
             else: return
 
         elif (len(self.nameStack) == 0):
-            if (debug): print( "line ",lineno() )
-            if (debug): print( "(Empty Stack)" )
+            debug_print( "trace" )
+            debug_print( "(Empty Stack)" )
             return
         elif (self.nameStack[0] == "namespace"):
             #Taken care of outside of here
@@ -1739,44 +1749,44 @@ class CppHeader( _CppHeader ):
         elif len(self.nameStack) >= 2 and self.nameStack[0] == 'using' and self.nameStack[1] == 'namespace': pass    # TODO
 
         elif is_enum_namestack(self.nameStack):
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             self.evaluate_enum_stack()
 
         elif self._method_body and self.braceDepth > self._method_body: trace_print( 'INSIDE METHOD DEF' )
         elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             self.evaluate_method_stack()
         elif '(' not in self.nameStack and ')' not in self.nameStack and self.stack[-1] == ';':
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             if self.nameStack[0]=='class': self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 
         elif (self.nameStack[0] == "class"):
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             self.evaluate_class_stack()
         elif (self.nameStack[0] == "struct"):
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             ##this causes a bug when structs are nested in protected or private##self.curAccessSpecifier = "public"
             self.evaluate_struct_stack()
 
 
         elif not self.curClass:
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             if is_enum_namestack(self.nameStack): self.evaluate_enum_stack()
             elif self.curStruct and self.stack[-1] == ';': self.evaluate_property_stack()    # this catches fields of global structs
             self.nameStack = []
             doxygenCommentCache = ""
             return
         elif (self.braceDepth < 1):
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             #Ignore global stuff for now
-            if (debug): print( "Global stuff: ",  self.nameStack )
+            debug_print( "Global stuff: %s"%self.nameStack )
             self.nameStack = []
             doxygenCommentCache = ""
             return
         elif (self.braceDepth > len(self.nameSpaces) + 1):
-            if (debug): print( "line ",lineno() )
+            debug_print( "trace" )
             self.nameStack = []
             doxygenCommentCache = ""
             return
