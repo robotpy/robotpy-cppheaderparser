@@ -295,7 +295,7 @@ class CppClass(dict):
 
         elif nameStack.count(':') == 2: self['parent'] = self['name']; self['name'] = nameStack[-1]
 
-        elif nameStack.count(':') > 2 and nameStack[0] == "class":
+        elif nameStack.count(':') > 2 and nameStack[0] in ("class", "struct"):
             tmpStack = nameStack[nameStack.index(":") + 1:]
             
             superTmpStack = [[]]
@@ -1557,8 +1557,11 @@ class _CppHeader( Resolver ):
         elif self.braceDepth != len(self.nameSpaces):
             print( 'ERROR: WRONG BRACE DEPTH' )
             return
-
-        self.curAccessSpecifier = 'private'        # private is default
+        
+        if self.nameStack[0] == "class":
+            self.curAccessSpecifier = 'private'
+        else:#struct
+            self.curAccessSpecifier = 'public'
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         newClass = CppClass(self.nameStack)
         trace_print( 'NEW CLASS', newClass['name'] )
@@ -1732,7 +1735,7 @@ class CppHeader( _CppHeader ):
                     if (tok.value == 'class'):
                         self.nameStack.append(tok.value)
                     elif tok.value in supportedAccessSpecifier:
-                        if len(self.nameStack) and self.nameStack[0] == "class":
+                        if len(self.nameStack) and self.nameStack[0] in ("class", "struct"):
                             self.nameStack.append(tok.value)
                         elif self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == len(self.curClass.split("::")):
                             self.curAccessSpecifier = tok.value;
@@ -1795,13 +1798,13 @@ class CppHeader( _CppHeader ):
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 
-        elif (self.nameStack[0] == "class"):
+        elif self.nameStack[0] in ("class", "struct"):
             debug_print( "trace" )
             self.evaluate_class_stack()
-        elif (self.nameStack[0] == "struct"):
-            debug_print( "trace" )
+        #elif (self.nameStack[0] == "struct"):
+        #    debug_print( "trace" )
             ##this causes a bug when structs are nested in protected or private##self.curAccessSpecifier = "public"
-            self.evaluate_struct_stack()
+        #    self.evaluate_struct_stack()
 
 
         elif not self.curClass:

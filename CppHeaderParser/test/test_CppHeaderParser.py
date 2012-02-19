@@ -465,8 +465,58 @@ class Bug3487551_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_method_rtn_type(self):
-        self.assertEquals(self.cppHeader.classes["Bug_3487551"]["methods"]["public"][0]["rtnType"], "int")
+        self.assertEqual(self.cppHeader.classes["Bug_3487551"]["methods"]["public"][0]["rtnType"], "int")
     
+
+class SampleStruct_meth_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_name(self):
+        self.assertEqual(
+            self.cppHeader.classes["SampleStruct"]["methods"]["public"][0]["name"],
+            'meth')
+
+    def test_rtntype(self):
+        self.assertEqual(
+            self.cppHeader.classes["SampleStruct"]["methods"]["public"][0]["rtnType"],
+            'unsigned int')
+
+    def test_parameters(self):
+        self.assertEqual(
+            self.cppHeader.classes["SampleStruct"]["methods"]["public"][0]["parameters"],
+            [])
+
+    def test_doxygen(self):
+        self.assertTrue(
+        "doxygen"
+        not in self.cppHeader.classes["SampleStruct"]["methods"]["public"][0].keys())
+
+
+
+class SampleStruct_prop_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_name(self):
+        self.assertEqual(
+            self.cppHeader.classes["SampleStruct"]["properties"]["private"][0]["name"],
+            'prop')
+
+    def test_type(self):
+        self.assertEqual(
+            self.cppHeader.classes["SampleStruct"]["properties"]["private"][0]["type"],
+            'int')
+
+    def test_doxygen(self):
+        self.assertTrue(
+        "doxygen"
+        not in self.cppHeader.classes["SampleStruct"]["properties"]["private"][0].keys())
+
+
+
 if __name__ == '__main__':
     unittest.main()
 

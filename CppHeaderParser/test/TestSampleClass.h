@@ -121,3 +121,12 @@ class Bug_3487551
 public:
     virtual int method();
 };
+
+
+// Feature Request 3488051
+struct SampleStruct
+{
+    unsigned int meth();
+private:
+    int prop;
+};
