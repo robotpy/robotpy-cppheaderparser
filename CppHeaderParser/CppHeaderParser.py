@@ -507,8 +507,11 @@ class CppMethod( _CppMethod ):
         else:
             self["rtnType"] = " ".join(nameStack[:nameStack.index('(') - 1])
             self["name"] = " ".join(nameStack[nameStack.index('(') - 1:nameStack.index('(')])
+        if self["rtnType"].startswith("virtual"):
+           self["rtnType"] = self["rtnType"][len("virtual"):].strip()
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
+        
 
         self.update( methinfo )
 

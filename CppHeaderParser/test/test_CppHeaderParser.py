@@ -459,6 +459,14 @@ class Bug3488360_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["ExcellentCake"]["inherits"],
             [{'access': 'private', 'class': 'Citrus::BloodOrange'}, {'access': 'private', 'class': 'Convoluted::Nested::Mixin'}])
     
+class Bug3487551_TestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_method_rtn_type(self):
+        self.assertEquals(self.cppHeader.classes["Bug_3487551"]["methods"]["public"][0]["rtnType"], "int")
+    
 if __name__ == '__main__':
     unittest.main()
 

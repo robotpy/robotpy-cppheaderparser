@@ -114,3 +114,10 @@ class Bananna: public Citrus::BloodOrange
 class ExcellentCake: private Citrus::BloodOrange, Convoluted::Nested::Mixin
 {
 };
+
+// Bug 3487551
+class Bug_3487551
+{
+public:
+    virtual int method();
+};
