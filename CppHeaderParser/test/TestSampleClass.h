@@ -100,3 +100,17 @@ class Bug_3488053
 		int x;
 	};
 };
+
+// Bug 3488360
+namespace Citrus
+{
+  class BloodOrange { };
+}
+
+class Bananna: public Citrus::BloodOrange
+{
+};
+
+class ExcellentCake: private Citrus::BloodOrange, Convoluted::Nested::Mixin
+{
+};

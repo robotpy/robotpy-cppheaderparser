@@ -444,6 +444,21 @@ class Bug3488053_TestCase(unittest.TestCase):
         self.assertEqual(len(self.cppHeader.classes["Bug_3488053::Bug_3488053_Nested"]["properties"]["protected"]), 0)
     
 
+class Bug3488360_TestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_BloodOrange_inherits(self):
+        self.assertEqual(self.cppHeader.classes["BloodOrange"]["inherits"], [])
+    
+    def test_Bananna_inherits(self):
+        self.assertEqual(self.cppHeader.classes["Bananna"]["inherits"], [{'access': 'public', 'class': 'Citrus::BloodOrange'}])
+    
+    def test_ExcellentCake_inherits(self):
+        self.assertEqual(self.cppHeader.classes["ExcellentCake"]["inherits"],
+            [{'access': 'private', 'class': 'Citrus::BloodOrange'}, {'access': 'private', 'class': 'Convoluted::Nested::Mixin'}])
+    
 if __name__ == '__main__':
     unittest.main()
 

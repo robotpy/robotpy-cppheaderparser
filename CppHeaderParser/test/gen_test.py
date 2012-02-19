@@ -141,7 +141,7 @@ def gen_test_key_not_exist(key, testObj):
     global testScript
     testScript += """\
     def test_%s(self):
-        self.assert_(
+        self.assertTrue(
         "%s"
         not in %s.keys())
 

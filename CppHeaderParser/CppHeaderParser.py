@@ -295,7 +295,34 @@ class CppClass(dict):
 
         elif nameStack.count(':') == 2: self['parent'] = self['name']; self['name'] = nameStack[-1]
 
-        elif nameStack.count(':') > 2: print('ERROR can not parse', nameStack)    # TODO
+        elif nameStack.count(':') > 2 and nameStack[0] == "class":
+            tmpStack = nameStack[nameStack.index(":") + 1:]
+            
+            superTmpStack = [[]]
+            for tok in tmpStack:
+                if tok == ',':
+                    superTmpStack.append([])
+                else:
+                    superTmpStack[-1].append(tok)
+            
+            for tmpStack in superTmpStack:
+                tmpInheritClass = {"access":"private"}
+                
+                if len(tmpStack) and tmpStack[0] in supportedAccessSpecifier:
+                    tmpInheritClass["access"] = tmpStack[0]
+                    tmpStack = tmpStack[1:]
+                
+                inheritNSStack = []
+                while len(tmpStack) > 3:
+                    if tmpStack[0] == ':': break;
+                    if tmpStack[1] != ':': break;
+                    if tmpStack[2] != ':': break;
+                    inheritNSStack.append(tmpStack[0])
+                    tmpStack = tmpStack[3:]
+                if len(tmpStack) == 1 and tmpStack[0] != ':':
+                     inheritNSStack.append(tmpStack[0])
+                tmpInheritClass["class"] = "::".join(inheritNSStack)
+                inheritList.append(tmpInheritClass)
 
         self['inherits'] = inheritList
 
@@ -1702,7 +1729,9 @@ class CppHeader( _CppHeader ):
                     if (tok.value == 'class'):
                         self.nameStack.append(tok.value)
                     elif tok.value in supportedAccessSpecifier:
-                        if self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == len(self.curClass.split("::")):
+                        if len(self.nameStack) and self.nameStack[0] == "class":
+                            self.nameStack.append(tok.value)
+                        elif self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == len(self.curClass.split("::")):
                             self.curAccessSpecifier = tok.value;
                             debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier) 
                         self.stack = []
@@ -1721,6 +1750,7 @@ class CppHeader( _CppHeader ):
                     elif self.stack[0] != 'typedef': self.stack = []; trace_print('CLEAR STACK')
 
         except:
+            if (debug): raise
             raise CppParseError("Not able to parse %s on line %d evaluating \"%s\"\nError around: %s"
                                 % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
 
@@ -1729,7 +1759,7 @@ class CppHeader( _CppHeader ):
     def evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
         global doxygenCommentCache
-        debug_print( "Evaluating stack %s\n       BraceDepth: %s" %(self.nameStack,self.braceDepth))
+        debug_print( "Evaluating stack %s\n       BraceDepth: %s (called from %d)" %(self.nameStack,self.braceDepth, inspect.currentframe().f_back.f_lineno))
         if (len(self.curClass)):
             debug_print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
 
