@@ -139,3 +139,10 @@ int items[MAX_ITEM];
 int otherItems[7];
 int oneItem;
 };
+
+// Bug 3488054
+class Monkey {
+private:
+static void Create();
+};
+inline void Monkey::Create() { }

@@ -537,6 +537,20 @@ class Bird_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["Bird"]["properties"]["private"][1]["array_size"], "7")
 
 
+class Monkey_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Monkey"]["methods"]["public"]), 0)
+        
+    def test_num_private_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Monkey"]["methods"]["private"]), 1)
+        
+    def test_num_protected_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Monkey"]["methods"]["protected"]), 0)
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -1793,8 +1793,6 @@ class CppHeader( _CppHeader ):
                                 % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
 
         self.finalize()
-        error_print("JASH error print")
-        warning_print("JASH warning print")
 
     def evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -1825,7 +1823,8 @@ class CppHeader( _CppHeader ):
         elif self._method_body and self.braceDepth > self._method_body: trace_print( 'INSIDE METHOD DEF' )
         elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:
             debug_print( "trace" )
-            self.evaluate_method_stack()
+            if self.braceDepth > 0:
+                self.evaluate_method_stack()
         elif '(' not in self.nameStack and ')' not in self.nameStack and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0]=='class': self.evalute_forward_decl()
