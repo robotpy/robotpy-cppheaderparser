@@ -146,3 +146,10 @@ private:
 static void Create();
 };
 inline void Monkey::Create() { }
+
+// Bug 3488275
+class Chicken
+{
+template <typename T> static T Get();
+};
+template <typename T> T Chicken::Get() { return T(); }

@@ -551,6 +551,22 @@ class Monkey_TestCase(unittest.TestCase):
     def test_num_protected_methods(self):
         self.assertEqual(len(self.cppHeader.classes["Monkey"]["methods"]["protected"]), 0)
 
+
+
+class Chicken_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Chicken"]["methods"]["public"]), 0)
+        
+    def test_num_private_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Chicken"]["methods"]["private"]), 1)
+        
+    def test_num_protected_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Chicken"]["methods"]["protected"]), 0)
+
 if __name__ == '__main__':
     unittest.main()
 

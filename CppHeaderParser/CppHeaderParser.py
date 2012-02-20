@@ -1824,7 +1824,11 @@ class CppHeader( _CppHeader ):
         elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:
             debug_print( "trace" )
             if self.braceDepth > 0:
-                self.evaluate_method_stack()
+                if "{" in self.stack and self.stack[0] != '{' and self.stack[-1] == ';' and self.braceDepth == 1:
+                    #Special case of a method defined outside a class that has a body
+                    pass
+                else: 
+                    self.evaluate_method_stack()
         elif '(' not in self.nameStack and ')' not in self.nameStack and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0]=='class': self.evalute_forward_decl()
