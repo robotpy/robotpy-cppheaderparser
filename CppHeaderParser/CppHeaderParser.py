@@ -142,8 +142,21 @@ def t_error(v):
     print( "Lex error: ", v )
 
 lex.lex()
+# Controls error_print
+print_errors = 1
+# Controls warning_print
+print_warnings = 1
+# Controls debug_print
 debug = 0
+# Controls trace_print
 debug_trace = 0
+
+def error_print(arg):
+    if print_errors: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+
+def warning_print(arg):
+    if print_warnings: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+
 def debug_print(arg):
     global debug
     if debug: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
@@ -263,7 +276,7 @@ class CppClass(dict):
 
         debug_print( "Class:   %s"%nameStack )
         if (len(nameStack) < 2):
-            print( "Error detecting class" )
+            warning_print( "Error detecting class" )
             return
         global doxygenCommentCache
         if len(doxygenCommentCache):
@@ -294,7 +307,7 @@ class CppClass(dict):
                     tmpInheritClass["access"] = tmpStack[0]
                     tmpInheritClass["class"] = tmpStack[1]
                 else:
-                    print( "Warning: can not parse inheriting class %s"%(" ".join(tmpStack)))
+                    warning_print( "Warning: can not parse inheriting class %s"%(" ".join(tmpStack)))
                     if '>' in tmpStack: pass    # allow skip templates for now
                     else: raise NotImplemented
 
@@ -632,7 +645,7 @@ class CppVariable( _CppVariable ):
 
         if (len(nameStack) < 2):    # +++
             if len(nameStack) == 1: self['type'] = nameStack[0]; self['name'] = ''
-            else: print(_stack_); assert 0
+            else: error_print(_stack_); assert 0
 
         elif ("=" in nameStack):
             self["type"] = " ".join(nameStack[:nameStack.index("=") - 1])
@@ -753,7 +766,7 @@ class CppEnum(_CppEnum):
             self['type'] = self.resolve_enum_values( valueList )    # returns int for standard enum
             self["values"] = valueList
         else:
-            print( 'WARN-enum: empty enum', nameStack )
+            warning_print( 'WARN-enum: empty enum', nameStack )
             return
         #Figure out if it has a name
         preBraceStack = nameStack[:nameStack.index("{")]
@@ -762,7 +775,7 @@ class CppEnum(_CppEnum):
             self["name"] = preBraceStack[1]           
         elif len(postBraceStack) and "typedef" in nameStack:
                 self["name"] = " ".join(postBraceStack)
-        else: print( 'WARN-enum: nameless enum', nameStack )
+        else: warning_print( 'WARN-enum: nameless enum', nameStack )
         #See if there are instances of this
         if "typedef" not in nameStack and len(postBraceStack):
             self["instances"] = []
@@ -1041,7 +1054,7 @@ class Resolver(object):
 
 
                         elif var['parent']:
-                            print( 'WARN unresolved', _tag)
+                            warning_print( 'WARN unresolved', _tag)
                             var['ctypes_type'] = 'ctypes.c_void_p'
                             var['unresolved'] = True
 
@@ -1127,7 +1140,7 @@ class Resolver(object):
                             var['unresolved'] = True    # TODO, how to deal with templates?
 
                         elif tag.startswith('_'):    # assume starting with underscore is not important for wrapping
-                            print( 'WARN unresolved', _tag)
+                            warning_print( 'WARN unresolved', _tag)
                             var['ctypes_type'] = 'ctypes.c_void_p'
                             var['unresolved'] = True
 
@@ -1249,7 +1262,7 @@ class _CppHeader( Resolver ):
                                 klass = self.classes[ b ]
                                 meth['returns_class'] = a + '::' + b
                             elif '<' in b and '>' in b:
-                                print( 'WARN-can not return template:', b )
+                                warning_print( 'WARN-can not return template:', b )
                                 meth['returns_unknown'] = True
                             elif b in self.global_enums:
                                 enum = self.global_enums[ b ]
@@ -1570,7 +1583,7 @@ class _CppHeader( Resolver ):
         if self.braceDepth > len( self.nameSpaces) and parent:
             trace_print( 'HIT NESTED SUBCLASS' )
         elif self.braceDepth != len(self.nameSpaces):
-            print( 'ERROR: WRONG BRACE DEPTH' )
+            error_print( 'ERROR: WRONG BRACE DEPTH' )
             return
         
         if self.nameStack[0] == "class":
@@ -1780,6 +1793,8 @@ class CppHeader( _CppHeader ):
                                 % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
 
         self.finalize()
+        error_print("JASH error print")
+        warning_print("JASH warning print")
 
     def evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
