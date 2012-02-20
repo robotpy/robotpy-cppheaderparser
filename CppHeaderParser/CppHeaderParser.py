@@ -766,7 +766,7 @@ class CppEnum(_CppEnum):
             self['type'] = self.resolve_enum_values( valueList )    # returns int for standard enum
             self["values"] = valueList
         else:
-            warning_print( 'WARN-enum: empty enum', nameStack )
+            warning_print( 'WARN-enum: empty enum %s'%nameStack )
             return
         #Figure out if it has a name
         preBraceStack = nameStack[:nameStack.index("{")]
@@ -775,7 +775,7 @@ class CppEnum(_CppEnum):
             self["name"] = preBraceStack[1]           
         elif len(postBraceStack) and "typedef" in nameStack:
                 self["name"] = " ".join(postBraceStack)
-        else: warning_print( 'WARN-enum: nameless enum', nameStack )
+        else: warning_print( 'WARN-enum: nameless enum %s'%nameStack )
         #See if there are instances of this
         if "typedef" not in nameStack and len(postBraceStack):
             self["instances"] = []
@@ -1054,7 +1054,7 @@ class Resolver(object):
 
 
                         elif var['parent']:
-                            warning_print( 'WARN unresolved', _tag)
+                            warning_print( 'WARN unresolved %s'%_tag)
                             var['ctypes_type'] = 'ctypes.c_void_p'
                             var['unresolved'] = True
 
@@ -1140,7 +1140,7 @@ class Resolver(object):
                             var['unresolved'] = True    # TODO, how to deal with templates?
 
                         elif tag.startswith('_'):    # assume starting with underscore is not important for wrapping
-                            warning_print( 'WARN unresolved', _tag)
+                            warning_print( 'WARN unresolved %s'%_tag)
                             var['ctypes_type'] = 'ctypes.c_void_p'
                             var['unresolved'] = True
 
@@ -1262,7 +1262,7 @@ class _CppHeader( Resolver ):
                                 klass = self.classes[ b ]
                                 meth['returns_class'] = a + '::' + b
                             elif '<' in b and '>' in b:
-                                warning_print( 'WARN-can not return template:', b )
+                                warning_print( 'WARN-can not return template: %s'%b )
                                 meth['returns_unknown'] = True
                             elif b in self.global_enums:
                                 enum = self.global_enums[ b ]
