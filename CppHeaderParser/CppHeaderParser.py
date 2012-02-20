@@ -68,6 +68,8 @@ tokens = [
     'CLOSE_PAREN',
     'OPEN_BRACE',
     'CLOSE_BRACE',
+    'OPEN_SQUARE_BRACKET',
+    'CLOSE_SQUARE_BRACKET',
     'COLON',
     'SEMI_COLON',
     'COMMA',
@@ -87,7 +89,7 @@ tokens = [
     'NEW_LINE',
 ]
 
-t_ignore = " \t\r[].|!?%@'^\\"        # harts hack (litteral backslash is a bad idea?) - old version: " \t\r[].|!?%@"
+t_ignore = " \t\r.|!?%@'^\\"        # harts hack (litteral backslash is a bad idea?) - old version: " \t\r[].|!?%@"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
 t_OPERATOR_DIVIDE_OVERLOAD = r'/='
@@ -95,6 +97,8 @@ t_OPEN_PAREN = r'\('
 t_CLOSE_PAREN = r'\)'
 t_OPEN_BRACE = r'{'
 t_CLOSE_BRACE = r'}'
+t_OPEN_SQUARE_BRACKET = r'\['
+t_CLOSE_SQUARE_BRACKET = r'\]'
 t_SEMI_COLON = r';'
 t_COLON = r':'
 t_COMMA = r','
@@ -146,7 +150,10 @@ def debug_print(arg):
 
 def trace_print(*arg):
     global debug_trace
-    if debug_trace: print("[%s] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+    if debug_trace:
+        sys.stdout.write("[%s] "%(inspect.currentframe().f_back.f_lineno))
+        for a in arg: sys.stdout.write("%s "%a)
+        sys.stdout.write("\n")
 
 supportedAccessSpecifier = [
     'public',
@@ -607,6 +614,14 @@ class CppVariable( _CppVariable ):
     Vars = []
     def __init__(self, nameStack,  **kwargs):
         _stack_ = nameStack
+        if "[" in nameStack: #strip off array informatin
+            arrayStack = nameStack[nameStack.index("["):]
+            if len(arrayStack) == 3:
+                self["array_size"] = arrayStack[1] 
+            nameStack = nameStack[:nameStack.index("[")]
+            self["array"] = 1
+        else:
+            self["array"] = 0
         nameStack = self._name_stack_helper( nameStack )
         global doxygenCommentCache
         if len(doxygenCommentCache):
@@ -1718,6 +1733,10 @@ class CppHeader( _CppHeader ):
                 if (tok.type == 'OPEN_PAREN'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'CLOSE_PAREN'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'OPEN_SQUARE_BRACKET'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'CLOSE_SQUARE_BRACKET'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'EQUALS'):
                     self.nameStack.append(tok.value)

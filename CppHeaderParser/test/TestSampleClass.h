@@ -130,3 +130,12 @@ struct SampleStruct
 private:
     int prop;
 };
+
+// Bug 3488049 & Feature Request 3488050
+const int MAX_ITEM = 7;
+class Bird
+{
+int items[MAX_ITEM];
+int otherItems[7];
+int oneItem;
+};

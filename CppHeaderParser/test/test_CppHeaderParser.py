@@ -516,6 +516,26 @@ class SampleStruct_prop_TestCase(unittest.TestCase):
         not in self.cppHeader.classes["SampleStruct"]["properties"]["private"][0].keys())
 
 
+class Bird_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_items_array(self):
+        self.assertEqual(self.cppHeader.classes["Bird"]["properties"]["private"][0]["array"], 1)
+    
+    def test_otherItems_array(self):
+        self.assertEqual(self.cppHeader.classes["Bird"]["properties"]["private"][1]["array"], 1)
+    
+    def test_oneItem_array(self):
+        self.assertEqual(self.cppHeader.classes["Bird"]["properties"]["private"][2]["array"], 0)
+    
+    def test_items_array_size(self):
+        self.assertEqual(self.cppHeader.classes["Bird"]["properties"]["private"][0]["array_size"], "MAX_ITEM")
+    
+    def test_otherItems_array_size(self):
+        self.assertEqual(self.cppHeader.classes["Bird"]["properties"]["private"][1]["array_size"], "7")
+
 
 if __name__ == '__main__':
     unittest.main()
