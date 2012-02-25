@@ -1449,7 +1449,7 @@ class _CppHeader( Resolver ):
         if name.startswith('~'):
             info['destructor'] = True
             name = name[1:]
-        elif not a:
+        elif not a or (name == self.curClass and len(self.curClass)):
             info['constructor'] = True
 
         info['name'] = name

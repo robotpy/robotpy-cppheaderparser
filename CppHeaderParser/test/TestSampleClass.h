@@ -153,3 +153,9 @@ class Chicken
 template <typename T> static T Get();
 };
 template <typename T> T Chicken::Get() { return T(); }
+
+// Bug 3491240
+class Lizzard {
+Lizzard();
+explicit Lizzard( int a );
+};

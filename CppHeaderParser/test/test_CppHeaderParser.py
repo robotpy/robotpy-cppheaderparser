@@ -15,6 +15,13 @@ def filter_pameters(p):
         rtn.append({'name': d['name'], 'desc': d['desc'], 'type': d['type']})
     return rtn
 
+def filter_dict_keys(d, keys):
+    "Filter a dictonary to a specified set of keys"
+    rtn = {}
+    for k in keys:
+        rtn[k] = d.get(k, None)
+    return rtn
+
 class SampleClass_SampleClass_TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -567,6 +574,30 @@ class Chicken_TestCase(unittest.TestCase):
     def test_num_protected_methods(self):
         self.assertEqual(len(self.cppHeader.classes["Chicken"]["methods"]["protected"]), 0)
 
+
+
+class Lizzard_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_normal_constructor(self):
+        cmp_values = {'inline': False, 'name': 'Lizzard', 'parameters': [], 'friend': False,
+                      'explicit': False, 'constructor': True, 'namespace': '', 'destructor': False,
+                      'pure_virtual': False, 'returns': '', 'static': False, 'virtual': False,
+                      'template': False, 'rtnType': 'void', 'extern': False, 'path': 'Lizzard',
+                      'returns_pointer': 0, 'class': None}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["Lizzard"]["methods"]["private"][0], cmp_values.keys()), 
+                         cmp_values)
+    
+    def test_explicit_constructor(self):
+        cmp_values = {'inline': False, 'name': 'Lizzard', 'friend': False,
+                      'explicit': True, 'constructor': True, 'namespace': '', 'destructor': False,
+                      'pure_virtual': False, 'returns': '', 'static': False, 'virtual': False,
+                      'template': False, 'rtnType': 'void', 'extern': False, 'path': 'Lizzard',
+                      'returns_pointer': 0, 'class': None}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["Lizzard"]["methods"]["private"][1], cmp_values.keys()), 
+                         cmp_values)
 if __name__ == '__main__':
     unittest.main()
 
