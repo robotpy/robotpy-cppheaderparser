@@ -159,3 +159,16 @@ class Lizzard {
 Lizzard();
 explicit Lizzard( int a );
 };
+
+// Bug 3491178
+class Owl {
+private:
+template <typename T> int* tFunc( int count );
+};
+
+template <typename T> int* Owl::tFunc( int count ) {
+if (count == 0) {
+return NULL;
+}
+return NULL;
+}

@@ -1402,6 +1402,8 @@ class _CppHeader( Resolver ):
             info['defined'] = True
             self._method_body = self.braceDepth
             trace_print( 'NEW METHOD WITH BODY', self.braceDepth )
+            if not self.curClass: #Method/function defined outside class braces
+                return None
         elif stack[-1] == ';':
             info['defined'] = False
             self._method_body = None    # not a great idea to be clearing here
@@ -1806,7 +1808,7 @@ class CppHeader( _CppHeader ):
             trace_print('STACK', self.stack)
             if token == 'SEMI_COLON' and ('{' not in self.stack or '}' in self.stack): self.evaluate_typedef()
             else: return
-
+        
         elif (len(self.nameStack) == 0):
             debug_print( "trace" )
             debug_print( "(Empty Stack)" )

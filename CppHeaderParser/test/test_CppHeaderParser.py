@@ -598,6 +598,23 @@ class Lizzard_TestCase(unittest.TestCase):
                       'returns_pointer': 0, 'class': None}
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["Lizzard"]["methods"]["private"][1], cmp_values.keys()), 
                          cmp_values)
+
+
+
+class Lizzard_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Owl"]["methods"]["public"]), 0)
+        
+    def test_num_private_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Owl"]["methods"]["private"]), 1)
+        
+    def test_num_protected_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Owl"]["methods"]["protected"]), 0)
+
 if __name__ == '__main__':
     unittest.main()
 
