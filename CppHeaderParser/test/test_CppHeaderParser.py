@@ -670,6 +670,18 @@ class Mango_TestCase(unittest.TestCase):
     def test_virtual_inherits(self):
         self.assertEqual(self.cppHeader.classes["MangoClass"]["inherits"][0]["virtual"], True)
 
+
+
+class Eagle_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_property(self):
+        cmp_values = {'constant': 0, 'name': 'a', 'reference': 0, 'array_size': 'MAX_LEN', 'type': 'int', 'static': 0, 'pointer': 0}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["EagleClass"]["properties"]["private"][0], cmp_values.keys()), cmp_values)
+    
+
 if __name__ == '__main__':
     unittest.main()
 

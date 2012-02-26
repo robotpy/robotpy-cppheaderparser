@@ -684,6 +684,7 @@ class CppVariable( _CppVariable ):
     def __repr__(self):
         keys_white_list = ['constant','name','reference','type','static','pointer','desc']
         cpy = dict((k,v) for (k,v) in self.items() if k in keys_white_list)
+        if self.has_key("array_size"): cpy["array_size"] = self["array_size"]
         return "%s"%cpy
 
 class _CppEnum(dict):
@@ -1828,6 +1829,16 @@ class CppHeader( _CppHeader ):
         debug_print( "Evaluating stack %s\n       BraceDepth: %s (called from %d)" %(self.nameStack,self.braceDepth, inspect.currentframe().f_back.f_lineno))
         if (len(self.curClass)):
             debug_print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
+
+        #Filter special case of array with casting in it
+        try:
+            bracePos = self.nameStack.index("[")
+            parenPos = self.nameStack.index("(")
+            if bracePos == parenPos - 1:
+                endParen = self.nameStack.index(")")
+                self.nameStack = self.nameStack[:bracePos + 1] + self.nameStack[endParen + 1:]
+                debug_print("Filtered namestack to=%s"%self.nameStack)
+        except: pass
 
         #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
         if not self.curClass and 'typedef' in self.nameStack:

@@ -197,3 +197,9 @@ struct CowStruct {};
 // Bug 3491334
 class BaseMangoClass { };
 class MangoClass: virtual public BaseMangoClass { };
+
+// Bug 3492237
+const long MAX_LEN = 7;
+class EagleClass {
+int a[(int)MAX_LEN];
+};
