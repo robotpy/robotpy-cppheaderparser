@@ -294,7 +294,7 @@ class CppClass(dict):
             nameStack = nameStack[nameStack.index(":") + 1:]
             while len(nameStack):
                 tmpStack = []
-                tmpInheritClass = {"access":"private"}
+                tmpInheritClass = {"access":"private", "virtual": False}
                 if "," in nameStack:
                     tmpStack = nameStack[:nameStack.index(",")]
                     nameStack = nameStack[nameStack.index(",") + 1:]
@@ -308,6 +308,10 @@ class CppClass(dict):
                 elif len(tmpStack) == 2:
                     tmpInheritClass["access"] = tmpStack[0]
                     tmpInheritClass["class"] = tmpStack[1]
+                elif len(tmpStack) == 3 and tmpStack[0] == "virtual":
+                    tmpInheritClass["access"] = tmpStack[1]
+                    tmpInheritClass["class"] = tmpStack[2]
+                    tmpInheritClass["virtual"] = True
                 else:
                     warning_print( "Warning: can not parse inheriting class %s"%(" ".join(tmpStack)))
                     if '>' in tmpStack: pass    # allow skip templates for now
@@ -385,6 +389,7 @@ class CppClass(dict):
         if "inherits" in self.keys():
             rtn += "  Inherits: "
             for inheritClass in self["inherits"]:
+                if inheritClass["virtual"]: rtn += "virtual "
                 rtn += "%s %s, "%(inheritClass["access"], inheritClass["class"])
             rtn += "\n"
         rtn += "  {\n"
@@ -422,6 +427,7 @@ class CppClass(dict):
         if "inherits" in self.keys() and len(self["inherits"]):
             rtn += "Inherits: "
             for inheritClass in self["inherits"]:
+                if inheritClass["virtual"]: rtn += "virtual "
                 rtn += "%s %s, "%(inheritClass["access"], inheritClass["class"])
             rtn += "\n"
         rtn += "{\n"

@@ -650,7 +650,7 @@ class AnonHolderClass_TestCase(unittest.TestCase):
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["AnonHolderClass"]["properties"]["public"][0], cmp_values.keys()), cmp_values)
 
 
-class AnonHolderClass_TestCase(unittest.TestCase):
+class CowClass_TestCase(unittest.TestCase):
 
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
@@ -660,6 +660,15 @@ class AnonHolderClass_TestCase(unittest.TestCase):
 
     def test_struct_declaration_method(self):
         self.assertEqual(self.cppHeader.classes["CowStruct"]["declaration_method"], "struct")
+
+
+class Mango_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_virtual_inherits(self):
+        self.assertEqual(self.cppHeader.classes["MangoClass"]["inherits"][0]["virtual"], True)
 
 if __name__ == '__main__':
     unittest.main()

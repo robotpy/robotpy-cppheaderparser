@@ -193,3 +193,7 @@ int x;
 // Feature Request 3491220
 class CowClass {};
 struct CowStruct {};
+
+// Bug 3491334
+class BaseMangoClass { };
+class MangoClass: virtual public BaseMangoClass { };
