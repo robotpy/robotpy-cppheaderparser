@@ -172,3 +172,11 @@ return NULL;
 }
 return NULL;
 }
+
+// Bug 3491232
+class GrapeClass {
+private:
+struct GrapeStruct { };
+int x;
+void f();
+};

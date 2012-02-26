@@ -1584,6 +1584,7 @@ class _CppHeader( Resolver ):
         parent = self.curClass
         if self.braceDepth > len( self.nameSpaces) and parent:
             trace_print( 'HIT NESTED SUBCLASS' )
+            self.accessSpecifierStack.append(self.curAccessSpecifier)
         elif self.braceDepth != len(self.nameSpaces):
             error_print( 'ERROR: WRONG BRACE DEPTH' )
             return
@@ -1685,6 +1686,7 @@ class CppHeader( _CppHeader ):
         self.nameStack = []
         self.nameSpaces = []
         self.curAccessSpecifier = 'private'    # private is default
+        self.accessSpecifierStack = []
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         self.initextra()
     
@@ -1733,6 +1735,9 @@ class CppHeader( _CppHeader ):
 
                     if (self.braceDepth == 0) or (self.curClass and self._classes_brace_level[self.curClass]==self.braceDepth):
                         trace_print( 'END OF CLASS DEF' )
+                        if self.accessSpecifierStack:
+                            self.curAccessSpecifier = self.accessSpecifierStack[-1]
+                            self.accessSpecifierStack = self.accessSpecifierStack[:-1] 
                         if self.curClass and self.classes[ self.curClass ]['parent']: self.curClass = self.classes[ self.curClass ]['parent']
                         else: self.curClass = ""; #self.curStruct = None
                         self.stack = []

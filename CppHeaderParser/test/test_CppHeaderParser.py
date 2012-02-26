@@ -615,6 +615,30 @@ class Lizzard_TestCase(unittest.TestCase):
     def test_num_protected_methods(self):
         self.assertEqual(len(self.cppHeader.classes["Owl"]["methods"]["protected"]), 0)
 
+
+class Grape_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["properties"]["public"]), 0)
+        
+    def test_num_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["properties"]["private"]), 1)
+        
+    def test_num_protected_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["properties"]["protected"]), 0)
+
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["methods"]["public"]), 0)
+        
+    def test_num_private_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["methods"]["private"]), 1)
+        
+    def test_num_protected_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["methods"]["protected"]), 0)
+
 if __name__ == '__main__':
     unittest.main()
 
