@@ -180,3 +180,11 @@ struct GrapeStruct { };
 int x;
 void f();
 };
+
+
+// Bug 3491319
+struct AnonHolderClass {
+struct {
+int x;
+} a;
+};

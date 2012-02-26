@@ -639,6 +639,16 @@ class Grape_TestCase(unittest.TestCase):
     def test_num_protected_methods(self):
         self.assertEqual(len(self.cppHeader.classes["GrapeClass"]["methods"]["protected"]), 0)
 
+
+class AnonHolderClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_property(self):
+        cmp_values = {'constant': 0, 'name': 'a', 'reference': 0, 'type': '', 'static': 0, 'pointer': 0}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["AnonHolderClass"]["properties"]["public"][0], cmp_values.keys()), cmp_values)
+
 if __name__ == '__main__':
     unittest.main()
 

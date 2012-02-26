@@ -176,6 +176,9 @@ supportedAccessSpecifier = [
 
 doxygenCommentCache = ""
 
+#Track what was added in what order and at what depth
+parseHistory = []
+
 def is_namespace(nameStack):
     """Determines if a namespace is being specified"""
     if len(nameStack) == 0:
@@ -276,8 +279,7 @@ class CppClass(dict):
 
         debug_print( "Class:   %s"%nameStack )
         if (len(nameStack) < 2):
-            warning_print( "Error detecting class" )
-            return
+            nameStack.insert(1, "")#anonymous struct
         global doxygenCommentCache
         if len(doxygenCommentCache):
             self["doxygen"] = doxygenCommentCache
@@ -378,7 +380,7 @@ class CppClass(dict):
         else: rtn += '\n'
 
         if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
-        if 'parent' in self.keys() and self['parent']: rtn += 'parent class:' + self['parent'] + '\n'
+        if 'parent' in self.keys() and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
 
         if "inherits" in self.keys():
             rtn += "  Inherits: "
@@ -415,7 +417,7 @@ class CppClass(dict):
         else: rtn += '\n'
 
         if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
-        if 'parent' in self.keys() and self['parent']: rtn += 'parent class:' + self['parent'] + '\n'
+        if 'parent' in self.keys() and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
 
         if "inherits" in self.keys() and len(self["inherits"]):
             rtn += "Inherits: "
@@ -1506,7 +1508,7 @@ class _CppHeader( Resolver ):
                 newMethod['parent'] = klass
                 if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
                 else: newMethod['path'] = klass['name']
-
+                
             elif self.curClass:    # normal case
                 newMethod = CppMethod(self.nameStack, self.curClass, info)
                 klass = self.classes[self.curClass]
@@ -1514,7 +1516,8 @@ class _CppHeader( Resolver ):
                 newMethod['parent'] = klass
                 if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
                 else: newMethod['path'] = klass['name']
-
+            global parseHistory
+            parseHistory.append({"braceDepth": self.braceDepth, "item_type": "method", "item": newMethod})
         else:
             trace_print( 'free function?', self.nameStack )
 
@@ -1554,6 +1557,7 @@ class _CppHeader( Resolver ):
 
     def evaluate_property_stack(self):
         """Create a Property out of the name stack"""
+        global parseHistory
         assert self.stack[-1] == ';'
         if self.nameStack[0] == 'typedef':
             if self.curClass:
@@ -1565,6 +1569,12 @@ class _CppHeader( Resolver ):
                 Resolver.SubTypedefs[ name ] = self.curClass
             else: assert 0
         elif self.curStruct or self.curClass:
+            if len(self.nameStack) == 1:
+                #See if we can de anonymize the type
+                filteredParseHistory = [h for h in parseHistory if h["braceDepth"] == self.braceDepth]
+                if len(filteredParseHistory) and filteredParseHistory[-1]["item_type"] == "class":
+                    self.nameStack.insert(0, filteredParseHistory[-1]["item"]["name"])
+                    debug_print("DEANONYMOIZING %s to type '%s'"%(self.nameStack[1], self.nameStack[0]))
             newVar = CppVariable(self.nameStack)
             newVar['namespace'] = self.current_namespace()
             if self.curStruct:
@@ -1574,6 +1584,7 @@ class _CppHeader( Resolver ):
                 klass = self.classes[self.curClass]
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar['property_of_class'] = klass['name']
+            parseHistory.append({"braceDepth": self.braceDepth, "item_type": "variable", "item": newVar})
 
         self.stack = []        # CLEAR STACK
 
@@ -1628,6 +1639,8 @@ class _CppHeader( Resolver ):
 
         assert key not in self.classes    # namespace collision
         self.classes[ key ] = newClass
+        global parseHistory
+        parseHistory.append({"braceDepth": self.braceDepth, "item_type": "class", "item": newClass})
 
     def evalute_forward_decl(self):
         trace_print( 'FORWARD DECL', self.nameStack )
@@ -1717,6 +1730,7 @@ class CppHeader( _CppHeader ):
                         self.nameStack.append(tok.value)
                     if self.stack and self.stack[0] == 'class': self.stack = []
                     self.braceDepth += 1
+                    
                 elif (tok.type == 'CLOSE_BRACE'):
                     if self.braceDepth == 0:
                         continue
