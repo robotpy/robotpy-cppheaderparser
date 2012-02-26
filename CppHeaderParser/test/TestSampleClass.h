@@ -188,3 +188,8 @@ struct {
 int x;
 } a;
 };
+
+
+// Feature Request 3491220
+class CowClass {};
+struct CowStruct {};

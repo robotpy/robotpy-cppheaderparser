@@ -649,6 +649,18 @@ class AnonHolderClass_TestCase(unittest.TestCase):
         cmp_values = {'constant': 0, 'name': 'a', 'reference': 0, 'type': '', 'static': 0, 'pointer': 0}
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["AnonHolderClass"]["properties"]["public"][0], cmp_values.keys()), cmp_values)
 
+
+class AnonHolderClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_class_declaration_method(self):
+        self.assertEqual(self.cppHeader.classes["CowClass"]["declaration_method"], "class")
+
+    def test_struct_declaration_method(self):
+        self.assertEqual(self.cppHeader.classes["CowStruct"]["declaration_method"], "struct")
+
 if __name__ == '__main__':
     unittest.main()
 

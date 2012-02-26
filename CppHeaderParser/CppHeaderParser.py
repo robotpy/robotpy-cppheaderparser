@@ -375,7 +375,7 @@ class CppClass(dict):
         """Convert class to a string"""
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
-        rtn = "class %s"%(namespace_prefix + self["name"])
+        rtn = "%s %s"%(self["declaration_method"], namespace_prefix + self["name"])
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
@@ -412,7 +412,7 @@ class CppClass(dict):
         """Convert class to a string"""
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
-        rtn = "class %s"%(namespace_prefix + self["name"])
+        rtn = "%s %s"%(self["declaration_method"], namespace_prefix + self["name"])
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
@@ -1606,6 +1606,7 @@ class _CppHeader( Resolver ):
             self.curAccessSpecifier = 'public'
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         newClass = CppClass(self.nameStack)
+        newClass["declaration_method"] = self.nameStack[0] 
         trace_print( 'NEW CLASS', newClass['name'] )
         self.classes_order.append( newClass )    # good idea to save ordering
         self.stack = []        # fixes if class declared with ';' in closing brace
