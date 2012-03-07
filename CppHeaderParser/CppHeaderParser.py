@@ -197,6 +197,34 @@ def is_enum_namestack(nameStack):
         return True
     return False
 
+def is_fundamental(s):
+    for a in s.split():
+        if a not in 'size_t struct union unsigned signed bool char short int float double long void *': return False
+    return True
+
+def is_method_namestack(stack):
+    r = False
+    if '(' not in stack: r = False
+    elif stack[0] == 'typedef': r = False    # TODO deal with typedef function prototypes
+    #elif '=' in stack and stack.index('=') < stack.index('(') and stack[stack.index('=')-1] != 'operator': r = False    #disabled July6th - allow all operators
+    elif 'operator' in stack: r = True    # allow all operators
+    elif '{' in stack and stack.index('{') < stack.index('('): r = False    # struct that looks like a method/class
+    elif '(' in stack and ')' in stack:
+        if '{' in stack and '}' in stack: r = True
+        elif stack[-1] == ';': r = True
+        elif '{' in stack: r = True    # ideally we catch both braces... TODO
+    else: r = False
+    #Test for case of property set to somehting with parens such as "static const int CONST_A = (1 << 7) - 1;"
+    if r and "(" in stack and "=" in stack:
+        if stack.index("=") < stack.index("("): r = False
+    return r
+
+def is_property_namestack(mameStack):
+    r = False
+    if '(' not in mameStack and ')' not in mameStack: r = True
+    elif "(" in mameStack and "=" in mameStack and mameStack.index("=") < mameStack.index("("): r = True
+    return r
+
 class CppParseError(Exception): pass
     
 class CppClass(dict):
@@ -793,25 +821,6 @@ class CppEnum(_CppEnum):
                     continue
                 self["instances"].append(var)
         self["namespace"] = ""
-
-def is_fundamental(s):
-    for a in s.split():
-        if a not in 'size_t struct union unsigned signed bool char short int float double long void *': return False
-    return True
-
-def is_method_namestack(stack):
-    r = False
-    if '(' not in stack: r = False
-    elif stack[0] == 'typedef': r = False    # TODO deal with typedef function prototypes
-    #elif '=' in stack and stack.index('=') < stack.index('(') and stack[stack.index('=')-1] != 'operator': r = False    #disabled July6th - allow all operators
-    elif 'operator' in stack: r = True    # allow all operators
-    elif '{' in stack and stack.index('{') < stack.index('('): r = False    # struct that looks like a method/class
-    elif '(' in stack and ')' in stack:
-        if '{' in stack and '}' in stack: r = True
-        elif stack[-1] == ';': r = True
-        elif '{' in stack: r = True    # ideally we catch both braces... TODO
-    else: r = False
-    return r
 
 
 class CppStruct(dict):
@@ -1872,7 +1881,7 @@ class CppHeader( _CppHeader ):
                     pass
                 else: 
                     self.evaluate_method_stack()
-        elif '(' not in self.nameStack and ')' not in self.nameStack and self.stack[-1] == ';':
+        elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0]=='class': self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass

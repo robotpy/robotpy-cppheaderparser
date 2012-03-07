@@ -709,6 +709,30 @@ class Fish_TestCase(unittest.TestCase):
         #Just make sure it doesnt crash
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
+
+    
+
+class Panda_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_property_CONST_A(self):
+        cmp_values = {'typedef': None, 'unresolved': False, 'constant': 1, 'name': 'CONST_A',
+                      'parent': None, 'pointer': 0, 'namespace': '', 'raw_type': 'int', 'class': 0,
+                      'property_of_class': 'PandaClass', 'static': 1, 'fundamental': True,
+                      'mutable': False, 'typedefs': 0, 'array': 0, 'type': 'static const int',
+                      'reference': 0, 'aliases': []}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["PandaClass"]["properties"]["private"][0], cmp_values.keys()), cmp_values)
+
+    def test_property_CONST_B(self):
+        cmp_values = {'typedef': None, 'unresolved': False, 'constant': 1, 'name': 'CONST_B',
+                      'parent': None, 'pointer': 0, 'namespace': '', 'raw_type': 'int', 'class': 0,
+                      'property_of_class': 'PandaClass', 'static': 1, 'fundamental': True,
+                      'mutable': False, 'typedefs': 0, 'array': 0, 'type': 'static const int',
+                      'reference': 0, 'aliases': []}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["PandaClass"]["properties"]["private"][1], cmp_values.keys()), cmp_values)
+
 if __name__ == '__main__':
     unittest.main()
 

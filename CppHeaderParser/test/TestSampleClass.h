@@ -232,3 +232,9 @@ extern "C" {
 int FishA( const char* strA );
 int FishB( const char* strB );
 }
+
+// Bug 3497168
+class PandaClass {
+static const int CONST_A = (1 << 7) - 1;
+static const int CONST_B = sizeof(int);
+};
