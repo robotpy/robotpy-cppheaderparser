@@ -226,3 +226,9 @@ class DogClass;
 class CatClass {
     friend DogClass;
 };
+
+// Bug 3497155
+extern "C" {
+int FishA( const char* strA );
+int FishB( const char* strB );
+}

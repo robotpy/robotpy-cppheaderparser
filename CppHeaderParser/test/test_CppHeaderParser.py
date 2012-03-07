@@ -700,6 +700,15 @@ class Cat_TestCase(unittest.TestCase):
     def test_num_private_properties(self):
         self.assertEqual(len(self.cppHeader.classes["CatClass"]["properties"]["private"]), 0)
 
+
+    
+
+class Fish_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        #Just make sure it doesnt crash
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
 if __name__ == '__main__':
     unittest.main()
 

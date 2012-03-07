@@ -1523,6 +1523,8 @@ class _CppHeader( Resolver ):
                 newMethod['parent'] = klass
                 if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
                 else: newMethod['path'] = klass['name']
+            else: #non class functions
+                newMethod = CppMethod(self.nameStack, None, info)
             global parseHistory
             parseHistory.append({"braceDepth": self.braceDepth, "item_type": "method", "item": newMethod})
         else:
