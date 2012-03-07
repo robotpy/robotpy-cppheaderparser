@@ -238,3 +238,12 @@ class PandaClass {
 static const int CONST_A = (1 << 7) - 1;
 static const int CONST_B = sizeof(int);
 };
+
+// Bug 3497166
+class PotatoClass {
+    struct FwdStruct;
+    FwdStruct* ptr;
+    struct FwdStruct {
+    int a;
+    };
+};

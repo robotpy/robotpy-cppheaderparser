@@ -1663,7 +1663,7 @@ class _CppHeader( Resolver ):
 
     def evalute_forward_decl(self):
         trace_print( 'FORWARD DECL', self.nameStack )
-        assert self.nameStack[0] == 'class'
+        assert self.nameStack[0] in ('class', 'struct')
         name = self.nameStack[-1]
         if self.curClass:
             klass = self.classes[ self.curClass ]
@@ -1883,7 +1883,7 @@ class CppHeader( _CppHeader ):
                     self.evaluate_method_stack()
         elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
-            if self.nameStack[0]=='class': self.evalute_forward_decl()
+            if self.nameStack[0] in ('class', 'struct'): self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 

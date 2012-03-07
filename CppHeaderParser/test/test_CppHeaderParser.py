@@ -701,15 +701,11 @@ class Cat_TestCase(unittest.TestCase):
         self.assertEqual(len(self.cppHeader.classes["CatClass"]["properties"]["private"]), 0)
 
 
-    
-
 class Fish_TestCase(unittest.TestCase):
 
     def setUp(self):
         #Just make sure it doesnt crash
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
-
-
     
 
 class Panda_TestCase(unittest.TestCase):
@@ -732,6 +728,19 @@ class Panda_TestCase(unittest.TestCase):
                       'mutable': False, 'typedefs': 0, 'array': 0, 'type': 'static const int',
                       'reference': 0, 'aliases': []}
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["PandaClass"]["properties"]["private"][1], cmp_values.keys()), cmp_values)
+
+
+class Potato_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_private_properties_potato(self):
+        self.assertEqual(len(self.cppHeader.classes["PotatoClass"]["properties"]["private"]), 1)
+    
+    def test_num_public_properties_potato_fwdstruct(self):
+        self.assertEqual(len(self.cppHeader.classes["PotatoClass::FwdStruct"]["properties"]["public"]), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
