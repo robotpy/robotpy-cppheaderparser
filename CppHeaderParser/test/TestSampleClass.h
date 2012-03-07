@@ -203,3 +203,20 @@ const long MAX_LEN = 7;
 class EagleClass {
 int a[(int)MAX_LEN];
 };
+
+// Bug 3497164
+class FrogClass {
+
+    struct {
+        int a;
+    } x;
+
+    struct {
+        int b;
+    } y;
+
+    struct {
+        int c;
+    } z;
+
+};

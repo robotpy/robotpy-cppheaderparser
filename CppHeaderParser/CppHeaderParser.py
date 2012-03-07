@@ -1639,13 +1639,13 @@ class _CppHeader( Resolver ):
             self.curClass = newClass["name"]
             self._classes_brace_level[ newClass['name'] ] = self.braceDepth
 
-        if key in self.classes:
-            trace_print( 'ERROR name collision:', key )
-            self.classes[key].show()
-            trace_print('-'*80)
-            newClass.show()
-
-        assert key not in self.classes    # namespace collision
+        if not key.endswith("::") and len(key) != 0:
+            if key in self.classes:
+                trace_print( 'ERROR name collision:', key )
+                self.classes[key].show()
+                trace_print('-'*80)
+                newClass.show()            
+                assert key not in self.classes    # namespace collision
         self.classes[ key ] = newClass
         global parseHistory
         parseHistory.append({"braceDepth": self.braceDepth, "item_type": "class", "item": newClass})

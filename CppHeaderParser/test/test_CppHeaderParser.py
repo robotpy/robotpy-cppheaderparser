@@ -682,6 +682,14 @@ class Eagle_TestCase(unittest.TestCase):
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["EagleClass"]["properties"]["private"][0], cmp_values.keys()), cmp_values)
     
 
+class Frog_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["FrogClass"]["properties"]["private"]), 3)
+
 if __name__ == '__main__':
     unittest.main()
 
