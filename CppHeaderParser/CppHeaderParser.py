@@ -1853,6 +1853,8 @@ class CppHeader( _CppHeader ):
         elif (self.nameStack[0] == "namespace"):
             #Taken care of outside of here
             pass
+        elif self.nameStack[0] == "friend":
+            pass
         elif len(self.nameStack) >= 2 and self.nameStack[0] == 'using' and self.nameStack[1] == 'namespace': pass    # TODO
 
         elif is_enum_namestack(self.nameStack):

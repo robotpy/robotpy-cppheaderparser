@@ -690,6 +690,16 @@ class Frog_TestCase(unittest.TestCase):
     def test_num_private_properties(self):
         self.assertEqual(len(self.cppHeader.classes["FrogClass"]["properties"]["private"]), 3)
 
+    
+
+class Cat_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["CatClass"]["properties"]["private"]), 0)
+
 if __name__ == '__main__':
     unittest.main()
 

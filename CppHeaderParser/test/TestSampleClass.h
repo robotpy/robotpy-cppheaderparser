@@ -220,3 +220,9 @@ class FrogClass {
     } z;
 
 };
+
+// Bug 3497160
+class DogClass;
+class CatClass {
+    friend DogClass;
+};
