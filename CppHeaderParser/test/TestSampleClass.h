@@ -244,6 +244,14 @@ class PotatoClass {
     struct FwdStruct;
     FwdStruct* ptr;
     struct FwdStruct {
-    int a;
+    	int a;
     };
+};
+
+// Bug 3497162
+class HogClass {
+	union HogUnion {
+		int a;
+		float b;
+	} u;
 };

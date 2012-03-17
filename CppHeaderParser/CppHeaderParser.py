@@ -479,6 +479,57 @@ class CppClass(dict):
         rtn += "}\n"
         return rtn
 
+
+class CppUnion( CppClass ):
+    """Takes a name stack and turns it into a union
+    
+    Contains the following Keys:
+    self['name'] - Name of the union
+    self['doxygen'] - Doxygen comments associated with the union if they exist
+    self['members'] - List of members the union has 
+    
+    An example of how this could look is as follows:
+    #self =
+    {
+        'name': ""
+        'members': []
+    }
+    """
+    
+    def __init__(self, nameStack):
+        CppClass.__init__(self, nameStack)
+        self["name"] = "union " + self["name"]
+        self["members"] = self["properties"]["public"]
+    
+    def transform_to_union_keys(self):
+        print "union keys: %s"%self.keys()
+        for key in ['inherits', 'parent', 'abstract', 'namespace', 'typedefs', 'methods']:
+            del self[key] 
+        
+    def show(self):
+        """Convert class to a string"""
+        print self
+    
+    
+    def __repr__(self):
+        """Convert class to a string"""
+        namespace_prefix = ""
+        if self["namespace"]: namespace_prefix = self["namespace"] + "::"
+        rtn = "%s %s"%(self["declaration_method"], namespace_prefix + self["name"])
+        if self['abstract']: rtn += '    (abstract)\n'
+        else: rtn += '\n'
+
+        if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
+        if 'parent' in self.keys() and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
+
+        rtn += "{\n"
+        for member in self["members"]:
+            rtn += "    %s\n"%(repr(member))
+        rtn += "}\n"
+        return rtn
+
+       
+
 class _CppMethod( dict ):
     def _params_helper1( self, stack ):
         # deal with "throw" keyword
@@ -1623,9 +1674,13 @@ class _CppHeader( Resolver ):
         else:#struct
             self.curAccessSpecifier = 'public'
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
-        newClass = CppClass(self.nameStack)
-        newClass["declaration_method"] = self.nameStack[0] 
-        trace_print( 'NEW CLASS', newClass['name'] )
+        if self.nameStack[0] == "union":
+            newClass = CppUnion(self.nameStack)
+            trace_print( 'NEW UNION', newClass['name'] )
+        else:
+            newClass = CppClass(self.nameStack)
+            trace_print( 'NEW CLASS', newClass['name'] )
+        newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append( newClass )    # good idea to save ordering
         self.stack = []        # fixes if class declared with ';' in closing brace
         if parent:
@@ -1660,6 +1715,7 @@ class _CppHeader( Resolver ):
         self.classes[ key ] = newClass
         global parseHistory
         parseHistory.append({"braceDepth": self.braceDepth, "item_type": "class", "item": newClass})
+    
 
     def evalute_forward_decl(self):
         trace_print( 'FORWARD DECL', self.nameStack )
@@ -1807,7 +1863,7 @@ class CppHeader( _CppHeader ):
                     if (tok.value == 'class'):
                         self.nameStack.append(tok.value)
                     elif tok.value in supportedAccessSpecifier:
-                        if len(self.nameStack) and self.nameStack[0] in ("class", "struct"):
+                        if len(self.nameStack) and self.nameStack[0] in ("class", "struct", "union"):
                             self.nameStack.append(tok.value)
                         elif self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == len(self.curClass.split("::")):
                             self.curAccessSpecifier = tok.value;
@@ -1887,7 +1943,8 @@ class CppHeader( _CppHeader ):
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 
-        elif self.nameStack[0] in ("class", "struct"):
+        elif self.nameStack[0] in ("class", "struct", "union"):
+            #Parsing a union can reuse much of the class parsing
             debug_print( "trace" )
             self.evaluate_class_stack()
         #elif (self.nameStack[0] == "struct"):

@@ -742,6 +742,30 @@ class Potato_TestCase(unittest.TestCase):
         self.assertEqual(len(self.cppHeader.classes["PotatoClass::FwdStruct"]["properties"]["public"]), 1)
 
 
+class Hog_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_private_properties_potato(self):
+        self.assertEqual(len(self.cppHeader.classes["HogClass"]["properties"]["private"]), 1)
+    
+    def test_property(self):
+        cmp_values = {'constant': 0, 'name': 'u', 'reference': 0, 'type': 'union HogUnion', 'static': 0, 'pointer': 0}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["HogClass"]["properties"]["private"][0], cmp_values.keys()), cmp_values)
+
+    def test_union(self):
+        cmp_values = {"name": "union HogUnion", "parent":  "HogClass", "declaration_method": "union"}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["HogClass::union HogUnion"], cmp_values.keys()), cmp_values)
+    
+    def test_union_member_a(self):
+        cmp_values = {'constant': 0, 'name': 'a', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["HogClass::union HogUnion"]["members"][0], cmp_values.keys()), cmp_values)
+    
+    def test_union_member_b(self):
+        cmp_values = {'constant': 0, 'name': 'b', 'reference': 0, 'type': 'float', 'static': 0, 'pointer': 0}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["HogClass::union HogUnion"]["members"][1], cmp_values.keys()), cmp_values)
+
 if __name__ == '__main__':
     unittest.main()
 
