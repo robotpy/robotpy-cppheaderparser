@@ -276,3 +276,12 @@ public:
     int fun1(T);
     int fun2(T);
 };
+
+// Bug 3514728
+class CarrotClass
+{
+int var1;
+#define FIRSTLINE \
+SECONDLINE
+void fun1();
+};

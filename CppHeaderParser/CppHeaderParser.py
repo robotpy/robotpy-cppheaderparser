@@ -1785,6 +1785,10 @@ class CppHeader( _CppHeader ):
         
         # Strip out template declarations
         headerFileStr = re.sub("template[\t ]*<[^>]*>", "", headerFileStr)
+        
+        # Strip out #defines
+        # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
+        headerFileStr = re.sub(r'(?m)^#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', "", headerFileStr)
                                          
         self.braceDepth = 0
         lex.input(headerFileStr)

@@ -790,6 +790,23 @@ class GarlicClass_TestCase(unittest.TestCase):
     def test_num_public_methods(self):
         self.assertEqual(len(self.cppHeader.classes["GarlicClass"]["methods"]["public"]), 3)
 
+# Bug 3514728
+class CarrotClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["CarrotClass"]["properties"]["private"]), 1)
+    
+    def test_num_private_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["CarrotClass"]["methods"]["private"]), 1)
+    
+    def test_method_params(self):
+        self.assertEqual(
+            filter_pameters(self.cppHeader.classes["CarrotClass"]["methods"]["private"][0]["parameters"]),
+            [])
+
 if __name__ == '__main__':
     unittest.main()
 
