@@ -1054,7 +1054,7 @@ class Resolver(object):
                     nestedEnum = None
                     nestedStruct = None
                     nestedTypedef = None
-                    if 'method' in var:
+                    if 'method' in var and 'parent' in var['method'].keys():
                         klass = var['method']['parent']
                         if tag in var['method']['parent']._public_enums:
                             nestedEnum = var['method']['parent']._public_enums[ tag ]
@@ -1789,7 +1789,11 @@ class CppHeader( _CppHeader ):
         # Strip out #defines
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
         headerFileStr = re.sub(r'(?m)^#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', "", headerFileStr)
-                                         
+        
+        #Filter out Extern "C" statements.  These are order dependent
+        headerFileStr = re.sub(re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), "namespace __IGNORED_NAMESPACE__CppHeaderParser__ {", headerFileStr) #To be ignored later
+        headerFileStr = re.sub(r'extern[ ]+"[Cc]"[ ]*', "", headerFileStr)
+        
         self.braceDepth = 0
         lex.input(headerFileStr)
         curLine = 0
@@ -1804,6 +1808,8 @@ class CppHeader( _CppHeader ):
                 curChar = tok.lexpos
                 if (tok.type == 'OPEN_BRACE'):
                     if len(self.nameStack) >= 2 and is_namespace(self.nameStack):    # namespace {} with no name used in boost, this sets default?
+                        if self.nameStack[1] == "__IGNORED_NAMESPACE__CppHeaderParser__":#Used in filtering extern "C"
+                            self.nameStack[1] = ""
                         self.nameSpaces.append(self.nameStack[1])
                         ns = self.cur_namespace(); self.stack = []
                         if ns not in self.namespaces: self.namespaces.append( ns )

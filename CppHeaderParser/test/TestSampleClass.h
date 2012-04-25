@@ -285,3 +285,16 @@ int var1;
 SECONDLINE
 void fun1();
 };
+
+// Bug 3517289
+extern "C" void f(int i, char c, float x);
+
+extern "C" {
+	int fun1(SP1, SP2);
+	int fun2(SP1, SP2);
+
+	class ExternClass
+	{
+		ExternClass();
+	}
+};

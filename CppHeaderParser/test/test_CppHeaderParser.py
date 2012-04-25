@@ -807,6 +807,16 @@ class CarrotClass_TestCase(unittest.TestCase):
             filter_pameters(self.cppHeader.classes["CarrotClass"]["methods"]["private"][0]["parameters"]),
             [])
 
+
+# Bug 3517289
+class CarrotClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["ExternClass"]["methods"]["private"]), 1)
+
 if __name__ == '__main__':
     unittest.main()
 
