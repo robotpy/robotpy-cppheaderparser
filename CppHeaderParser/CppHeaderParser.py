@@ -455,7 +455,7 @@ class CppClass(dict):
         if "inherits" in self.keys() and len(self["inherits"]):
             rtn += "Inherits: "
             for inheritClass in self["inherits"]:
-                if inheritClass["virtual"]: rtn += "virtual "
+                if inheritClass.get("virtual", False): rtn += "virtual "
                 rtn += "%s %s, "%(inheritClass["access"], inheritClass["class"])
             rtn += "\n"
         rtn += "{\n"
@@ -1763,7 +1763,7 @@ class CppHeader( _CppHeader ):
         else:
             raise Exception("Arg type must be either file or string")
         self.curClass = ""
-        
+       
         # nested classes have parent::nested, but no extra namespace,
         # this keeps the API compatible, TODO proper namespace for everything. 
         Resolver.CLASSES = {}
@@ -1780,8 +1780,12 @@ class CppHeader( _CppHeader ):
     
         if (len(self.headerFileName)):
             fd = open(self.headerFileName)
-            headerFileStr = "\n".join(fd.readlines())
-            fd.close()                                      
+            headerFileStr = "".join(fd.readlines())
+            fd.close()     
+        
+        # Strip out template declarations
+        headerFileStr = re.sub("template[\t ]*<[^>]*>", "", headerFileStr)
+                                         
         self.braceDepth = 0
         lex.input(headerFileStr)
         curLine = 0

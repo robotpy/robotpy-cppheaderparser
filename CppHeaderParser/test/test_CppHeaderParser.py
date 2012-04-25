@@ -766,6 +766,30 @@ class Hog_TestCase(unittest.TestCase):
         cmp_values = {'constant': 0, 'name': 'b', 'reference': 0, 'type': 'float', 'static': 0, 'pointer': 0}
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["HogClass::union HogUnion"]["members"][1], cmp_values.keys()), cmp_values)
 
+# Bug 3497158
+class CherryClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["CherryClass::NestStruct"]["properties"]["public"]), 1)
+    
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["CherryClass::NestStruct"]["methods"]["public"]), 1)
+
+# Bug 3517308
+class GarlicClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["GarlicClass"]["properties"]["public"]), 0)
+    
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["GarlicClass"]["methods"]["public"]), 3)
+
 if __name__ == '__main__':
     unittest.main()
 

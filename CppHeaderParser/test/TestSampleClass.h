@@ -255,3 +255,24 @@ class HogClass {
 		float b;
 	} u;
 };
+
+// Bug 3497158
+class CherryClass {
+	template< int ID >
+public:
+	void CherryClass ();
+	struct NestStruct {
+	    void FuncA();
+	    int val;
+	};
+};
+
+// Bug 3517308
+template<class T>
+class GarlicClass
+{
+public:
+	GarlicClass();
+    int fun1(T);
+    int fun2(T);
+};
