@@ -818,7 +818,7 @@ class CarrotClass_TestCase(unittest.TestCase):
         self.assertEqual(len(self.cppHeader.classes["ExternClass"]["methods"]["private"]), 1)
 
 
-# Bug 3517289
+# Bug 3514671
 class OliveStruct_TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -829,6 +829,31 @@ class OliveStruct_TestCase(unittest.TestCase):
     
     def test_var_a(self):
         self.assertEqual(self.cppHeader.classes["OliveStruct"]["properties"]["public"][0]["name"], "a")
+
+
+# Bug 3515330
+class Rooster_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_num_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass"]["properties"]["public"]), 1)
+    
+    def test_num_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass"]["properties"]["private"]), 1)
+    
+    def test_num_sub1_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass::RoosterSubClass1"]["properties"]["public"]), 1)
+    
+    def test_num_sub1_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass::RoosterSubClass1"]["properties"]["private"]), 1)
+    
+    def test_num_sub2_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass::RoosterSubClass2"]["properties"]["public"]), 1)
+    
+    def test_num_sub2_private_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass::RoosterSubClass2"]["properties"]["private"]), 1)
 
 
 if __name__ == '__main__':

@@ -306,3 +306,31 @@ struct OliveStruct{
 	boolean c;
 	int d;
 };
+
+// Bug 3515330
+namespace RoosterNamespace
+{
+    class RoosterOuterClass
+    {
+    public:
+        int member1;
+
+        class RoosterSubClass1
+        {
+        public:
+            int publicMember1;
+        private:
+            int privateMember1;
+        };
+
+    private:
+        int member2;
+        class RoosterSubClass2
+        {
+        public:
+            int publicMember2;
+        private:
+            int privateMember2;
+        };
+    };
+}

@@ -1879,9 +1879,9 @@ class CppHeader( _CppHeader ):
                     elif tok.value in supportedAccessSpecifier:
                         if len(self.nameStack) and self.nameStack[0] in ("class", "struct", "union"):
                             self.nameStack.append(tok.value)
-                        elif self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == len(self.curClass.split("::")):
+                        elif self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == (len(self.nameSpaces) + len(self.curClass.split("::"))):
                             self.curAccessSpecifier = tok.value;
-                            debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier) 
+                            debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier)
                         self.stack = []
                     else:
                         self.nameStack.append(tok.value)
