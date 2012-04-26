@@ -1953,7 +1953,7 @@ class CppHeader( _CppHeader ):
                     self.evaluate_method_stack()
         elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
-            if self.nameStack[0] in ('class', 'struct'): self.evalute_forward_decl()
+            if self.nameStack[0] in ('class', 'struct') and len(self.stack) == 3: self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 

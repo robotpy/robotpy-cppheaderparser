@@ -298,3 +298,11 @@ extern "C" {
 		ExternClass();
 	}
 };
+
+// Bug 3514671
+struct OliveStruct{
+	struct other* a;
+	void* b;
+	boolean c;
+	int d;
+};

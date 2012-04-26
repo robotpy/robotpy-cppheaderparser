@@ -814,8 +814,22 @@ class CarrotClass_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
-    def test_num_private_properties(self):
+    def test_num_private_methods(self):
         self.assertEqual(len(self.cppHeader.classes["ExternClass"]["methods"]["private"]), 1)
+
+
+# Bug 3517289
+class OliveStruct_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_properties(self):
+        self.assertEqual(len(self.cppHeader.classes["OliveStruct"]["properties"]["public"]), 4)
+    
+    def test_var_a(self):
+        self.assertEqual(self.cppHeader.classes["OliveStruct"]["properties"]["public"][0]["name"], "a")
+
 
 if __name__ == '__main__':
     unittest.main()
