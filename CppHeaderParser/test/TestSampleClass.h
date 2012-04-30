@@ -334,3 +334,49 @@ namespace RoosterNamespace
         };
     };
 }
+
+
+// Bug 3514672
+class OperatorClass
+{
+public:
+    void operator= (const Sample25Class&);
+    void operator-= (const Sample25Class&);
+    void operator+=();
+    void operator[]();
+    bool operator == (const int &b);
+    operator+();
+    void operator-();
+    void operator*();
+    void operator\();
+    void operator%();
+    void operator^();
+    void operator|();
+    void operator&();
+    void operator~();
+    void operator<<();
+    void operator>>();
+    void operator!=();
+    void operator<();
+    void operator>();
+    void operator>=();
+    void operator<=();
+    void operator!();
+    void operator&&();
+    void operator||();
+    void operator+=();
+    void operator-=();
+    void operator*=();
+    void operator\=();
+    void operator%=();
+    void operator&=();
+    void operator|=();
+    void operator^=();
+    void operator<<=();
+    void operator>>=();
+    void operator++();
+    void operator--();
+    void operator()();
+    void operator->();
+    void operator,();
+};

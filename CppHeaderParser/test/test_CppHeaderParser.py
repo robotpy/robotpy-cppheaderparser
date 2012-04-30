@@ -856,6 +856,130 @@ class Rooster_TestCase(unittest.TestCase):
         self.assertEqual(len(self.cppHeader.classes["RoosterOuterClass::RoosterSubClass2"]["properties"]["private"]), 1)
 
 
+# Bug 3514672
+class OperatorClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_op_0(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][0]["name"], 'operator=')
+
+    def test_op_1(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][1]["name"], 'operator-=')
+
+    def test_op_2(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][2]["name"], 'operator+=')
+
+    def test_op_3(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][3]["name"], 'operator[]')
+
+    def test_op_4(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][4]["name"], 'operator==')
+
+    def test_op_5(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][5]["name"], 'operator+')
+
+    def test_op_6(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][6]["name"], 'operator-')
+
+    def test_op_7(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][7]["name"], 'operator*')
+
+    def test_op_8(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][8]["name"], 'operator\\')
+
+    def test_op_9(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][9]["name"], 'operator%')
+
+    def test_op_10(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][10]["name"], 'operator^')
+
+    def test_op_11(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][11]["name"], 'operator|')
+
+    def test_op_12(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][12]["name"], 'operator&')
+
+    def test_op_13(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][13]["name"], 'operator~')
+
+    def test_op_14(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][14]["name"], 'operator<<')
+
+    def test_op_15(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][15]["name"], 'operator>>')
+
+    def test_op_16(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][16]["name"], 'operator!=')
+
+    def test_op_17(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][17]["name"], 'operator<')
+
+    def test_op_18(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][18]["name"], 'operator>')
+
+    def test_op_19(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][19]["name"], 'operator>=')
+
+    def test_op_20(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][20]["name"], 'operator<=')
+
+    def test_op_21(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][21]["name"], 'operator!')
+
+    def test_op_22(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][22]["name"], 'operator&&')
+
+    def test_op_23(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][23]["name"], 'operator||')
+
+    def test_op_24(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][24]["name"], 'operator+=')
+
+    def test_op_25(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][25]["name"], 'operator-=')
+
+    def test_op_26(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][26]["name"], 'operator*=')
+
+    def test_op_27(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][27]["name"], 'operator\\=')
+
+    def test_op_28(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][28]["name"], 'operator%=')
+
+    def test_op_29(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][29]["name"], 'operator&=')
+
+    def test_op_30(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][30]["name"], 'operator|=')
+
+    def test_op_31(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][31]["name"], 'operator^=')
+
+    def test_op_32(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][32]["name"], 'operator<<=')
+
+    def test_op_33(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][33]["name"], 'operator>>=')
+
+    def test_op_34(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][34]["name"], 'operator++')
+
+    def test_op_35(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][35]["name"], 'operator--')
+
+    def test_op_36(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][36]["name"], 'operator()')
+
+    def test_op_37(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][37]["name"], 'operator->')
+
+    def test_op_38(self):
+        self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][38]["name"], 'operator,')
+
+
 if __name__ == '__main__':
     unittest.main()
 

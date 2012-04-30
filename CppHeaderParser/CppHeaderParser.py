@@ -73,6 +73,12 @@ tokens = [
     'COLON',
     'SEMI_COLON',
     'COMMA',
+    'TAB',
+    'BACKSLASH',
+    'PIPE',
+    'PERCENT',
+    'EXCLAMATION',
+    'CARET',
     'COMMENT_SINGLELINE',
     'COMMENT_MULTILINE',
     'PRECOMP_MACRO',
@@ -85,14 +91,12 @@ tokens = [
     'DIVIDE', 
     'CHAR_LITERAL', 
     'STRING_LITERAL',
-    'OPERATOR_DIVIDE_OVERLOAD', 
     'NEW_LINE',
 ]
 
-t_ignore = " \t\r.|!?%@'^\\"        # harts hack (litteral backslash is a bad idea?) - old version: " \t\r[].|!?%@"
+t_ignore = " \r.?@'"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
-t_OPERATOR_DIVIDE_OVERLOAD = r'/='
 t_OPEN_PAREN = r'\('
 t_CLOSE_PAREN = r'\)'
 t_OPEN_BRACE = r'{'
@@ -102,6 +106,12 @@ t_CLOSE_SQUARE_BRACKET = r'\]'
 t_SEMI_COLON = r';'
 t_COLON = r':'
 t_COMMA = r','
+t_TAB = r'\t'
+t_BACKSLASH = r'\\'
+t_PIPE = r'\|'
+t_PERCENT = r'%'
+t_CARET = r'\^'
+t_EXCLAMATION = r'!'
 t_PRECOMP_MACRO = r'\#.*'
 t_PRECOMP_MACRO_CONT = r'.*\\\n'
 def t_COMMENT_SINGLELINE(t):
@@ -215,7 +225,7 @@ def is_method_namestack(stack):
         elif '{' in stack: r = True    # ideally we catch both braces... TODO
     else: r = False
     #Test for case of property set to somehting with parens such as "static const int CONST_A = (1 << 7) - 1;"
-    if r and "(" in stack and "=" in stack:
+    if r and "(" in stack and "=" in stack and 'operator' not in stack:
         if stack.index("=") < stack.index("("): r = False
     return r
 
@@ -1405,51 +1415,7 @@ class _CppHeader( Resolver ):
         self.curStruct = struct
         self._structs_brace_level[ struct['type'] ] = self.braceDepth
 
-    ## python style ##
-    PYTHON_OPERATOR_MAP = {
-        '()' : '__call__',
-        '[]' : '__getitem__',
-        '<'    :    '__lt__',
-        '<='    :    '__le__',
-        '=='    :    '__eq__',
-        '!='    :    '__ne__',
-        '>'    :    '__gt__',
-        '>='    :    '__ge__',
-        '+'    :    '__add__',
-        '-'    :    '__sub__',
-        '*'    :    '__mul__',
-        '%'    :    '__divmod__',
-        '**'    :    '__pow__',
-        '>>'    :    '__lshift__',
-        '<<'    :    '__rshift__',
-        '&'    :    '__and__',
-        '^'    :    '__xor__',
-        '|'    :    '__or__',
-        '+='    :    '__iadd__',
-        '-='    :    '__isub__',
-        '*='    :    '__imult__',
-        '/='    :    '__idiv__',
-        '%='    :    '__imod__',
-        '**='    :    '__ipow__',
-        '<<='    :    '__ilshift__',
-        '>>='    :    '__irshift__',
-        '&='    :    '__iand__',
-        '^='    :    '__ixor__',
-        '|='    :    '__ior__',
-        #__neg__ __pos__ __abs__; what are these in c++?
-        '~'    :    '__invert__',
-        '.'    :    '__getattr__',
-    }
-    OPERATOR_MAP = {    # do not use double under-scores so no conflicts with python #
-        '='    :    '_assignment_',
-        '->'    :    '_select_member_',
-        '++'    :    '_increment_',
-        '--'    :    '_deincrement_',
-        'new'    :    '_new_',
-        'delete' :    '_delete_',
-    }
-    OPERATOR_MAP.update( PYTHON_OPERATOR_MAP )
-
+    
     def parse_method_type( self, stack ):
         trace_print( 'meth type info', stack )
         if stack[0] in ':;': stack = stack[1:]
@@ -1487,16 +1453,15 @@ class _CppHeader( Resolver ):
             op = stack[ stack.index('operator')+1 : stack.index('(') ]
             op = ''.join(op)
             if not op:
-                trace_print( 'TODO - parse [] and () operators' )
-                return None
-            else:
-                info['operator'] = op
-                if op in self.OPERATOR_MAP:
-                    name = '__operator__' + self.OPERATOR_MAP[ op ]
-                    a = stack[ : stack.index('operator') ]
+                if " ".join(['operator', '(', ')', '(']) in " ".join(stack):
+                    op = "()"
                 else:
-                    trace_print('ERROR - not a C++ operator', op)
+                    trace_print( 'Error parsing operator')
                     return None
+            
+            info['operator'] = op
+            name = 'operator' + op
+            a = stack[ : stack.index('operator') ]
 
         elif r:
             name = r[-1]
@@ -1861,9 +1826,20 @@ class CppHeader( _CppHeader ):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'CLOSE_SQUARE_BRACKET'):
                     self.nameStack.append(tok.value)
+                elif (tok.type == 'TAB'): pass
                 elif (tok.type == 'EQUALS'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'COMMA'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'BACKSLASH'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'PIPE'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'PERCENT'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'CARET'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'EXCLAMATION'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'NUMBER'):
                     self.nameStack.append(tok.value)
@@ -1908,6 +1884,14 @@ class CppHeader( _CppHeader ):
         """Evaluates the current name stack"""
         global doxygenCommentCache
         debug_print( "Evaluating stack %s\n       BraceDepth: %s (called from %d)" %(self.nameStack,self.braceDepth, inspect.currentframe().f_back.f_lineno))
+        
+        #Handle special case of overloading operator ()
+        if "operator()(" in "".join(self.nameStack):
+            operator_index = self.nameStack.index("operator")
+            self.nameStack.pop(operator_index + 2)
+            self.nameStack.pop(operator_index + 1)
+            self.nameStack[operator_index] = "operator()"
+        
         if (len(self.curClass)):
             debug_print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
 
