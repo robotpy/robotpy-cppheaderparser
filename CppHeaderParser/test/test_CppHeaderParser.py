@@ -997,6 +997,32 @@ class CrowClass_TestCase(unittest.TestCase):
     def tearDown(self):
         CppHeaderParser.supportedAccessSpecifier = self.savedSupportedAccessSpecifier
 
+
+# Bug 3497170
+class DriverFuncs_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_name_0(self):
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][0]["name"], "init")
+        
+    def test_type_0(self):
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][0]["type"], "void * ( * ) ( )")
+    
+    def test_function_pointer_field_0(self):
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][0]["function_pointer"], 1)
+        
+    def test_name_1(self):
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["name"], "write")
+        
+    def test_type_1(self):
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["type"], "void ( * ) ( void * buf , int buflen )")
+    
+    def test_function_pointer_field_1(self):
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["function_pointer"], 1)
+    
+        
 if __name__ == '__main__':
     unittest.main()
 

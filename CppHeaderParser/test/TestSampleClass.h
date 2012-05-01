@@ -390,3 +390,9 @@ public:
 public slots:
     void testSlot(int i);
 };
+
+// Bug 3497170
+struct DriverFuncs {
+    void* (*init) ();
+    void (*write) (void *buf, int buflen);
+};

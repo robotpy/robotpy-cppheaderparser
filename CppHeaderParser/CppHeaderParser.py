@@ -212,6 +212,28 @@ def is_fundamental(s):
         if a not in 'size_t struct union unsigned signed bool char short int float double long void *': return False
     return True
 
+def is_function_pointer_stack(stack):
+    """Count how many non-nested paranthesis are in the stack.  Useful for determining if a stack is a function pointer"""
+    paren_depth = 0
+    paren_count = 0
+    star_after_first_paren = False
+    last_e = None
+    for e in stack:
+        if e == "(":
+            paren_depth += 1
+        elif e == ")" and paren_depth > 0:
+            paren_depth -= 1
+            if paren_depth == 0:
+                paren_count += 1
+        elif e == "*" and last_e == "(" and paren_count == 0 and paren_depth == 1:
+            star_after_first_paren = True
+        last_e = e
+        
+    if star_after_first_paren and paren_count == 2:
+        return True
+    else:
+        return False
+
 def is_method_namestack(stack):
     r = False
     if '(' not in stack: r = False
@@ -221,18 +243,24 @@ def is_method_namestack(stack):
     elif '{' in stack and stack.index('{') < stack.index('('): r = False    # struct that looks like a method/class
     elif '(' in stack and ')' in stack:
         if '{' in stack and '}' in stack: r = True
-        elif stack[-1] == ';': r = True
+        elif stack[-1] == ';':
+            if is_function_pointer_stack(stack):
+                r = False
+            else:
+                r = True
         elif '{' in stack: r = True    # ideally we catch both braces... TODO
     else: r = False
-    #Test for case of property set to somehting with parens such as "static const int CONST_A = (1 << 7) - 1;"
+    #Test for case of property set to something with parens such as "static const int CONST_A = (1 << 7) - 1;"
     if r and "(" in stack and "=" in stack and 'operator' not in stack:
         if stack.index("=") < stack.index("("): r = False
     return r
 
-def is_property_namestack(mameStack):
+def is_property_namestack(nameStack):
     r = False
-    if '(' not in mameStack and ')' not in mameStack: r = True
-    elif "(" in mameStack and "=" in mameStack and mameStack.index("=") < mameStack.index("("): r = True
+    if '(' not in nameStack and ')' not in nameStack: r = True
+    elif "(" in nameStack and "=" in nameStack and nameStack.index("=") < nameStack.index("("): r = True
+    #See if we are a function pointer
+    if not r and is_function_pointer_stack(nameStack): r = True
     return r
 
 class CppParseError(Exception): pass
@@ -739,10 +767,17 @@ class CppVariable( _CppVariable ):
             doxygenCommentCache = ""
 
         debug_print( "Variable: %s"%nameStack )
+        
+        self["function_pointer"] = 0
 
         if (len(nameStack) < 2):    # +++
             if len(nameStack) == 1: self['type'] = nameStack[0]; self['name'] = ''
             else: error_print(_stack_); assert 0
+
+        elif is_function_pointer_stack(nameStack): #function pointer
+            self["type"] = " ".join(nameStack[:nameStack.index("(") + 2] + nameStack[nameStack.index(")")  :])
+            self["name"] = " ".join(nameStack[nameStack.index("(") + 2 : nameStack.index(")")])
+            self["function_pointer"] = 1
 
         elif ("=" in nameStack):
             self["type"] = " ".join(nameStack[:nameStack.index("=") - 1])
