@@ -980,6 +980,23 @@ class OperatorClass_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][38]["name"], 'operator,')
 
 
+# Bug 3514672
+class CrowClass_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.savedSupportedAccessSpecifier = CppHeaderParser.supportedAccessSpecifier
+        CppHeaderParser.supportedAccessSpecifier.append("public  slots ")#intentionally add expra spaces to make sure they get cleaned up
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["CrowClass"]["methods"]["public"]), 1)
+    
+    def test_num_public_slot_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["CrowClass"]["methods"]["public slots"]), 1)
+    
+    def tearDown(self):
+        CppHeaderParser.supportedAccessSpecifier = self.savedSupportedAccessSpecifier
+
 if __name__ == '__main__':
     unittest.main()
 

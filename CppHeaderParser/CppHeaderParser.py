@@ -1740,6 +1740,7 @@ class CppHeader( _CppHeader ):
         self.nameSpaces = []
         self.curAccessSpecifier = 'private'    # private is default
         self.accessSpecifierStack = []
+        self.accessSpecifierScratch = []
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         self.initextra()
     
@@ -1747,6 +1748,11 @@ class CppHeader( _CppHeader ):
             fd = open(self.headerFileName)
             headerFileStr = "".join(fd.readlines())
             fd.close()     
+        
+        # Make sure supportedAccessSpecifier are sane
+        for i in range(0, len(supportedAccessSpecifier)):
+            if " " not in supportedAccessSpecifier[i]: continue
+            supportedAccessSpecifier[i] = re.sub("[ ]+", " ", supportedAccessSpecifier[i]).strip()
         
         # Strip out template declarations
         headerFileStr = re.sub("template[\t ]*<[^>]*>", "", headerFileStr)
@@ -1857,6 +1863,7 @@ class CppHeader( _CppHeader ):
                             self.nameStack.append(tok.value)
                         elif self.braceDepth == len(self.nameSpaces) + 1 or self.braceDepth == (len(self.nameSpaces) + len(self.curClass.split("::"))):
                             self.curAccessSpecifier = tok.value;
+                            self.accessSpecifierScratch.append(tok.value)
                             debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier)
                         self.stack = []
                     else:
@@ -1864,8 +1871,18 @@ class CppHeader( _CppHeader ):
                 elif (tok.type == 'COLON'):
                     #Dont want colon to be first in stack
                     if len(self.nameStack) == 0:
+                        self.accessSpecifierScratch = []
                         continue
-                    self.nameStack.append(tok.value)
+                    
+                    # Handle situation where access specifiers can be multi words such as "public slots"
+                    jns = " ".join(self.accessSpecifierScratch + self.nameStack)
+                    if jns in supportedAccessSpecifier:
+                        self.curAccessSpecifier = jns;
+                        debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier)
+                        self.stack = []
+                    else:
+                        self.nameStack.append(tok.value)
+                    self.accessSpecifierScratch = []
 
                 elif (tok.type == 'SEMI_COLON'):
                     if (self.braceDepth < 10): self.evaluate_stack( tok.type )

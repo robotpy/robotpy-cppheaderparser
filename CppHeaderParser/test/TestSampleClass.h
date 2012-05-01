@@ -380,3 +380,13 @@ public:
     void operator->();
     void operator,();
 };
+
+// Feature request 3519502
+class CrowClass
+{
+public:
+    int meth();
+
+public slots:
+    void testSlot(int i);
+};
