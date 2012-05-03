@@ -1025,7 +1025,22 @@ class DriverFuncs_TestCase(unittest.TestCase):
     def test_function_pointer_field_1(self):
         self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["function_pointer"], 1)
     
-        
+
+# Bug 3519178
+class Snail_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_rtn_type(self):
+        self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["rtnType"], "SnailNamespace::SnailClass")
+    
+    def test_param_name(self):
+        self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["parameters"][0]["name"], "")
+    
+    def test_param_name(self):
+        self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["parameters"][0]["type"], "tr1::shared_ptr<SnailTemplateClass<SnailNamespace::SnailClass>>")
+
 if __name__ == '__main__':
     unittest.main()
 

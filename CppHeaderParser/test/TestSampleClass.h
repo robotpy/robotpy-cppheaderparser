@@ -396,3 +396,21 @@ struct DriverFuncs {
     void* (*init) ();
     void (*write) (void *buf, int buflen);
 };
+
+// Bug 3519178
+template<class T> SnailTemplateClass
+{
+};
+
+namespace SnailNamespace2
+{
+    class SnailClass
+    {
+    };
+}
+
+class Snail2Class
+{
+public:
+    SnailNamespace::SnailClass meth(tr1::shared_ptr<SnailTemplateClass<SnailNamespace::SnailClass> >);
+};

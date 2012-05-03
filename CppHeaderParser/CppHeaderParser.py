@@ -209,7 +209,7 @@ def is_enum_namestack(nameStack):
 
 def is_fundamental(s):
     for a in s.split():
-        if a not in 'size_t struct union unsigned signed bool char short int float double long void *': return False
+        if a not in ["size_t", "struct", "union", "unsigned", "signed", "bool", "char", "short", "int", "float", "double", "long", "void", "*"]: return False
     return True
 
 def is_function_pointer_stack(stack):
@@ -657,6 +657,8 @@ class CppMethod( _CppMethod ):
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
         
+        self["rtnType"] = self["rtnType"].replace(' : : ', '::' )
+        
 
         self.update( methinfo )
 
@@ -785,9 +787,10 @@ class CppVariable( _CppVariable ):
             self["defaltValue"] = " ".join(nameStack[nameStack.index("=") + 1:])    # deprecate camelCase in dicts
             self['default'] = " ".join(nameStack[nameStack.index("=") + 1:])
 
-        elif nameStack[-1] == '*':        # rare case - function param is an unnamed pointer: "void somemethod( SomeObject* )"
-            self['type'] = ' '.join(nameStack)
-            self['name'] = ''
+        elif is_fundamental(nameStack[-1]) or nameStack[-1] in ['>', '<' , ':', '.']:
+            #Un named parameter
+            self["type"] = " ".join(nameStack)
+            self["name"] = ""
 
         else:    # common case
             self["type"] = " ".join(nameStack[:-1])
@@ -1455,7 +1458,7 @@ class _CppHeader( Resolver ):
         trace_print( 'meth type info', stack )
         if stack[0] in ':;': stack = stack[1:]
         info = { 
-            'debug': ' '.join(stack), 
+            'debug': ' '.join(stack).replace(' : : ', '::' ).replace(' < ', '<' ).replace(' > ', '> ' ), 
             'class':None, 
             'namespace':self.cur_namespace(add_double_colon=True),
         }
