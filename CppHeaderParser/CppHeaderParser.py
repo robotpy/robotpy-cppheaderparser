@@ -1915,6 +1915,7 @@ class CppHeader( _CppHeader ):
                         self.curAccessSpecifier = jns;
                         debug_print("curAccessSpecifier updated to %s"%self.curAccessSpecifier)
                         self.stack = []
+                        self.nameStack = []
                     else:
                         self.nameStack.append(tok.value)
                     self.accessSpecifierScratch = []

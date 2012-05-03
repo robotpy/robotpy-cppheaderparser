@@ -980,7 +980,7 @@ class OperatorClass_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["OperatorClass"]["methods"]["public"][38]["name"], 'operator,')
 
 
-# Bug 3514672
+# Feature Request 3519502 & 3523010
 class CrowClass_TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -990,7 +990,10 @@ class CrowClass_TestCase(unittest.TestCase):
 
     def test_num_public_methods(self):
         self.assertEqual(len(self.cppHeader.classes["CrowClass"]["methods"]["public"]), 1)
-    
+
+    def test_rtntype_public_slot_method(self):
+        self.assertEqual(self.cppHeader.classes["CrowClass"]["methods"]["public slots"][0]["rtnType"], 'void')
+
     def test_num_public_slot_methods(self):
         self.assertEqual(len(self.cppHeader.classes["CrowClass"]["methods"]["public slots"]), 1)
     
