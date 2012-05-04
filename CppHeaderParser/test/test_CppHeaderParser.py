@@ -1041,6 +1041,15 @@ class Snail_TestCase(unittest.TestCase):
     def test_param_name(self):
         self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["parameters"][0]["type"], "tr1::shared_ptr<SnailTemplateClass<SnailNamespace::SnailClass>>")
 
+# Feature Request 3523198
+class Quale_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_rtn_type(self):
+        self.assertEqual(self.cppHeader.classes["QualeClass"]["methods"]["private"][0]["rtnType"], "void")
+
 if __name__ == '__main__':
     unittest.main()
 

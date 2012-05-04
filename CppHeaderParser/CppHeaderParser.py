@@ -184,6 +184,11 @@ supportedAccessSpecifier = [
     'private'
 ]
 
+#Symbols to ignore, usually special macros
+ignoreSymbols = [
+    'Q_OBJECT',
+]
+
 doxygenCommentCache = ""
 
 #Track what was added in what order and at what depth
@@ -1894,7 +1899,9 @@ class CppHeader( _CppHeader ):
                 elif (tok.type == 'STRING_LITERAL'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'NAME' or tok.type == 'AMPERSTAND' or tok.type == 'ASTERISK'):
-                    if (tok.value == 'class'):
+                    if tok.value in ignoreSymbols:
+                        debug_print("Ignore symbol %s"%tok.value)
+                    elif (tok.value == 'class'):
                         self.nameStack.append(tok.value)
                     elif tok.value in supportedAccessSpecifier:
                         if len(self.nameStack) and self.nameStack[0] in ("class", "struct", "union"):

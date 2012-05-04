@@ -414,3 +414,10 @@ class Snail2Class
 public:
     SnailNamespace::SnailClass meth(tr1::shared_ptr<SnailTemplateClass<SnailNamespace::SnailClass> >);
 };
+
+// Feature Request 3523198
+class QualeClass : public QObject
+{
+    Q_OBJECT
+    void func();
+};
