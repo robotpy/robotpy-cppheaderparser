@@ -664,6 +664,7 @@ class CppMethod( _CppMethod ):
         
         self["rtnType"] = self["rtnType"].replace(' : : ', '::' )
         
+        self["const"] = (nameStack[-1] == "const")        
 
         self.update( methinfo )
 

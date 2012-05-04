@@ -1050,6 +1050,19 @@ class Quale_TestCase(unittest.TestCase):
     def test_rtn_type(self):
         self.assertEqual(self.cppHeader.classes["QualeClass"]["methods"]["private"][0]["rtnType"], "void")
 
+
+# Feature Request 3523235
+class Rock_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_const_0(self):
+        self.assertEqual(self.cppHeader.classes["RockClass"]["methods"]["private"][0]["const"], True)
+    
+    def test_const_1(self):
+        self.assertEqual(self.cppHeader.classes["RockClass"]["methods"]["private"][1]["const"], False)
+
 if __name__ == '__main__':
     unittest.main()
 

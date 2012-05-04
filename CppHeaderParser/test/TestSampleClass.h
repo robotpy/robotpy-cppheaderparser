@@ -421,3 +421,10 @@ class QualeClass : public QObject
     Q_OBJECT
     void func();
 };
+
+// Feature Request 3523235
+class RockClass
+{
+    int getNum() const;
+    int getNum2();
+};
