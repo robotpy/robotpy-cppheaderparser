@@ -428,3 +428,11 @@ class RockClass
     int getNum() const;
     int getNum2();
 };
+
+// Bug 3523196
+class AlmondClass
+{
+public:
+    std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > > meth(bool flag,
+            std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > > bigArg);
+};

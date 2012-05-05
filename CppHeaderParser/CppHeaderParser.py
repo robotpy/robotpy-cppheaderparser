@@ -663,6 +663,9 @@ class CppMethod( _CppMethod ):
             self["rtnType"] = "void"
         
         self["rtnType"] = self["rtnType"].replace(' : : ', '::' )
+        self["rtnType"] = self["rtnType"].replace(" <","<")
+        self["rtnType"] = self["rtnType"].replace(" >",">").replace(">>", "> >").replace(">>", "> >")
+        self["rtnType"] = self["rtnType"].replace(" ,",",")
         
         self["const"] = (nameStack[-1] == "const")        
 
@@ -701,10 +704,24 @@ class CppMethod( _CppMethod ):
         
         #Create the variable now
         while (len(paramsStack)):
-            if (',' in paramsStack):
-                param = CppVariable(paramsStack[0:paramsStack.index(',')],  doxyVarDesc=doxyVarDesc)
+            # Find commas that are not nexted in <>'s like template types
+            open_template_count = 0
+            param_separator = 0
+            i = 0
+            for elm in paramsStack:
+                if '<' in elm :
+                    open_template_count += 1
+                elif '>' in elm:
+                    open_template_count -= 1
+                elif elm == ',' and open_template_count == 0:
+                    param_separator = i
+                    break
+                i += 1
+            
+            if param_separator:
+                param = CppVariable(paramsStack[0:param_separator],  doxyVarDesc=doxyVarDesc)
                 if len(param.keys()): params.append(param)
-                paramsStack = paramsStack[paramsStack.index(',') + 1:]
+                paramsStack = paramsStack[param_separator + 1:]
             else:
                 param = CppVariable(paramsStack,  doxyVarDesc=doxyVarDesc)
                 if len(param.keys()): params.append(param)
@@ -805,7 +822,8 @@ class CppVariable( _CppVariable ):
         self["type"] = self["type"].replace(" :",":")
         self["type"] = self["type"].replace(": ",":")
         self["type"] = self["type"].replace(" <","<")
-        self["type"] = self["type"].replace(" >",">")
+        self["type"] = self["type"].replace(" >",">").replace(">>", "> >").replace(">>", "> >")
+        self["type"] = self["type"].replace(" ,",",")
         #Optional doxygen description
         try:
             self["desc"] = kwargs["doxyVarDesc"][self["name"]]
@@ -1464,7 +1482,7 @@ class _CppHeader( Resolver ):
         trace_print( 'meth type info', stack )
         if stack[0] in ':;': stack = stack[1:]
         info = { 
-            'debug': ' '.join(stack).replace(' : : ', '::' ).replace(' < ', '<' ).replace(' > ', '> ' ), 
+            'debug': ' '.join(stack).replace(' : : ', '::' ).replace(' < ', '<' ).replace(' > ', '> ' ).replace(" >",">").replace(">>", "> >").replace(">>", "> >"), 
             'class':None, 
             'namespace':self.cur_namespace(add_double_colon=True),
         }

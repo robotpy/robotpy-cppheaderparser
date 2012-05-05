@@ -1020,7 +1020,7 @@ class DriverFuncs_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["name"], "write")
         
     def test_type_1(self):
-        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["type"], "void ( * ) ( void * buf , int buflen )")
+        self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["type"], "void ( * ) ( void * buf, int buflen )")
     
     def test_function_pointer_field_1(self):
         self.assertEqual(self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["function_pointer"], 1)
@@ -1039,7 +1039,7 @@ class Snail_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["parameters"][0]["name"], "")
     
     def test_param_name(self):
-        self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["parameters"][0]["type"], "tr1::shared_ptr<SnailTemplateClass<SnailNamespace::SnailClass>>")
+        self.assertEqual(self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["parameters"][0]["type"], "tr1::shared_ptr<SnailTemplateClass<SnailNamespace::SnailClass> >")
 
 # Feature Request 3523198
 class Quale_TestCase(unittest.TestCase):
@@ -1062,6 +1062,30 @@ class Rock_TestCase(unittest.TestCase):
     
     def test_const_1(self):
         self.assertEqual(self.cppHeader.classes["RockClass"]["methods"]["private"][1]["const"], False)
+
+
+# Bug 3523196
+class Almond_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_rtn_type(self):
+        self.assertEqual(self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["rtnType"], "std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > >")
+ 
+    def test_param_1_name(self):
+        self.assertEqual(self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["parameters"][0]["name"], "flag")
+     
+    def test_param_1_type(self):
+        self.assertEqual(self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["parameters"][0]["type"], "bool")
+     
+    def test_param_2_name(self):
+        self.assertEqual(self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["parameters"][1]["name"], "bigArg")
+    
+    def test_param_2_type(self):
+        self.assertEqual(self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["parameters"][1]["type"], "std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > >")
+ 
+
 
 if __name__ == '__main__':
     unittest.main()
