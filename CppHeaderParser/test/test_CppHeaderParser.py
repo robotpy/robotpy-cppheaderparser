@@ -1084,6 +1084,19 @@ class Almond_TestCase(unittest.TestCase):
     
     def test_param_2_type(self):
         self.assertEqual(self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["parameters"][1]["type"], "std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > >")
+
+
+# Bug 3524327
+class Stone_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_const_0(self):
+        self.assertEqual(self.cppHeader.classes["StoneClass"]["methods"]["private"][0]["const"], True)
+    
+    def test_const_1(self):
+        self.assertEqual(self.cppHeader.classes["StoneClass"]["methods"]["private"][1]["const"], False)
  
 
 

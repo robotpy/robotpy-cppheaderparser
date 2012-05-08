@@ -667,7 +667,13 @@ class CppMethod( _CppMethod ):
         self["rtnType"] = self["rtnType"].replace(" >",">").replace(">>", "> >").replace(">>", "> >")
         self["rtnType"] = self["rtnType"].replace(" ,",",")
         
-        self["const"] = (nameStack[-1] == "const")        
+        self["const"] = False
+        for i in reversed(nameStack):
+            if i == "const":
+                self["const"] = True
+                break
+            elif i == ")":
+                break        
 
         self.update( methinfo )
 

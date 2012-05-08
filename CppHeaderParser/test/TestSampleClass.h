@@ -436,3 +436,10 @@ public:
     std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > > meth(bool flag,
             std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > > bigArg);
 };
+
+// Bug 3524327
+class StoneClass
+{
+    virtual int getNum2() const = 0;
+    int getNum3();
+};
