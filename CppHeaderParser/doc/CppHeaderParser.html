@@ -6,7 +6,7 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.0)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.1)</font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py">/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py</a></font></td></tr></table>
     <p><tt>Parse&nbsp;C++&nbsp;header&nbsp;files&nbsp;and&nbsp;generate&nbsp;a&nbsp;data&nbsp;structure<br>
@@ -59,7 +59,12 @@ representing&nbsp;the&nbsp;class</tt></p>
 </font></dt><dd>
 <dl>
 <dt><font face="helvetica, arial"><a href="CppHeaderParser.html#CppClass">CppClass</a>
-</font></dt><dt><font face="helvetica, arial"><a href="CppHeaderParser.html#CppStruct">CppStruct</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="CppHeaderParser.html#CppUnion">CppUnion</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="CppHeaderParser.html#CppStruct">CppStruct</a>
 </font></dt></dl>
 </dd>
 <dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
@@ -424,12 +429,6 @@ Methods inherited from <a href="CppHeaderParser.html#_CppHeader">_CppHeader</a>:
 <dl><dt><a name="CppHeader-parse_method_type"><strong>parse_method_type</strong></a>(self, stack)</dt></dl>
 
 <hr>
-Data and other attributes inherited from <a href="CppHeaderParser.html#_CppHeader">_CppHeader</a>:<br>
-<dl><dt><strong>OPERATOR_MAP</strong> = {'!=': '__ne__', '%': '__divmod__', '%=': '__imod__', '&amp;': '__and__', '&amp;=': '__iand__', '()': '__call__', '*': '__mul__', '**': '__pow__', '**=': '__ipow__', '*=': '__imult__', ...}</dl>
-
-<dl><dt><strong>PYTHON_OPERATOR_MAP</strong> = {'!=': '__ne__', '%': '__divmod__', '%=': '__imod__', '&amp;': '__and__', '&amp;=': '__iand__', '()': '__call__', '*': '__mul__', '**': '__pow__', '**=': '__ipow__', '*=': '__imult__', ...}</dl>
-
-<hr>
 Methods inherited from <a href="CppHeaderParser.html#Resolver">Resolver</a>:<br>
 <dl><dt><a name="CppHeader-concrete_typedef"><strong>concrete_typedef</strong></a>(self, key)</dt></dl>
 
@@ -602,7 +601,7 @@ Data descriptors defined here:<br>
 </dl>
 <hr>
 Methods inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
-<dl><dt><a name="CppParseError-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#CppParseError-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;x.__class__.__doc__&nbsp;for&nbsp;signature</tt></dd></dl>
+<dl><dt><a name="CppParseError-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#CppParseError-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;help(type(x))&nbsp;for&nbsp;signature</tt></dd></dl>
 
 <hr>
 Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
@@ -748,6 +747,143 @@ Data and other attributes inherited from <a href="__builtin__.html#dict">__built
 <dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#CppStruct-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
 
 <dl><dt><strong>fromkeys</strong> = &lt;built-in method fromkeys of type object&gt;<dd><tt><a href="__builtin__.html#dict">dict</a>.<a href="#CppStruct-fromkeys">fromkeys</a>(S[,v])&nbsp;-&gt;&nbsp;New&nbsp;<a href="__builtin__.html#dict">dict</a>&nbsp;with&nbsp;keys&nbsp;from&nbsp;S&nbsp;and&nbsp;values&nbsp;equal&nbsp;to&nbsp;v.<br>
+v&nbsp;defaults&nbsp;to&nbsp;None.</tt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="CppUnion">class <strong>CppUnion</strong></a>(<a href="CppHeaderParser.html#CppClass">CppClass</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Takes&nbsp;a&nbsp;name&nbsp;stack&nbsp;and&nbsp;turns&nbsp;it&nbsp;into&nbsp;a&nbsp;union<br>
+&nbsp;<br>
+Contains&nbsp;the&nbsp;following&nbsp;Keys:<br>
+self['name']&nbsp;-&nbsp;Name&nbsp;of&nbsp;the&nbsp;union<br>
+self['doxygen']&nbsp;-&nbsp;Doxygen&nbsp;comments&nbsp;associated&nbsp;with&nbsp;the&nbsp;union&nbsp;if&nbsp;they&nbsp;exist<br>
+self['members']&nbsp;-&nbsp;List&nbsp;of&nbsp;members&nbsp;the&nbsp;union&nbsp;has&nbsp;<br>
+&nbsp;<br>
+An&nbsp;example&nbsp;of&nbsp;how&nbsp;this&nbsp;could&nbsp;look&nbsp;is&nbsp;as&nbsp;follows:<br>
+#self&nbsp;=<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'name':&nbsp;""<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'members':&nbsp;[]<br>
+}<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="CppHeaderParser.html#CppUnion">CppUnion</a></dd>
+<dd><a href="CppHeaderParser.html#CppClass">CppClass</a></dd>
+<dd><a href="__builtin__.html#dict">__builtin__.dict</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="CppUnion-__init__"><strong>__init__</strong></a>(self, nameStack)</dt></dl>
+
+<dl><dt><a name="CppUnion-__repr__"><strong>__repr__</strong></a>(self)</dt><dd><tt>Convert&nbsp;class&nbsp;to&nbsp;a&nbsp;string</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-show"><strong>show</strong></a>(self)</dt><dd><tt>Convert&nbsp;class&nbsp;to&nbsp;a&nbsp;string</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-transform_to_union_keys"><strong>transform_to_union_keys</strong></a>(self)</dt></dl>
+
+<hr>
+Methods inherited from <a href="CppHeaderParser.html#CppClass">CppClass</a>:<br>
+<dl><dt><a name="CppUnion-get_all_method_names"><strong>get_all_method_names</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CppUnion-get_all_methods"><strong>get_all_methods</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CppUnion-get_all_pure_virtual_methods"><strong>get_all_pure_virtual_methods</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CppUnion-get_method_names"><strong>get_method_names</strong></a>(self, type<font color="#909090">='public'</font>)</dt></dl>
+
+<dl><dt><a name="CppUnion-get_pure_virtual_methods"><strong>get_pure_virtual_methods</strong></a>(self, type<font color="#909090">='public'</font>)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="CppHeaderParser.html#CppClass">CppClass</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="__builtin__.html#dict">__builtin__.dict</a>:<br>
+<dl><dt><a name="CppUnion-__cmp__"><strong>__cmp__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__cmp__">__cmp__</a>(y)&nbsp;&lt;==&gt;&nbsp;cmp(x,y)</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__contains__"><strong>__contains__</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-__contains__">__contains__</a>(k)&nbsp;-&gt;&nbsp;True&nbsp;if&nbsp;D&nbsp;has&nbsp;a&nbsp;key&nbsp;k,&nbsp;else&nbsp;False</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__delitem__"><strong>__delitem__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__delitem__">__delitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;del&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__eq__"><strong>__eq__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__eq__">__eq__</a>(y)&nbsp;&lt;==&gt;&nbsp;x==y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__ge__"><strong>__ge__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__ge__">__ge__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&gt;=y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__gt__"><strong>__gt__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__gt__">__gt__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&gt;y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__iter__"><strong>__iter__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__iter__">__iter__</a>()&nbsp;&lt;==&gt;&nbsp;iter(x)</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__le__"><strong>__le__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__le__">__le__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&lt;=y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__len__"><strong>__len__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__len__">__len__</a>()&nbsp;&lt;==&gt;&nbsp;len(x)</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__lt__"><strong>__lt__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__lt__">__lt__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&lt;y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__ne__"><strong>__ne__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__ne__">__ne__</a>(y)&nbsp;&lt;==&gt;&nbsp;x!=y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__setitem__"><strong>__setitem__</strong></a>(...)</dt><dd><tt>x.<a href="#CppUnion-__setitem__">__setitem__</a>(i,&nbsp;y)&nbsp;&lt;==&gt;&nbsp;x[i]=y</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-__sizeof__"><strong>__sizeof__</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-__sizeof__">__sizeof__</a>()&nbsp;-&gt;&nbsp;size&nbsp;of&nbsp;D&nbsp;in&nbsp;memory,&nbsp;in&nbsp;bytes</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-clear"><strong>clear</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-clear">clear</a>()&nbsp;-&gt;&nbsp;None.&nbsp;&nbsp;Remove&nbsp;all&nbsp;items&nbsp;from&nbsp;D.</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-copy"><strong>copy</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-copy">copy</a>()&nbsp;-&gt;&nbsp;a&nbsp;shallow&nbsp;copy&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-get"><strong>get</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-get">get</a>(k[,d])&nbsp;-&gt;&nbsp;D[k]&nbsp;if&nbsp;k&nbsp;in&nbsp;D,&nbsp;else&nbsp;d.&nbsp;&nbsp;d&nbsp;defaults&nbsp;to&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-has_key"><strong>has_key</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-has_key">has_key</a>(k)&nbsp;-&gt;&nbsp;True&nbsp;if&nbsp;D&nbsp;has&nbsp;a&nbsp;key&nbsp;k,&nbsp;else&nbsp;False</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-items"><strong>items</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-items">items</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;D's&nbsp;(key,&nbsp;value)&nbsp;pairs,&nbsp;as&nbsp;2-tuples</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-iteritems"><strong>iteritems</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-iteritems">iteritems</a>()&nbsp;-&gt;&nbsp;an&nbsp;iterator&nbsp;over&nbsp;the&nbsp;(key,&nbsp;value)&nbsp;items&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-iterkeys"><strong>iterkeys</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-iterkeys">iterkeys</a>()&nbsp;-&gt;&nbsp;an&nbsp;iterator&nbsp;over&nbsp;the&nbsp;keys&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-itervalues"><strong>itervalues</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-itervalues">itervalues</a>()&nbsp;-&gt;&nbsp;an&nbsp;iterator&nbsp;over&nbsp;the&nbsp;values&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-keys"><strong>keys</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-keys">keys</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;D's&nbsp;keys</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-pop"><strong>pop</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-pop">pop</a>(k[,d])&nbsp;-&gt;&nbsp;v,&nbsp;remove&nbsp;specified&nbsp;key&nbsp;and&nbsp;return&nbsp;the&nbsp;corresponding&nbsp;value.<br>
+If&nbsp;key&nbsp;is&nbsp;not&nbsp;found,&nbsp;d&nbsp;is&nbsp;returned&nbsp;if&nbsp;given,&nbsp;otherwise&nbsp;KeyError&nbsp;is&nbsp;raised</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-popitem"><strong>popitem</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-popitem">popitem</a>()&nbsp;-&gt;&nbsp;(k,&nbsp;v),&nbsp;remove&nbsp;and&nbsp;return&nbsp;some&nbsp;(key,&nbsp;value)&nbsp;pair&nbsp;as&nbsp;a<br>
+2-tuple;&nbsp;but&nbsp;raise&nbsp;KeyError&nbsp;if&nbsp;D&nbsp;is&nbsp;empty.</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-setdefault"><strong>setdefault</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-setdefault">setdefault</a>(k[,d])&nbsp;-&gt;&nbsp;D.<a href="#CppUnion-get">get</a>(k,d),&nbsp;also&nbsp;set&nbsp;D[k]=d&nbsp;if&nbsp;k&nbsp;not&nbsp;in&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-update"><strong>update</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-update">update</a>(E,&nbsp;**F)&nbsp;-&gt;&nbsp;None.&nbsp;&nbsp;Update&nbsp;D&nbsp;from&nbsp;<a href="__builtin__.html#dict">dict</a>/iterable&nbsp;E&nbsp;and&nbsp;F.<br>
+If&nbsp;E&nbsp;has&nbsp;a&nbsp;.<a href="#CppUnion-keys">keys</a>()&nbsp;method,&nbsp;does:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;k&nbsp;in&nbsp;E:&nbsp;D[k]&nbsp;=&nbsp;E[k]<br>
+If&nbsp;E&nbsp;lacks&nbsp;.<a href="#CppUnion-keys">keys</a>()&nbsp;method,&nbsp;does:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(k,&nbsp;v)&nbsp;in&nbsp;E:&nbsp;D[k]&nbsp;=&nbsp;v<br>
+In&nbsp;either&nbsp;case,&nbsp;this&nbsp;is&nbsp;followed&nbsp;by:&nbsp;for&nbsp;k&nbsp;in&nbsp;F:&nbsp;D[k]&nbsp;=&nbsp;F[k]</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-values"><strong>values</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-values">values</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;D's&nbsp;values</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-viewitems"><strong>viewitems</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-viewitems">viewitems</a>()&nbsp;-&gt;&nbsp;a&nbsp;set-like&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;providing&nbsp;a&nbsp;view&nbsp;on&nbsp;D's&nbsp;items</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-viewkeys"><strong>viewkeys</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-viewkeys">viewkeys</a>()&nbsp;-&gt;&nbsp;a&nbsp;set-like&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;providing&nbsp;a&nbsp;view&nbsp;on&nbsp;D's&nbsp;keys</tt></dd></dl>
+
+<dl><dt><a name="CppUnion-viewvalues"><strong>viewvalues</strong></a>(...)</dt><dd><tt>D.<a href="#CppUnion-viewvalues">viewvalues</a>()&nbsp;-&gt;&nbsp;an&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;providing&nbsp;a&nbsp;view&nbsp;on&nbsp;D's&nbsp;values</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="__builtin__.html#dict">__builtin__.dict</a>:<br>
+<dl><dt><strong>__hash__</strong> = None</dl>
+
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#CppUnion-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<dl><dt><strong>fromkeys</strong> = &lt;built-in method fromkeys of type object&gt;<dd><tt><a href="__builtin__.html#dict">dict</a>.<a href="#CppUnion-fromkeys">fromkeys</a>(S[,v])&nbsp;-&gt;&nbsp;New&nbsp;<a href="__builtin__.html#dict">dict</a>&nbsp;with&nbsp;keys&nbsp;from&nbsp;S&nbsp;and&nbsp;values&nbsp;equal&nbsp;to&nbsp;v.<br>
 v&nbsp;defaults&nbsp;to&nbsp;None.</tt></dl>
 
 </td></tr></table> <p>
@@ -925,10 +1061,14 @@ Data and other attributes defined here:<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><dl><dt><a name="-is_enum_namestack"><strong>is_enum_namestack</strong></a>(nameStack)</dt><dd><tt>Determines&nbsp;if&nbsp;a&nbsp;namestack&nbsp;is&nbsp;an&nbsp;enum&nbsp;namestack</tt></dd></dl>
+<td width="100%"><dl><dt><a name="-debug_print"><strong>debug_print</strong></a>(arg)</dt></dl>
+ <dl><dt><a name="-error_print"><strong>error_print</strong></a>(arg)</dt></dl>
+ <dl><dt><a name="-is_enum_namestack"><strong>is_enum_namestack</strong></a>(nameStack)</dt><dd><tt>Determines&nbsp;if&nbsp;a&nbsp;namestack&nbsp;is&nbsp;an&nbsp;enum&nbsp;namestack</tt></dd></dl>
+ <dl><dt><a name="-is_function_pointer_stack"><strong>is_function_pointer_stack</strong></a>(stack)</dt><dd><tt>Count&nbsp;how&nbsp;many&nbsp;non-nested&nbsp;paranthesis&nbsp;are&nbsp;in&nbsp;the&nbsp;stack.&nbsp;&nbsp;Useful&nbsp;for&nbsp;determining&nbsp;if&nbsp;a&nbsp;stack&nbsp;is&nbsp;a&nbsp;function&nbsp;pointer</tt></dd></dl>
  <dl><dt><a name="-is_fundamental"><strong>is_fundamental</strong></a>(s)</dt></dl>
  <dl><dt><a name="-is_method_namestack"><strong>is_method_namestack</strong></a>(stack)</dt></dl>
  <dl><dt><a name="-is_namespace"><strong>is_namespace</strong></a>(nameStack)</dt><dd><tt>Determines&nbsp;if&nbsp;a&nbsp;namespace&nbsp;is&nbsp;being&nbsp;specified</tt></dd></dl>
+ <dl><dt><a name="-is_property_namestack"><strong>is_property_namestack</strong></a>(nameStack)</dt></dl>
  <dl><dt><a name="-lineno"><strong>lineno</strong></a>()</dt><dd><tt>Returns&nbsp;the&nbsp;current&nbsp;line&nbsp;number&nbsp;in&nbsp;our&nbsp;program.</tt></dd></dl>
  <dl><dt><a name="-standardize_fundamental"><strong>standardize_fundamental</strong></a>(s)</dt></dl>
  <dl><dt><a name="-t_COMMENT_MULTILINE"><strong>t_COMMENT_MULTILINE</strong></a>(t)</dt><dd><tt>/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/</tt></dd></dl>
@@ -936,6 +1076,7 @@ Data and other attributes defined here:<br>
  <dl><dt><a name="-t_NEWLINE"><strong>t_NEWLINE</strong></a>(t)</dt><dd><tt>\n+</tt></dd></dl>
  <dl><dt><a name="-t_error"><strong>t_error</strong></a>(v)</dt></dl>
  <dl><dt><a name="-trace_print"><strong>trace_print</strong></a>(*arg)</dt></dl>
+ <dl><dt><a name="-warning_print"><strong>warning_print</strong></a>(arg)</dt></dl>
 </td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#55aa55">
@@ -944,32 +1085,43 @@ Data and other attributes defined here:<br>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><strong>C99_NONSTANDARD</strong> = {'int16': 'short int', 'int32': 'int', 'int64': 'int64_t', 'int8': 'signed char', 'uint': 'unsigned int', 'uint16': 'unsigned short int', 'uint32': 'unsigned int', 'uint64': 'uint64_t', 'uint8': 'unsigned char'}<br>
-<strong>__version__</strong> = '2.0'<br>
+<strong>__version__</strong> = '2.1'<br>
 <strong>debug</strong> = 0<br>
 <strong>debug_trace</strong> = 0<br>
 <strong>doxygenCommentCache</strong> = ''<br>
+<strong>ignoreSymbols</strong> = ['Q_OBJECT']<br>
+<strong>parseHistory</strong> = []<br>
+<strong>print_errors</strong> = 1<br>
+<strong>print_warnings</strong> = 1<br>
 <strong>supportedAccessSpecifier</strong> = ['public', 'protected', 'private']<br>
 <strong>t_AMPERSTAND</strong> = '&amp;'<br>
 <strong>t_ASTERISK</strong> = r'\*'<br>
+<strong>t_BACKSLASH</strong> = r'\\'<br>
+<strong>t_CARET</strong> = r'\^'<br>
 <strong>t_CHAR_LITERAL</strong> = "'.'"<br>
 <strong>t_CLOSE_BRACE</strong> = '}'<br>
 <strong>t_CLOSE_PAREN</strong> = r'\)'<br>
+<strong>t_CLOSE_SQUARE_BRACKET</strong> = r'\]'<br>
 <strong>t_COLON</strong> = ':'<br>
 <strong>t_COMMA</strong> = ','<br>
 <strong>t_DIVIDE</strong> = '/[^/]'<br>
 <strong>t_EQUALS</strong> = '='<br>
+<strong>t_EXCLAMATION</strong> = '!'<br>
 <strong>t_MINUS</strong> = r'\-'<br>
 <strong>t_NAME</strong> = '[&lt;&gt;A-Za-z_~][A-Za-z0-9_]*'<br>
 <strong>t_NUMBER</strong> = '[0-9][0-9XxA-Fa-f]*'<br>
 <strong>t_OPEN_BRACE</strong> = '{'<br>
 <strong>t_OPEN_PAREN</strong> = r'\('<br>
-<strong>t_OPERATOR_DIVIDE_OVERLOAD</strong> = '/='<br>
+<strong>t_OPEN_SQUARE_BRACKET</strong> = r'\['<br>
+<strong>t_PERCENT</strong> = '%'<br>
+<strong>t_PIPE</strong> = r'\|'<br>
 <strong>t_PLUS</strong> = r'\+'<br>
 <strong>t_PRECOMP_MACRO</strong> = r'\#.*'<br>
 <strong>t_PRECOMP_MACRO_CONT</strong> = r'.*\\\n'<br>
 <strong>t_SEMI_COLON</strong> = ';'<br>
 <strong>t_STRING_LITERAL</strong> = r'"([^"\\]|\\.)*"'<br>
-<strong>t_ignore</strong> = " <font color="#c040c0">\t\r</font>[].|!?%@'^<font color="#c040c0">\\</font>"<br>
-<strong>tokens</strong> = ['NUMBER', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'COLON', 'SEMI_COLON', 'COMMA', 'COMMENT_SINGLELINE', 'COMMENT_MULTILINE', 'PRECOMP_MACRO', 'PRECOMP_MACRO_CONT', 'ASTERISK', 'AMPERSTAND', 'EQUALS', 'MINUS', 'PLUS', 'DIVIDE', 'CHAR_LITERAL', ...]<br>
-<strong>version</strong> = '2.0'</td></tr></table>
+<strong>t_TAB</strong> = r'\t'<br>
+<strong>t_ignore</strong> = " <font color="#c040c0">\r</font>.?@'"<br>
+<strong>tokens</strong> = ['NUMBER', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'OPEN_SQUARE_BRACKET', 'CLOSE_SQUARE_BRACKET', 'COLON', 'SEMI_COLON', 'COMMA', 'TAB', 'BACKSLASH', 'PIPE', 'PERCENT', 'EXCLAMATION', 'CARET', 'COMMENT_SINGLELINE', 'COMMENT_MULTILINE', 'PRECOMP_MACRO', ...]<br>
+<strong>version</strong> = '2.1'</td></tr></table>
 </body></html>
