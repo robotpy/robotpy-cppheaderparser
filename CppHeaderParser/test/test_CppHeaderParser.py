@@ -1099,6 +1099,18 @@ class Stone_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["StoneClass"]["methods"]["private"][1]["const"], False)
  
 
+# Bug 3531219
+class Kangaroo_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_kangaroo_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Kangaroo"]["methods"]["public"]), 1)
+    
+    def test_num_joey_methods(self):
+        self.assertEqual(len(self.cppHeader.classes["Kangaroo::Joey"]["methods"]["public"]), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

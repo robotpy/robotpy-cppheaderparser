@@ -443,3 +443,16 @@ class StoneClass
     virtual int getNum2() const = 0;
     int getNum3();
 };
+
+// Bug 3531219
+class Kangaroo
+{
+public:
+    Kangaroo() {
+    }
+    class Joey
+    {
+    public:
+        Joey();
+    };
+};

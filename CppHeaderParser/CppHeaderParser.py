@@ -1889,7 +1889,7 @@ class CppHeader( _CppHeader ):
                         trace_print( 'END OF STRUCT DEF' )
                         self.curStruct = None
 
-                    if self._method_body and self.braceDepth < self._method_body:
+                    if self._method_body and self.braceDepth <= self._method_body:
                         self._method_body = None; self.stack = []; self.nameStack = []; trace_print( 'FORCE CLEAR METHBODY' )
                 
                 if (tok.type == 'OPEN_PAREN'):
