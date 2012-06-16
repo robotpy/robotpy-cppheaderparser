@@ -677,7 +677,25 @@ class CppMethod( _CppMethod ):
 
         self.update( methinfo )
 
+        #Filter out initializer lists used in constructors
+        try:
+            found_first_paren = False
+            paren_depth_counter = 0
+            for i in range(0, len(nameStack)):
+                elm = nameStack[i]
+                if elm == "(":
+                    found_first_paren = True
+                    paren_depth_counter += 1
+                if elm == ")":
+                    paren_depth_counter -=1
+                    if paren_depth_counter == 0 and nameStack[i+1] == ':':
+                        debug_print("Stripping out initializer list")
+                        nameStack = nameStack[:i+1]
+                        break
+        except: pass
+        
         paramsStack = self._params_helper1( nameStack )
+        
 
         params = []
         #See if there is a doxygen comment for the variable

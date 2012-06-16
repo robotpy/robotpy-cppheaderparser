@@ -1112,6 +1112,18 @@ class Kangaroo_TestCase(unittest.TestCase):
         self.assertEqual(len(self.cppHeader.classes["Kangaroo::Joey"]["methods"]["public"]), 1)
 
 
+# Bug 3535465
+class Ant_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_num_constructor_1_params(self):
+        self.assertEqual(len(self.cppHeader.classes["Ant"]["methods"]["public"][0]["parameters"]), 3)
+    
+    def test_num_constructor_2_params(self):
+        self.assertEqual(len(self.cppHeader.classes["Ant"]["methods"]["public"][1]["parameters"]), 1)
+
 if __name__ == '__main__':
     unittest.main()
 

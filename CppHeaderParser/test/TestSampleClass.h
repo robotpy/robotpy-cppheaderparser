@@ -456,3 +456,15 @@ public:
         Joey();
     };
 };
+
+
+// Bug 3535465
+class Ant
+{
+public:
+    Ant(uint index, const FiniteElement& element, const ufc::cell& cell)
+      : index(index), element(element), cell(cell) {}
+
+	Ant(MeshEntity& entity) : MeshEntity(entity.mesh(), 1, entity.index())
+	{}
+};
