@@ -397,8 +397,8 @@ class CppClass(dict):
                 elif len(tmpStack) == 2:
                     tmpInheritClass["access"] = tmpStack[0]
                     tmpInheritClass["class"] = tmpStack[1]
-                elif len(tmpStack) == 3 and tmpStack[0] == "virtual":
-                    tmpInheritClass["access"] = tmpStack[1]
+                elif len(tmpStack) == 3 and "virtual" in tmpStack:
+                    tmpInheritClass["access"] = tmpStack[1] if tmpStack[1] != "virtual" else tmpStack[0]
                     tmpInheritClass["class"] = tmpStack[2]
                     tmpInheritClass["virtual"] = True
                 else:

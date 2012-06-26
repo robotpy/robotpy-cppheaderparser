@@ -479,3 +479,10 @@ template <typename Plant> struct Onion<Sweet,Plant>
 {
     int i;
 };
+
+// Bug 3536067
+class BlueJay : public Bird, public virtual Food
+{
+public:
+    BlueJay() {}
+};
