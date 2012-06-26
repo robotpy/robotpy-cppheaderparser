@@ -1142,8 +1142,26 @@ class BlueJay_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
-    def test_num_public_methods_red(self):
+    def test_num_public_methods(self):
         self.assertEqual(len(self.cppHeader.classes["BlueJay"]["methods"]["public"]), 1)
+
+# Bug 3536266
+class functions_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("""\
+              void global_funct1(int i);             
+              int global_funct2(void);
+              """, "string")
+    
+    def test_num_functions(self):
+        self.assertEqual(len(self.cppHeader.functions), 2)
+    
+    def test_function_name_1(self):
+        self.assertEqual(self.cppHeader.functions[0]["name"], "global_funct1")
+    
+    def test_function_name_2(self):
+        self.assertEqual(self.cppHeader.functions[1]["name"], "global_funct2")
 
 if __name__ == '__main__':
     unittest.main()

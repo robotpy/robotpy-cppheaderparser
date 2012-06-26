@@ -1651,7 +1651,9 @@ class _CppHeader( Resolver ):
                 if klass['namespace']: newMethod['path'] = klass['namespace'] + '::' + klass['name']
                 else: newMethod['path'] = klass['name']
             else: #non class functions
+                debug_print("FREE FUNCTION")
                 newMethod = CppMethod(self.nameStack, None, info)
+                self.functions.append(newMethod)
             global parseHistory
             parseHistory.append({"braceDepth": self.braceDepth, "item_type": "method", "item": newMethod})
         else:
@@ -1835,6 +1837,8 @@ class CppHeader( _CppHeader ):
         # this keeps the API compatible, TODO proper namespace for everything. 
         Resolver.CLASSES = {}
         self.classes = Resolver.CLASSES
+        #Functions that are not part of a class
+        self.functions = []
 
         self.enums = []
         self.global_enums = {}
@@ -2057,6 +2061,9 @@ class CppHeader( _CppHeader ):
                     pass
                 else: 
                     self.evaluate_method_stack()
+            else:
+                #Free function
+                self.evaluate_method_stack()
         elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0] in ('class', 'struct') and len(self.stack) == 3: self.evalute_forward_decl()
@@ -2126,4 +2133,8 @@ class CppHeader( _CppHeader ):
         rtn = ""
         for className in self.classes.keys():
             rtn += "%s\n"%self.classes[className]
+        if self.functions:
+            rtn += "// functions\n"
+            for f in self.functions:
+                rtn += "%s\n"%f
         return rtn
