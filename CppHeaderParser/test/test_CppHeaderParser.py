@@ -1124,6 +1124,20 @@ class Ant_TestCase(unittest.TestCase):
     def test_num_constructor_2_params(self):
         self.assertEqual(len(self.cppHeader.classes["Ant"]["methods"]["public"][1]["parameters"]), 1)
 
+# Bug 3536069
+class Ant_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_public_properties_red(self):
+        self.assertEqual(len(self.cppHeader.classes["Onion<Red,Plant>"]["properties"]["public"]), 1)
+
+    def test_num_public_properties_sweet(self):
+        self.assertEqual(len(self.cppHeader.classes["Onion<Sweet,Plant>"]["properties"]["public"]), 1)
+    
+    
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -356,6 +356,24 @@ class CppClass(dict):
             self["doxygen"] = doxygenCommentCache
             doxygenCommentCache = ""
         self["name"] = nameStack[1]
+        
+        #Handle template classes
+        if len(nameStack) > 3 and nameStack[2].startswith("<"):
+            open_template_count = 0
+            param_separator = 0
+            found_first = False
+            i = 0
+            for elm in nameStack:
+                if '<' in elm :
+                    open_template_count += 1
+                    found_first = True
+                elif '>' in elm:
+                    open_template_count -= 1
+                if found_first and open_template_count == 0:
+                    self["name"] = "".join(nameStack[1:i + 1])
+                    break;
+                i += 1
+                
         inheritList = []
 
         if ":" in nameStack:
@@ -679,12 +697,10 @@ class CppMethod( _CppMethod ):
 
         #Filter out initializer lists used in constructors
         try:
-            found_first_paren = False
             paren_depth_counter = 0
             for i in range(0, len(nameStack)):
                 elm = nameStack[i]
                 if elm == "(":
-                    found_first_paren = True
                     paren_depth_counter += 1
                 if elm == ")":
                     paren_depth_counter -=1

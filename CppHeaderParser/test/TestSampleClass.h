@@ -468,3 +468,14 @@ public:
 	Ant(MeshEntity& entity) : MeshEntity(entity.mesh(), 1, entity.index())
 	{}
 };
+
+// Bug 3536069
+template <typename Plant> struct Onion<Red,Plant>
+{
+    int i;
+};
+
+template <typename Plant> struct Onion<Sweet,Plant>
+{
+    int i;
+};
