@@ -486,3 +486,10 @@ class BlueJay : public Bird, public virtual Food
 public:
     BlueJay() {}
 };
+
+// Bug 3536071
+class Pea : public Vegetable<Green>
+{
+	int i;
+}
+};

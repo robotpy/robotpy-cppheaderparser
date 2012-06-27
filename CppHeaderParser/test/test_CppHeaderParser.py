@@ -1163,6 +1163,19 @@ class functions_TestCase(unittest.TestCase):
     def test_function_name_2(self):
         self.assertEqual(self.cppHeader.functions[1]["name"], "global_funct2")
 
+    
+# Bug 3536071
+class Pea_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_num_inherits(self):
+        self.assertEqual(len(self.cppHeader.classes["Pea"]["inherits"]), 1)
+
+    def test_name_inherits(self):
+        self.assertEqual(self.cppHeader.classes["Pea"]["inherits"][0]["class"], "Vegetable<Green>")
+
 if __name__ == '__main__':
     unittest.main()
 

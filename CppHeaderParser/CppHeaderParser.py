@@ -390,6 +390,14 @@ class CppClass(dict):
                 else:
                     tmpStack = nameStack
                     nameStack = []
+                
+                # Convert template classes to one name in the last index
+                for i in range(0, len(tmpStack)):
+                    if '<' in tmpStack[i]:
+                        tmpStack2 = tmpStack[:i-1]
+                        tmpStack2.append("".join(tmpStack[i-1:]))
+                        tmpStack = tmpStack2
+                        break
                 if len(tmpStack) == 0:
                     break;
                 elif len(tmpStack) == 1:
