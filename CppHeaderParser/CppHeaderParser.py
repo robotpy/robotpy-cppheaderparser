@@ -1547,8 +1547,6 @@ class _CppHeader( Resolver ):
             info['defined'] = True
             self._method_body = self.braceDepth
             trace_print( 'NEW METHOD WITH BODY', self.braceDepth )
-            if not self.curClass: #Method/function defined outside class braces
-                return None
         elif stack[-1] == ';':
             info['defined'] = False
             self._method_body = None    # not a great idea to be clearing here
@@ -1589,6 +1587,9 @@ class _CppHeader( Resolver ):
             klass = name[ : name.rindex('::') ]
             name = name.split('::')[-1]
             info['class'] = klass
+            if self.classes.has_key(klass) and not self.curClass:
+                 #Class function defined outside the class
+                return None
         #    info['name'] = name
         #else: info['name'] = name
 

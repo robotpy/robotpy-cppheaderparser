@@ -601,7 +601,7 @@ class Lizzard_TestCase(unittest.TestCase):
 
 
 
-class Lizzard_TestCase(unittest.TestCase):
+class Owl_TestCase(unittest.TestCase):
 
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
@@ -1175,6 +1175,26 @@ class Pea_TestCase(unittest.TestCase):
 
     def test_name_inherits(self):
         self.assertEqual(self.cppHeader.classes["Pea"]["inherits"][0]["class"], "Vegetable<Green>")
+
+# Bug 3540172
+class functions2_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("""\
+              void global_funct1(int i);             
+              int global_funct2(void){
+                  // do something
+              }
+              """, "string")
+    
+    def test_num_functions(self):
+        self.assertEqual(len(self.cppHeader.functions), 2)
+    
+    def test_function_name_1(self):
+        self.assertEqual(self.cppHeader.functions[0]["name"], "global_funct1")
+    
+    def test_function_name_2(self):
+        self.assertEqual(self.cppHeader.functions[1]["name"], "global_funct2")
 
 if __name__ == '__main__':
     unittest.main()
