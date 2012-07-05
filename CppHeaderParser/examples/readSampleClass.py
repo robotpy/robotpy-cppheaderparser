@@ -49,3 +49,7 @@ print cppHeader.classes["OmegaClass"]["namespace"]
 
 print "\nType for omegaString is:"
 print cppHeader.classes["AlphaClass"]["properties"]["public"][0]["type"]
+
+print "\nFree functions are:"
+for func in cppHeader.functions:
+    print " %s"%func["name"]

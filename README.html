@@ -394,6 +394,14 @@ namespace Alpha
         };
     };
 }
+
+int sampleFreeFunction(int i)
+{
+    return i + 1;
+}
+
+int anotherFreeFunction(void);
+}
 </pre>
 <p><strong>Python code</strong>:</p>
 <pre class="literal-block">
@@ -448,6 +456,10 @@ print cppHeader.classes[&quot;OmegaClass&quot;][&quot;namespace&quot;]
 
 print &quot;\nType for omegaString is:&quot;
 print cppHeader.classes[&quot;AlphaClass&quot;][&quot;properties&quot;][&quot;public&quot;][0][&quot;type&quot;]
+
+print &quot;\nFree functions are:&quot;
+for func in cppHeader.functions:
+    print &quot; %s&quot;%func[&quot;name&quot;]
 </pre>
 <p><strong>Output</strong>:</p>
 <pre class="literal-block">
@@ -492,6 +504,9 @@ protected
 private
 }
 
+// functions
+{'inline': False, 'const': False, 'name': 'sampleFreeFunction', 'parameters': [{'constant': 0, 'name': 'i', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}], 'explicit': False, 'constructor': False, 'namespace': '', 'returns_fundamental': True, 'destructor': False, 'pure_virtual': False, 'returns': 'int', 'static': False, 'virtual': False, 'template': False, 'rtnType': 'int', 'extern': False, 'returns_pointer': 0, 'friend': False, 'class': None, 'debug': 'int sampleFreeFunction ( int i ) {', 'returns_class': False}
+{'inline': False, 'const': False, 'name': 'anotherFreeFunction', 'parameters': [{'constant': 0, 'name': '', 'reference': 0, 'type': 'void', 'static': 0, 'pointer': 0}], 'explicit': False, 'constructor': False, 'namespace': '', 'returns_fundamental': True, 'destructor': False, 'pure_virtual': False, 'returns': 'int', 'static': False, 'virtual': False, 'template': False, 'rtnType': 'int', 'extern': False, 'returns_pointer': 0, 'friend': False, 'class': None, 'debug': 'int anotherFreeFunction ( void ) ;', 'returns_class': False}
 
 Number of public methods 5
 Number of private properties 2
@@ -537,6 +552,10 @@ Alpha::Omega
 
 Type for omegaString is:
 string
+
+Free functions are:
+ sampleFreeFunction
+ anotherFreeFunction
 </pre>
 </div>
 <div class="section" id="contributors">

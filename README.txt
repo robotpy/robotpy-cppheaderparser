@@ -75,6 +75,14 @@ Python package "CppHeaderParser"
         };
     }
     
+    int sampleFreeFunction(int i)
+    {
+    	return i + 1;
+    }
+    
+    int anotherFreeFunction(void);
+    }
+    
 
 **Python code**::
 
@@ -129,6 +137,10 @@ Python package "CppHeaderParser"
     
     print "\nType for omegaString is:"
     print cppHeader.classes["AlphaClass"]["properties"]["public"][0]["type"]
+    
+    print "\nFree functions are:"
+    for func in cppHeader.functions:
+        print " %s"%func["name"]
 
 **Output**::
 
@@ -173,6 +185,9 @@ Python package "CppHeaderParser"
     private
     }
     
+    // functions
+    {'inline': False, 'const': False, 'name': 'sampleFreeFunction', 'parameters': [{'constant': 0, 'name': 'i', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}], 'explicit': False, 'constructor': False, 'namespace': '', 'returns_fundamental': True, 'destructor': False, 'pure_virtual': False, 'returns': 'int', 'static': False, 'virtual': False, 'template': False, 'rtnType': 'int', 'extern': False, 'returns_pointer': 0, 'friend': False, 'class': None, 'debug': 'int sampleFreeFunction ( int i ) {', 'returns_class': False}
+    {'inline': False, 'const': False, 'name': 'anotherFreeFunction', 'parameters': [{'constant': 0, 'name': '', 'reference': 0, 'type': 'void', 'static': 0, 'pointer': 0}], 'explicit': False, 'constructor': False, 'namespace': '', 'returns_fundamental': True, 'destructor': False, 'pure_virtual': False, 'returns': 'int', 'static': False, 'virtual': False, 'template': False, 'rtnType': 'int', 'extern': False, 'returns_pointer': 0, 'friend': False, 'class': None, 'debug': 'int anotherFreeFunction ( void ) ;', 'returns_class': False}
     
     Number of public methods 5
     Number of private properties 2
@@ -218,6 +233,10 @@ Python package "CppHeaderParser"
     
     Type for omegaString is:
     string
+    
+    Free functions are:
+     sampleFreeFunction
+     anotherFreeFunction
     
 
 
