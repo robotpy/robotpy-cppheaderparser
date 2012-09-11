@@ -1196,6 +1196,30 @@ class functions2_TestCase(unittest.TestCase):
     def test_function_name_2(self):
         self.assertEqual(self.cppHeader.functions[1]["name"], "global_funct2")
 
+# Feature: line numbers
+class line_num_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("LineNumTest.h")
+    
+    def test_lineno_function1(self):
+        return self.assertEqual(self.cppHeader.functions[0]["line_number"], 13)
+    
+    def test_lineno_function2(self):
+        return self.assertEqual(self.cppHeader.functions[1]["line_number"], 17)
+        
+    def test_lineno_Worm(self):
+        return self.assertEqual(self.cppHeader.classes["Worm"]["line_number"], 20)
+        
+    def test_lineno_Worm_Constructor(self):
+        return self.assertEqual(self.cppHeader.classes["Worm"]["methods"]["public"][0]["line_number"], 23)
+        
+    def test_lineno_Worm_getName(self):
+        return self.assertEqual(self.cppHeader.classes["Worm"]["methods"]["public"][1]["line_number"], 24)
+            
+    def test_lineno_Worm_namep(self):
+        return self.assertEqual(self.cppHeader.classes["Worm"]["properties"]["private"][0]["line_number"], 29)
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.2"
+version = __version__ = "2.2.1"
 
 tokens = [
     'NUMBER',
@@ -124,6 +124,7 @@ def t_COMMENT_SINGLELINE(t):
             doxygenCommentCache += t.value[:-1]
         else:
             doxygenCommentCache += t.value
+    t.lexer.lineno += len(filter(lambda a: a=="\n", t.value))
 t_ASTERISK = r'\*'
 t_MINUS = r'\-'
 t_PLUS = r'\+'
@@ -144,6 +145,7 @@ def t_COMMENT_MULTILINE(t):
         #strip prefixing whitespace
         v = re.sub("\n[\s]+\*", "\n*", v)
         doxygenCommentCache += v
+    t.lexer.lineno += len(filter(lambda a: a=="\n", t.value))
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
@@ -268,6 +270,33 @@ def is_property_namestack(nameStack):
     if not r and is_function_pointer_stack(nameStack): r = True
     return r
 
+def detect_lineno(s):
+    """Detect the line number for a given token string"""
+    try:
+        rtn = s.lineno()
+        if rtn != -1:
+            return rtn
+    except: pass
+    global curLine
+    return curLine 
+
+class TagStr(str):
+    """Wrapper for a string that allows us to store the line number associated with it"""
+    lineno_reg = {}
+    def __new__(cls,*args,**kw):
+        new_obj =  str.__new__(cls,*args)
+        if "lineno" in kw:
+            TagStr.lineno_reg[id(new_obj)] = kw["lineno"]
+        return new_obj
+    
+    def __del__(self):
+        try:
+            del TagStr.lineno_reg[id(self)]
+        except: pass
+    
+    def lineno(self):
+        return TagStr.lineno_reg.get(id(self), -1)
+
 class CppParseError(Exception): pass
     
 class CppClass(dict):
@@ -356,6 +385,7 @@ class CppClass(dict):
             self["doxygen"] = doxygenCommentCache
             doxygenCommentCache = ""
         self["name"] = nameStack[1]
+        self["line_number"] = detect_lineno(nameStack[0])
         
         #Handle template classes
         if len(nameStack) > 3 and nameStack[2].startswith("<"):
@@ -702,6 +732,7 @@ class CppMethod( _CppMethod ):
                 break        
 
         self.update( methinfo )
+        self["line_number"] = detect_lineno(nameStack[0])
 
         #Filter out initializer lists used in constructors
         try:
@@ -840,7 +871,8 @@ class CppVariable( _CppVariable ):
             doxygenCommentCache = ""
 
         debug_print( "Variable: %s"%nameStack )
-        
+
+        self["line_number"] = detect_lineno(nameStack[0])
         self["function_pointer"] = 0
 
         if (len(nameStack) < 2):    # +++
@@ -881,7 +913,7 @@ class CppVariable( _CppVariable ):
         CppVariable.Vars.append( self )        # save and resolve later
     
     def __repr__(self):
-        keys_white_list = ['constant','name','reference','type','static','pointer','desc']
+        keys_white_list = ['constant','name','reference','type','static','pointer','desc', 'line_number']
         cpy = dict((k,v) for (k,v) in self.items() if k in keys_white_list)
         if self.has_key("array_size"): cpy["array_size"] = self["array_size"]
         return "%s"%cpy
@@ -950,6 +982,7 @@ class CppEnum(_CppEnum):
             self["doxygen"] = doxygenCommentCache
             doxygenCommentCache = ""
         valueList = []
+        self["line_number"] = detect_lineno(nameStack[0])
         #Figure out what values it has
         valueStack = nameStack[nameStack.index('{') + 1: nameStack.index('}')]
         while len(valueStack):
@@ -1001,6 +1034,8 @@ class CppStruct(dict):
         else: self['type'] = None
         self['fields'] = []
         self.Structs.append( self )
+        global curLine
+        self["line_number"] = curLine
 
 C99_NONSTANDARD = {
     'int8' : 'signed char',
@@ -1874,20 +1909,32 @@ class CppHeader( _CppHeader ):
         
         # Strip out #defines
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
-        headerFileStr = re.sub(r'(?m)^#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', "", headerFileStr)
-        
+        matches = re.findall(r'(?m)^#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', headerFileStr)
+        for m in matches:
+            #Keep the newlines so that linecount doesnt break
+            num_newlines = len(filter(lambda a: a=="\n", m))
+            headerFileStr = headerFileStr.replace(m, "\n" * num_newlines)
+                
         #Filter out Extern "C" statements.  These are order dependent
-        headerFileStr = re.sub(re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), "namespace __IGNORED_NAMESPACE__CppHeaderParser__ {", headerFileStr) #To be ignored later
+        matches = re.findall(re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), headerFileStr)
+        for m in matches:
+            #Keep the newlines so that linecount doesnt break
+            num_newlines = len(filter(lambda a: a=="\n", m))
+            headerFileStr = headerFileStr.replace(m, "\n" * num_newlines)        
         headerFileStr = re.sub(r'extern[ ]+"[Cc]"[ ]*', "", headerFileStr)
-        
+                
         self.braceDepth = 0
+        lex.lex()
         lex.input(headerFileStr)
+        global curLine
+        global curChar
         curLine = 0
         curChar = 0
         try:
             while True:
                 tok = lex.token()
                 if not tok: break
+                tok.value = TagStr(tok.value, lineno=tok.lineno)
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
                 if tok.type not in ('PRECOMP_MACRO', 'PRECOMP_MACRO_CONT'): self.stack.append( tok.value )
                 curLine = tok.lineno
