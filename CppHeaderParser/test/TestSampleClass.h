@@ -492,4 +492,11 @@ class Pea : public Vegetable<Green>
 {
 	int i;
 }
+
+
+// Bug 3567172
+class Pear
+{
+	enum Stem stem_property;
+}
 };

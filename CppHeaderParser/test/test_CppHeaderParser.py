@@ -1220,6 +1220,15 @@ class line_num_TestCase(unittest.TestCase):
     def test_lineno_Worm_namep(self):
         return self.assertEqual(self.cppHeader.classes["Worm"]["properties"]["private"][0]["line_number"], 29)
 
+# Bug 3567172
+class Pear_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_property(self):
+        self.assertEqual(self.cppHeader.classes["Pear"]["properties"]["private"][0]["name"], "stem_property")
+
 if __name__ == '__main__':
     unittest.main()
 

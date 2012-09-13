@@ -974,13 +974,18 @@ class CppEnum(_CppEnum):
                 }
     """
     def __init__(self, nameStack):
-        if len(nameStack) < 4 or "{" not in nameStack or "}" not in nameStack:
-            #Not enough stuff for an enum
-            return
         global doxygenCommentCache
         if len(doxygenCommentCache):
             self["doxygen"] = doxygenCommentCache
             doxygenCommentCache = ""
+        if len(nameStack) == 3 and nameStack[0] == "enum":
+            debug_print("Created enum as just name/value")
+            self["name"] = nameStack[1]
+            self["instances"]=[nameStack[2]]
+        if len(nameStack) < 4 or "{" not in nameStack or "}" not in nameStack:
+            #Not enough stuff for an enum
+            debug_print("Bad enum")
+            return
         valueList = []
         self["line_number"] = detect_lineno(nameStack[0])
         #Figure out what values it has
@@ -2162,6 +2167,7 @@ class CppHeader( _CppHeader ):
 
     def evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""
+        debug_print( "evaluating enum" )
         newEnum = CppEnum(self.nameStack)
         if len(newEnum.keys()):
             if len(self.curClass):
