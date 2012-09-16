@@ -499,4 +499,16 @@ class Pear
 {
 	enum Stem stem_property;
 }
+
+// Bug 3567854
+struct Beans
+{
+    UINT16 hdr;
+    union
+    {
+        UINT16 typeA;
+        UINT16 typeB;
+        UINT16 raw[3];
+    };
+    UINT32 data[204];
 };

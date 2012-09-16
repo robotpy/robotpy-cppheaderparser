@@ -1263,6 +1263,17 @@ class Macro_TestCase(unittest.TestCase):
     def test_pragmas2(self):
         self.assertEqual(self.cppHeader.defines[2], 'DEBUG_PRINT(x)           \\\n    printf("---------------\\n"); \\\n    printf("DEBUG: %d\\n", x);    \\\n    printf("---------------\\n");')
 
+
+
+# Bug: 3567854
+class Beans_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_anonymous_union_name(self):
+        return self.assertEqual(self.cppHeader.classes["Beans"]["properties"]["public"][1]["name"], "")
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -1814,6 +1814,7 @@ class _CppHeader( Resolver ):
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         if self.nameStack[0] == "union":
             newClass = CppUnion(self.nameStack)
+            self.anon_union_counter = [self.braceDepth, 2]
             trace_print( 'NEW UNION', newClass['name'] )
         else:
             newClass = CppClass(self.nameStack)
@@ -1924,6 +1925,8 @@ class CppHeader( _CppHeader ):
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         self.initextra()
     
+        self.anon_union_counter = [-1, 0]
+    
         if (len(self.headerFileName)):
             fd = open(self.headerFileName)
             headerFileStr = "".join(fd.readlines())
@@ -1968,6 +1971,8 @@ class CppHeader( _CppHeader ):
             while True:
                 tok = lex.token()
                 if not tok: break
+                if self.anon_union_counter[0] == self.braceDepth and self.anon_union_counter[1]:
+                    self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, lineno=tok.lineno)
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
                 self.stack.append( tok.value )
@@ -2070,6 +2075,8 @@ class CppHeader( _CppHeader ):
                         self.stack = []
                     else:
                         self.nameStack.append(tok.value)
+                        if self.anon_union_counter[0] == self.braceDepth:
+                            self.anon_union_counter = [-1, 0]
                 elif (tok.type == 'COLON'):
                     #Dont want colon to be first in stack
                     if len(self.nameStack) == 0:
@@ -2088,6 +2095,22 @@ class CppHeader( _CppHeader ):
                     self.accessSpecifierScratch = []
 
                 elif (tok.type == 'SEMI_COLON'):
+                    if self.anon_union_counter[0] == self.braceDepth and self.anon_union_counter[1]:
+                        debug_print("Creating anonymous union")
+                        #Force the processing of an anonymous union
+                        saved_namestack = self.nameStack[:] 
+                        saved_stack = self.stack[:]
+                        self.nameStack = [""]
+                        self.stack = self.nameStack + [";"]
+                        self.nameStack = self.nameStack[0:1]
+                        debug_print("pre eval anon stack")
+                        self.evaluate_stack( tok.type )
+                        debug_print("post eval anon stack")
+                        self.nameStack = saved_namestack
+                        self.stack = saved_stack
+                        self.anon_union_counter = [-1, 0];
+                    
+                    
                     if (self.braceDepth < 10): self.evaluate_stack( tok.type )
                     if not self.stack: continue
                     if self.stack[0]=='typedef' and ( '{' not in self.stack or '}' in self.stack ): self.stack = []; trace_print( "REAL CLEAR")
