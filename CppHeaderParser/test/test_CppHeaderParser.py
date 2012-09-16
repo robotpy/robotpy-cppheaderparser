@@ -1229,6 +1229,40 @@ class Pear_TestCase(unittest.TestCase):
     def test_property(self):
         self.assertEqual(self.cppHeader.classes["Pear"]["properties"]["private"][0]["name"], "stem_property")
 
+
+
+# Bug 3567217
+class Macro_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(r"""
+#include <string.h>
+#include "../../debug.h"
+
+#define ONE 1
+#define TWO_NUM_N_NAME "2 (TWO)"
+#pragma once
+
+#define DEBUG_PRINT(x)           \
+    printf("---------------\n"); \
+    printf("DEBUG: %d\n", x);    \
+    printf("---------------\n");""", "string")
+
+    def test_includes(self):
+        self.assertEqual(self.cppHeader.includes, ['<string.h>', '"../../debug.h"'])
+    
+    def test_pragmas(self):
+        self.assertEqual(self.cppHeader.pragmas, ['once'])
+        
+    def test_pragmas0(self):
+        self.assertEqual(self.cppHeader.defines[0], 'ONE 1')
+            
+    def test_pragmas1(self):
+        self.assertEqual(self.cppHeader.defines[1], 'TWO_NUM_N_NAME "2 (TWO)"')
+                
+    def test_pragmas2(self):
+        self.assertEqual(self.cppHeader.defines[2], 'DEBUG_PRINT(x)           \\\n    printf("---------------\\n"); \\\n    printf("DEBUG: %d\\n", x);    \\\n    printf("---------------\\n");')
+
 if __name__ == '__main__':
     unittest.main()
 

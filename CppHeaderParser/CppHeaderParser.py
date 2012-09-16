@@ -1425,6 +1425,26 @@ class Resolver(object):
                 var['unresolved'] = True
                 if 'method' in var: var['method']['unresolved_parameters'] = True
                 #var['raw_type'] = var['raw_type'][2:]
+        
+        # Take care of #defines and #pragmas etc
+        trace_print("Processing precomp_macro_buf: %s"%self._precomp_macro_buf)
+        for m in self._precomp_macro_buf:
+            macro = m.replace("<CppHeaderParser_newline_temp_replacement>\\n", "\n")
+            try:
+                if macro.lower().startswith("#define"):
+                    trace_print("Adding #define %s"%macro)
+                    self.defines.append(macro.split(" ", 1)[1].strip())
+                elif macro.lower().startswith("#pragma"):
+                    trace_print("Adding #pragma %s"%macro)
+                    self.pragmas.append(macro.split(" ", 1)[1].strip())
+                elif macro.lower().startswith("#include"):
+                    trace_print("Adding #include %s"%macro)
+                    self.includes.append(macro.split(" ", 1)[1].strip())
+                else:
+                    debug_print("Cant detect what to do with precomp macro '%s'"%macro)
+            except: pass
+        self._precomp_macro_buf = None
+        
 
     def concrete_typedef( self, key ):
         if key not in self.typedefs:
@@ -1888,6 +1908,11 @@ class CppHeader( _CppHeader ):
         self.classes = Resolver.CLASSES
         #Functions that are not part of a class
         self.functions = []
+        
+        self.pragmas = []
+        self.defines = []
+        self.includes = []
+        self._precomp_macro_buf = [] #for internal purposes, will end up filling out pragmras and defines at the end
 
         self.enums = []
         self.global_enums = {}
@@ -1911,14 +1936,18 @@ class CppHeader( _CppHeader ):
         
         # Strip out template declarations
         headerFileStr = re.sub("template[\t ]*<[^>]*>", "", headerFileStr)
-        
+
         # Strip out #defines
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
         matches = re.findall(r'(?m)^#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', headerFileStr)
         for m in matches:
             #Keep the newlines so that linecount doesnt break
+            self._precomp_macro_buf.append(m)
             num_newlines = len(filter(lambda a: a=="\n", m))
-            headerFileStr = headerFileStr.replace(m, "\n" * num_newlines)
+            new_m = m.replace("\n", "<CppHeaderParser_newline_temp_replacement>\\n")
+            if (num_newlines > 1):
+                new_m += "\n"*(num_newlines)
+            headerFileStr = headerFileStr.replace(m, new_m)
                 
         #Filter out Extern "C" statements.  These are order dependent
         matches = re.findall(re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), headerFileStr)
@@ -1941,9 +1970,13 @@ class CppHeader( _CppHeader ):
                 if not tok: break
                 tok.value = TagStr(tok.value, lineno=tok.lineno)
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
-                if tok.type not in ('PRECOMP_MACRO', 'PRECOMP_MACRO_CONT'): self.stack.append( tok.value )
+                self.stack.append( tok.value )
                 curLine = tok.lineno
                 curChar = tok.lexpos
+                if (tok.type in ('PRECOMP_MACRO', 'PRECOMP_MACRO_CONT')):
+                    debug_print("PRECOMP: %s"%tok)
+                    self._precomp_macro_buf.append(tok.value)
+                    continue
                 if (tok.type == 'OPEN_BRACE'):
                     if len(self.nameStack) >= 2 and is_namespace(self.nameStack):    # namespace {} with no name used in boost, this sets default?
                         if self.nameStack[1] == "__IGNORED_NAMESPACE__CppHeaderParser__":#Used in filtering extern "C"
