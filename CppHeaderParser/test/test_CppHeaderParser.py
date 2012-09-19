@@ -1277,6 +1277,16 @@ class Beans_TestCase(unittest.TestCase):
     def test_second_anonymous_union_name(self):
         return self.assertEqual(self.cppHeader.classes["Beans"]["properties"]["public"][3]["name"], "")
 
+
+# Bug: 3567854 and 3568241
+class termite_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_termite_function(self):
+        self.assertEqual(self.cppHeader.functions[5]["name"], "termite")
+
 if __name__ == '__main__':
     unittest.main()
 

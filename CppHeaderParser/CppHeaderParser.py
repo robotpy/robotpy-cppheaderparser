@@ -1605,7 +1605,7 @@ class _CppHeader( Resolver ):
 
         if '{' in stack:
             info['defined'] = True
-            self._method_body = self.braceDepth
+            self._method_body = self.braceDepth + 1
             trace_print( 'NEW METHOD WITH BODY', self.braceDepth )
         elif stack[-1] == ';':
             info['defined'] = False
@@ -2026,7 +2026,7 @@ class CppHeader( _CppHeader ):
                         trace_print( 'END OF STRUCT DEF' )
                         self.curStruct = None
 
-                    if self._method_body and self.braceDepth <= self._method_body:
+                    if self._method_body and (self.braceDepth + 1) <= self._method_body:
                         self._method_body = None; self.stack = []; self.nameStack = []; trace_print( 'FORCE CLEAR METHBODY' )
                 
                 if (tok.type == 'OPEN_PAREN'):
@@ -2169,7 +2169,7 @@ class CppHeader( _CppHeader ):
             debug_print( "trace" )
             self.evaluate_enum_stack()
 
-        elif self._method_body and self.braceDepth > self._method_body: trace_print( 'INSIDE METHOD DEF' )
+        elif self._method_body and (self.braceDepth + 1) > self._method_body: trace_print( 'INSIDE METHOD DEF' )
         elif is_method_namestack(self.stack) and not self.curStruct and '(' in self.nameStack:
             debug_print( "trace" )
             if self.braceDepth > 0:

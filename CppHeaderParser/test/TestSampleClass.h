@@ -518,3 +518,9 @@ struct Beans
         UINT16 raw[3];
     };
 };
+
+// Bug 3568629
+void termite(void)
+{
+    return ((structA*) (Func())->element);
+}
