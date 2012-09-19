@@ -1844,7 +1844,7 @@ class _CppHeader( Resolver ):
             self.curClass = newClass["name"]
             self._classes_brace_level[ newClass['name'] ] = self.braceDepth
 
-        if not key.endswith("::") and len(key) != 0:
+        if not key.endswith("::") and not key.endswith(" ") and len(key) != 0:
             if key in self.classes:
                 trace_print( 'ERROR name collision:', key )
                 self.classes[key].show()

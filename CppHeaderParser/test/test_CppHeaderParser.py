@@ -1265,7 +1265,7 @@ class Macro_TestCase(unittest.TestCase):
 
 
 
-# Bug: 3567854
+# Bug: 3567854 and 3568241
 class Beans_TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1273,6 +1273,9 @@ class Beans_TestCase(unittest.TestCase):
     
     def test_anonymous_union_name(self):
         return self.assertEqual(self.cppHeader.classes["Beans"]["properties"]["public"][1]["name"], "")
+    
+    def test_second_anonymous_union_name(self):
+        return self.assertEqual(self.cppHeader.classes["Beans"]["properties"]["public"][3]["name"], "")
 
 if __name__ == '__main__':
     unittest.main()
