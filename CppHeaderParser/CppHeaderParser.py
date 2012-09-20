@@ -94,7 +94,7 @@ tokens = [
     'NEW_LINE',
 ]
 
-t_ignore = " \r.?@'"
+t_ignore = " \r.?@'\f"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
 t_OPEN_PAREN = r'\('
