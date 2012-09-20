@@ -1231,7 +1231,7 @@ class Pear_TestCase(unittest.TestCase):
 
 
 
-# Bug 3567217
+# Bug 3567217 and 3569663
 class Macro_TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1243,7 +1243,7 @@ class Macro_TestCase(unittest.TestCase):
 #define TWO_NUM_N_NAME "2 (TWO)"
 #pragma once
 
-#define DEBUG_PRINT(x)           \
+ #define DEBUG_PRINT(x)           \
     printf("---------------\n"); \
     printf("DEBUG: %d\n", x);    \
     printf("---------------\n");""", "string")

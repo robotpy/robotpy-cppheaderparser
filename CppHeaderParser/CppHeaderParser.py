@@ -1942,10 +1942,9 @@ class CppHeader( _CppHeader ):
 
         # Strip out #defines
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
-        matches = re.findall(r'(?m)^#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', headerFileStr)
+        matches = re.findall(r'(?m)^[ \t\v]*#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', headerFileStr)
         for m in matches:
             #Keep the newlines so that linecount doesnt break
-            self._precomp_macro_buf.append(m)
             num_newlines = len(filter(lambda a: a=="\n", m))
             new_m = m.replace("\n", "<CppHeaderParser_newline_temp_replacement>\\n")
             if (num_newlines > 1):
