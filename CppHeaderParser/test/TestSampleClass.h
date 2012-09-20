@@ -524,3 +524,17 @@ void termite(void)
 {
     return ((structA*) (Func())->element);
 }
+
+// Bug 3569622
+class Japyx
+{
+public:
+    enum enum1
+    {
+        e1, // 00
+        e2, // 01
+    };
+    UINT32 a;
+};
+
+void japyxFunc(struct s1 *pS, Japyx::enum1 x, MYTYPE myVar);

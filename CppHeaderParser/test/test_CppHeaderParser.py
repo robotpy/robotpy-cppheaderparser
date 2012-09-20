@@ -1287,6 +1287,17 @@ class termite_TestCase(unittest.TestCase):
     def test_termite_function(self):
         self.assertEqual(self.cppHeader.functions[5]["name"], "termite")
 
+
+
+# Bug: 3569622
+class Japyx_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_japyxFunc(self):
+        self.assertEqual(self.cppHeader.functions[6]["name"], "japyxFunc")
+
 if __name__ == '__main__':
     unittest.main()
 

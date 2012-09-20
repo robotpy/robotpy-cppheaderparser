@@ -1303,9 +1303,13 @@ class Resolver(object):
                                     elif enum['type'] is str:
                                         var['ctypes_type'] = 'ctypes.c_char_p'
                                         var['raw_type'] = 'char*'
-                                    if 'method' in var: var['enum'] = var['method']['path'] + '::' + enum['name']
-                                    else:    # class property
+                                    try:
+                                        if 'method' in var: var['enum'] = var['method']['path'] + '::' + enum['name']
+                                        else:    # class property
+                                            var['unresolved'] = True
+                                    except:
                                         var['unresolved'] = True
+                                        
                                     var['fundamental'] = True
 
                                 else: var['unresolved'] = True    # TODO klass._public_xxx
