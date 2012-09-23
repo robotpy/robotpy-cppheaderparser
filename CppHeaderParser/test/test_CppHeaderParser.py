@@ -1298,6 +1298,20 @@ class Japyx_TestCase(unittest.TestCase):
     def test_japyxFunc(self):
         self.assertEqual(self.cppHeader.functions[6]["name"], "japyxFunc")
 
+
+# Bug: 3570105
+class Author_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_name(self):
+        self.assertEqual(self.cppHeader.enums[0]["name"], "Author")
+    
+    def test_name(self):
+        self.assertEqual(self.cppHeader.enums[0]["values"], [
+            {'name': 'NAME', 'value': "( 'J' << 24 | 'A' << 16 | 'S' << 8 | 'H' )"}])
+
 if __name__ == '__main__':
     unittest.main()
 

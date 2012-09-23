@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.2.1"
+version = __version__ = "2.2.1+"
 
 tokens = [
     'NUMBER',
@@ -92,9 +92,10 @@ tokens = [
     'CHAR_LITERAL', 
     'STRING_LITERAL',
     'NEW_LINE',
+    'SQUOTE',
 ]
 
-t_ignore = " \r.?@'\f"
+t_ignore = " \r.?@\f"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
 t_OPEN_PAREN = r'\('
@@ -132,6 +133,7 @@ t_DIVIDE = r'/[^/]'
 t_AMPERSTAND = r'&'
 t_EQUALS = r'='
 t_CHAR_LITERAL = "'.'"
+t_SQUOTE = "'"
 #found at http://wordaligned.org/articles/string-literals-and-regular-expressions
 #TODO: This does not work with the string "bla \" bla"
 t_STRING_LITERAL = r'"([^"\\]|\\.)*"'
@@ -936,6 +938,9 @@ class _CppEnum(dict):
         for v in values:
             if 'value' in v:
                 a = v['value'].strip()
+                # Remove single quotes from single quoted chars (unless part of some expression
+                if len(a) == 3 and a[0] == "'" and a[2] == "'":
+                    a = v['value'] = a[1]
                 if a.lower().startswith("0x"):
                     try:
                         i = a = int(a , 16)
@@ -958,6 +963,9 @@ class _CppEnum(dict):
                     v['raw_value'] = v['value']
                 v['value'] = a
             else: v['value'] = i
+            try:
+                v['value'] = v['value'].replace(" < < ", " << ").replace(" >> ", " >> ")
+            except: pass
             i += 1
         return t
 
@@ -1944,17 +1952,22 @@ class CppHeader( _CppHeader ):
         # Strip out template declarations
         headerFileStr = re.sub("template[\t ]*<[^>]*>", "", headerFileStr)
 
-        # Strip out #defines
+        # Change multi line #defines and expressions to single lines maintaining line nubmers
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
-        matches = re.findall(r'(?m)^[ \t\v]*#[Dd][Ee][Ff][Ii][Nn][Ee] (?:.*\\\r?\n)*.*$', headerFileStr)
+        matches = re.findall(r'(?m)^(?:.*\\\r?\n)+.*$', headerFileStr)
+        is_define = re.compile(r'[ \t\v]*#[Dd][Ee][Ff][Ii][Nn][Ee]')
         for m in matches:
             #Keep the newlines so that linecount doesnt break
             num_newlines = len(filter(lambda a: a=="\n", m))
-            new_m = m.replace("\n", "<CppHeaderParser_newline_temp_replacement>\\n")
+            if is_define.match(m):
+                new_m = m.replace("\n", "<CppHeaderParser_newline_temp_replacement>\\n")
+            else:
+                # Just expression taking up multiple lines, make it take 1 line for easier parsing
+                new_m = m.replace("\\\n", " ")
             if (num_newlines > 1):
                 new_m += "\n"*(num_newlines)
             headerFileStr = headerFileStr.replace(m, new_m)
-                
+        
         #Filter out Extern "C" statements.  These are order dependent
         matches = re.findall(re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), headerFileStr)
         for m in matches:
@@ -1977,6 +1990,7 @@ class CppHeader( _CppHeader ):
                 if self.anon_union_counter[0] == self.braceDepth and self.anon_union_counter[1]:
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, lineno=tok.lineno)
+                #debug_print("TOK: %s"%tok)
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
                 self.stack.append( tok.value )
                 curLine = tok.lineno
@@ -2055,6 +2069,7 @@ class CppHeader( _CppHeader ):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'EXCLAMATION'):
                     self.nameStack.append(tok.value)
+                elif (tok.type == 'SQUOTE'): pass
                 elif (tok.type == 'NUMBER'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'MINUS'):
@@ -2063,7 +2078,7 @@ class CppHeader( _CppHeader ):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'STRING_LITERAL'):
                     self.nameStack.append(tok.value)
-                elif (tok.type == 'NAME' or tok.type == 'AMPERSTAND' or tok.type == 'ASTERISK'):
+                elif (tok.type == 'NAME' or tok.type == 'AMPERSTAND' or tok.type == 'ASTERISK' or tok.type == 'CHAR_LITERAL'):
                     if tok.value in ignoreSymbols:
                         debug_print("Ignore symbol %s"%tok.value)
                     elif (tok.value == 'class'):
@@ -2125,6 +2140,8 @@ class CppHeader( _CppHeader ):
                                 % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack)))
 
         self.finalize()
+        global parseHistory
+        parseHistory = []
 
     def evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -2257,5 +2274,9 @@ class CppHeader( _CppHeader ):
         if self.functions:
             rtn += "// functions\n"
             for f in self.functions:
+                rtn += "%s\n"%f
+        if self.enums:
+            rtn += "// enums\n"
+            for f in self.enums:
                 rtn += "%s\n"%f
         return rtn

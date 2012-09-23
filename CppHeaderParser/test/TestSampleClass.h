@@ -538,3 +538,12 @@ public:
 };
 
 void japyxFunc(struct s1 *pS, Japyx::enum1 x, MYTYPE myVar);
+
+// Bug 3570105
+enum Author
+{
+    NAME = ('J' << 24 | \
+    'A' << 16 | \
+    'S' << 8 | \
+    'H'),
+};
