@@ -547,3 +547,6 @@ enum Author
     'S' << 8 | \
     'H'),
 };
+
+// Bug 3577484
+template <> class FruitFly<int>: public Fly { };

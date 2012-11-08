@@ -1312,6 +1312,16 @@ class Author_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.enums[0]["values"], [
             {'name': 'NAME', 'value': "( 'J' << 24 | 'A' << 16 | 'S' << 8 | 'H' )"}])
 
+
+# Bug: 3577484
+class Fly_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("FruitFly<int>"), True)
+
 if __name__ == '__main__':
     unittest.main()
 

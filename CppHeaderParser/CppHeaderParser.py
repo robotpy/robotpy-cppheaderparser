@@ -405,11 +405,10 @@ class CppClass(dict):
                     self["name"] = "".join(nameStack[1:i + 1])
                     break;
                 i += 1
-                
-        inheritList = []
-
-        if ":" in nameStack:
+        elif ":" in nameStack:
             self['name'] = nameStack[ nameStack.index(':') - 1 ]
+
+        inheritList = []
 
         if nameStack.count(':') == 1:
             nameStack = nameStack[nameStack.index(":") + 1:]
