@@ -1,5 +1,9 @@
 #include <vector>
 #include <string>
+
+#define DEF_1 1
+#define OS_NAME "Linux"
+
 using namespace std;
 class SampleClass
 {

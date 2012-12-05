@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.9: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.9.1: http://docutils.sourceforge.net/" />
 <title></title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7056 2011-06-17 10:50:48Z milde $
+:Id: $Id: html4css1.css 7434 2012-05-11 21:06:27Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
@@ -249,9 +249,17 @@ pre.address {
   margin-top: 0 ;
   font: inherit }
 
-pre.literal-block, pre.doctest-block, pre.math {
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
   margin-left: 2em ;
   margin-right: 2em }
+
+pre.code .ln { /* line numbers */
+  color: grey;
+}
+
+.code {
+  background-color: #eeeeee
+}
 
 span.classifier {
   font-family: sans-serif ;
@@ -329,9 +337,13 @@ color: #6A6A6A;
 <p><strong>Licence:</strong> BSD</p>
 <p><strong>External modules required:</strong> PLY</p>
 <p><strong>Quick start</strong>:</p>
-<pre class="literal-block">
+<pre class="literal-block" width="1200px" style="max-width: 1200px">
 #include &lt;vector&gt;
 #include &lt;string&gt;
+
+#define DEF_1 1
+#define OS_NAME &quot;Linux&quot;
+
 using namespace std;
 class SampleClass
 {
@@ -404,7 +416,7 @@ int anotherFreeFunction(void);
 }
 </pre>
 <p><strong>Python code</strong>:</p>
-<pre class="literal-block">
+<pre class="literal-block" width="1200px" style="max-width: 1200px">
 #!/usr/bin/python
 import sys
 sys.path = [&quot;../&quot;] + sys.path
@@ -460,35 +472,43 @@ print cppHeader.classes[&quot;AlphaClass&quot;][&quot;properties&quot;][&quot;pu
 print &quot;\nFree functions are:&quot;
 for func in cppHeader.functions:
     print &quot; %s&quot;%func[&quot;name&quot;]
+
+print &quot;\n#includes are:&quot;
+for incl in cppHeader.includes:
+    print &quot; %s&quot;%incl
+
+print &quot;\n#defines are:&quot;
+for define in cppHeader.defines:
+    print &quot; %s&quot;%define
 </pre>
 <p><strong>Output</strong>:</p>
-<pre class="literal-block">
+<pre class="literal-block" width="1200px" style="max-width: 1200px">
 CppHeaderParser view of class SampleClass
 {
 public
     // Methods
-   {'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': '', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'SampleClass', 'returns_pointer': 0, 'class': None, 'name': 'SampleClass', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': True, 'debug': 'SampleClass ( ) ;', 'inline': False}
-   {'static': False, 'rtnType': 'string', 'returns_unknown': True, 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'string', 'template': False, 'friend': False, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '/*!\n* Method 1\n*/', 'name': 'meth1', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': False, 'constructor': False, 'debug': 'string meth1 ( ) ;', 'returns_pointer': 0}
-   {'static': False, 'rtnType': 'int', 'const': False, 'parameters': [{'constant': 0, 'name': 'v1', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0, 'desc': 'Variable 1'}], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'int', 'template': False, 'friend': False, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '///\n/// Method 2 description\n///\n/// &#64;param v1 Variable 1\n///', 'name': 'meth2', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'int meth2 ( int v1 ) ;', 'returns_pointer': 0}
-   {'static': False, 'rtnType': 'void', 'const': False, 'parameters': [{'constant': 1, 'name': 'v1', 'reference': 1, 'type': 'const string &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 1'}, {'constant': 0, 'name': 'v2', 'reference': 1, 'type': 'vector&lt;string&gt; &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 2'}], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'friend': False, 'unresolved_parameters': True, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'void meth3 ( const string &amp; v1 , vector &lt;string&gt; &amp; v2 ) ;', 'returns_pointer': 0}
-   {'static': False, 'rtnType': 'unsigned int', 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'unsigned int', 'template': False, 'friend': False, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '/**********************************\n* Method 4 description\n*\n* &#64;return Return value\n*********************************/', 'name': 'meth4', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'unsigned int meth4 ( ) ;', 'returns_pointer': 0}
+   {'line_number': 11, 'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': '', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'SampleClass', 'returns_pointer': 0, 'class': None, 'name': 'SampleClass', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': True, 'debug': 'SampleClass ( ) ;', 'inline': False}
+   {'line_number': 15, 'static': False, 'rtnType': 'string', 'returns_unknown': True, 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'string', 'template': False, 'friend': False, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '/*!\n* Method 1\n*/', 'name': 'meth1', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': False, 'constructor': False, 'debug': 'string meth1 ( ) ;', 'returns_pointer': 0}
+   {'line_number': 22, 'static': False, 'rtnType': 'int', 'const': False, 'parameters': [{'line_number': 22, 'constant': 0, 'name': 'v1', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0, 'desc': 'Variable 1'}], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'int', 'template': False, 'friend': False, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '///\n/// Method 2 description\n///\n/// &#64;param v1 Variable 1\n///', 'name': 'meth2', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'int meth2 ( int v1 ) ;', 'returns_pointer': 0}
+   {'line_number': 30, 'static': False, 'rtnType': 'void', 'const': False, 'parameters': [{'line_number': 30, 'constant': 1, 'name': 'v1', 'reference': 1, 'type': 'const string &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 1'}, {'line_number': 30, 'constant': 0, 'name': 'v2', 'reference': 1, 'type': 'vector&lt;string&gt; &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 2'}], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'friend': False, 'unresolved_parameters': True, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '/**\n* Method 3 description\n*\n* \\param v1 Variable 1\n* \\param v2 Variable 2\n*/', 'name': 'meth3', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'void meth3 ( const string &amp; v1 , vector &lt;string&gt; &amp; v2 ) ;', 'returns_pointer': 0}
+   {'line_number': 37, 'static': False, 'rtnType': 'unsigned int', 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'unsigned int', 'template': False, 'friend': False, 'returns_class': False, 'inline': False, 'extern': False, 'path': 'SampleClass', 'class': None, 'doxygen': '/**********************************\n* Method 4 description\n*\n* &#64;return Return value\n*********************************/', 'name': 'meth4', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'unsigned int meth4 ( ) ;', 'returns_pointer': 0}
 protected
 private
     // Properties
-    {'constant': 0, 'name': 'prop1', 'reference': 0, 'type': 'string', 'static': 0, 'pointer': 0}
-    {'constant': 0, 'name': 'prop5', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}
+    {'line_number': 42, 'constant': 0, 'name': 'prop1', 'reference': 0, 'type': 'string', 'static': 0, 'pointer': 0}
+    {'line_number': 44, 'constant': 0, 'name': 'prop5', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}
     // Methods
-   {'static': False, 'rtnType': 'void *', 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'SampleClass', 'returns_pointer': 1, 'class': None, 'name': 'meth5', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'void * meth5 ( ) {', 'inline': False}
+   {'line_number': 39, 'static': False, 'rtnType': 'void *', 'const': False, 'parameters': [], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'SampleClass', 'returns_pointer': 1, 'class': None, 'name': 'meth5', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'void * meth5 ( ) {', 'inline': False}
 }
 
 class Alpha::AlphaClass
 {
 public
     // Properties
-    {'constant': 0, 'name': 'alphaString', 'reference': 0, 'type': 'string', 'static': 0, 'pointer': 0}
+    {'line_number': 55, 'constant': 0, 'name': 'alphaString', 'reference': 0, 'type': 'string', 'static': 0, 'pointer': 0}
     // Methods
-   {'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': 'Alpha::', 'virtual': False, 'destructor': False, 'returns': '', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'Alpha::AlphaClass', 'returns_pointer': 0, 'class': None, 'name': 'AlphaClass', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': True, 'debug': 'AlphaClass ( ) ;', 'inline': False}
-   {'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': 'Alpha::', 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'Alpha::AlphaClass', 'returns_pointer': 0, 'class': None, 'name': 'alphaMethod', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'void alphaMethod ( ) ;', 'inline': False}
+   {'line_number': 51, 'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': 'Alpha::', 'virtual': False, 'destructor': False, 'returns': '', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'Alpha::AlphaClass', 'returns_pointer': 0, 'class': None, 'name': 'AlphaClass', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': True, 'debug': 'AlphaClass ( ) ;', 'inline': False}
+   {'line_number': 53, 'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': 'Alpha::', 'virtual': False, 'destructor': False, 'returns': 'void', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'Alpha::AlphaClass', 'returns_pointer': 0, 'class': None, 'name': 'alphaMethod', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'void alphaMethod ( ) ;', 'inline': False}
 protected
 private
 }
@@ -497,16 +517,16 @@ class Alpha::Omega::OmegaClass
 {
 public
     // Properties
-    {'constant': 0, 'name': 'omegaString', 'reference': 0, 'type': 'string', 'static': 0, 'pointer': 0}
+    {'line_number': 65, 'constant': 0, 'name': 'omegaString', 'reference': 0, 'type': 'string', 'static': 0, 'pointer': 0}
     // Methods
-   {'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': 'Alpha::Omega::', 'virtual': False, 'destructor': False, 'returns': '', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'Alpha::Omega::OmegaClass', 'returns_pointer': 0, 'class': None, 'name': 'OmegaClass', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': True, 'debug': 'OmegaClass ( ) ;', 'inline': False}
+   {'line_number': 63, 'static': False, 'rtnType': 'void', 'const': False, 'parameters': [], 'namespace': 'Alpha::Omega::', 'virtual': False, 'destructor': False, 'returns': '', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'path': 'Alpha::Omega::OmegaClass', 'returns_pointer': 0, 'class': None, 'name': 'OmegaClass', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': True, 'debug': 'OmegaClass ( ) ;', 'inline': False}
 protected
 private
 }
 
 // functions
-{'inline': False, 'const': False, 'name': 'sampleFreeFunction', 'parameters': [{'constant': 0, 'name': 'i', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}], 'explicit': False, 'constructor': False, 'namespace': '', 'returns_fundamental': True, 'destructor': False, 'pure_virtual': False, 'returns': 'int', 'static': False, 'virtual': False, 'template': False, 'rtnType': 'int', 'extern': False, 'returns_pointer': 0, 'friend': False, 'class': None, 'debug': 'int sampleFreeFunction ( int i ) {', 'returns_class': False}
-{'inline': False, 'const': False, 'name': 'anotherFreeFunction', 'parameters': [{'constant': 0, 'name': '', 'reference': 0, 'type': 'void', 'static': 0, 'pointer': 0}], 'explicit': False, 'constructor': False, 'namespace': '', 'returns_fundamental': True, 'destructor': False, 'pure_virtual': False, 'returns': 'int', 'static': False, 'virtual': False, 'template': False, 'rtnType': 'int', 'extern': False, 'returns_pointer': 0, 'friend': False, 'class': None, 'debug': 'int anotherFreeFunction ( void ) ;', 'returns_class': False}
+{'line_number': 70, 'static': False, 'rtnType': 'int', 'const': False, 'parameters': [{'line_number': 70, 'constant': 0, 'name': 'i', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'int', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'returns_pointer': 0, 'class': None, 'name': 'sampleFreeFunction', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'int sampleFreeFunction ( int i ) {', 'inline': False}
+{'line_number': 75, 'static': False, 'rtnType': 'int', 'const': False, 'parameters': [{'line_number': 75, 'constant': 0, 'name': '', 'reference': 0, 'type': 'void', 'static': 0, 'pointer': 0}], 'namespace': '', 'virtual': False, 'destructor': False, 'returns': 'int', 'template': False, 'friend': False, 'returns_class': False, 'extern': False, 'returns_pointer': 0, 'class': None, 'name': 'anotherFreeFunction', 'pure_virtual': False, 'explicit': False, 'returns_fundamental': True, 'constructor': False, 'debug': 'int anotherFreeFunction ( void ) ;', 'inline': False}
 
 Number of public methods 5
 Number of private properties 2
@@ -523,7 +543,7 @@ Doxygen for meth2:
 ///
 
 Parameters for meth3:
-[{'constant': 1, 'name': 'v1', 'reference': 1, 'type': 'const string &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 1'}, {'constant': 0, 'name': 'v2', 'reference': 1, 'type': 'vector&lt;string&gt; &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 2'}]
+[{'line_number': 30, 'constant': 1, 'name': 'v1', 'reference': 1, 'type': 'const string &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 1'}, {'line_number': 30, 'constant': 0, 'name': 'v2', 'reference': 1, 'type': 'vector&lt;string&gt; &amp;', 'static': 0, 'pointer': 0, 'desc': 'Variable 2'}]
 
 Doxygen for meth4:
 /**********************************
@@ -556,6 +576,14 @@ string
 Free functions are:
  sampleFreeFunction
  anotherFreeFunction
+
+#includes are:
+ &lt;vector&gt;
+ &lt;string&gt;
+
+#defines are:
+ DEF_1 1
+ OS_NAME &quot;Linux&quot;
 </pre>
 </div>
 <div class="section" id="contributors">

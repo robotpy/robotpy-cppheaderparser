@@ -33,6 +33,7 @@ def gen_readme_txt():
     import docutils.core
     h = docutils.core.publish_string(source=open("README.txt").read(), writer_name='html')
     h = h.replace("</style>", "/*customization*/\npre.literal-block{\ncolor: #6A6A6A;\n}\n\n</style>")
+    h = h.replace('<pre class="literal-block">', '<pre class="literal-block" width="1200px" style="max-width: 1200px">')
     open("README.html", "wa").write(h)
     print "wrote README.html"
 
