@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.3"
+version = __version__ = "2.3.1"
 
 tokens = [
     'NUMBER',
@@ -1963,7 +1963,7 @@ class CppHeader( _CppHeader ):
             else:
                 # Just expression taking up multiple lines, make it take 1 line for easier parsing
                 new_m = m.replace("\\\n", " ")
-            if (num_newlines > 1):
+            if (num_newlines > 0):
                 new_m += "\n"*(num_newlines)
             headerFileStr = headerFileStr.replace(m, new_m)
         
