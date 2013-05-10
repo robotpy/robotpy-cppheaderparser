@@ -550,3 +550,15 @@ enum Author
 
 // Bug 3577484
 template <> class FruitFly<int>: public Fly { };
+
+// Bug BitBucket #2
+MAGIC_BEGIN_MACRO(glitter, int)
+  NOT_FINISHED,
+  FINISHED
+MAGIC_END_MACRO(glitter)
+
+class ClassAfterMagicMacro
+{
+public:
+  ClassAfterMagicMacro();
+}

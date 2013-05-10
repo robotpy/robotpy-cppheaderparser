@@ -1322,6 +1322,15 @@ class Fly_TestCase(unittest.TestCase):
     def test_exists(self):
         self.assertEqual(self.cppHeader.classes.has_key("FruitFly<int>"), True)
 
+# Bug BitBucket #2
+class ClassAfterMagicMacro_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("ClassAfterMagicMacro"), True)
+
 if __name__ == '__main__':
     unittest.main()
 

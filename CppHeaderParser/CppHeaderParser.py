@@ -1990,6 +1990,10 @@ class CppHeader( _CppHeader ):
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, lineno=tok.lineno)
                 #debug_print("TOK: %s"%tok)
+                #Detect when funky macros put the state machine in a bad state
+                if len(self.nameStack) and tok.value in ["class"]:
+                    debug_print("Unexpectedly ran across %s with content in the nameStack.  Must be following #define magic.  Process that before moving on"%tok)
+                    self.evaluate_stack()                    
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
                 self.stack.append( tok.value )
                 curLine = tok.lineno
