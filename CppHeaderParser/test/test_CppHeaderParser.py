@@ -1328,8 +1328,37 @@ class ClassAfterMagicMacro_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
-    def test_exists(self):
+    def test_class_exists(self):
         self.assertEqual(self.cppHeader.classes.has_key("ClassAfterMagicMacro"), True)
+
+# Bug BitBucket #3
+class FilterMagicMacro_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        savedIgnoreSymbols = CppHeaderParser.ignoreSymbols
+        CppHeaderParser.ignoreSymbols.append("MAGIC_FUNC()")
+        self.cppHeader = CppHeaderParser.CppHeader(r"""
+class FilterMagicMacro
+{
+public:
+
+  MAGIC_FUNC(var)
+  MAGIC_FUNC(v,
+             a,
+             r)
+  MAGIC_FUNC((int)var)
+  MAGIC_FUNC(((()))var()()())
+  MAGIC_FUNC("1) \" var")
+
+  void FilterMagicMacroMethod(int);
+};""", "string")
+        CppHeaderParser.ignoreSymbols = savedIgnoreSymbols
+    
+    def test_method_exists(self):
+        self.assertEqual(self.cppHeader.classes["FilterMagicMacro"]["methods"]["public"][0]["name"], "FilterMagicMacroMethod")
+    
+    def test_line_num_is_correct(self):
+        self.assertEqual(self.cppHeader.classes["FilterMagicMacro"]["methods"]["public"][0]["line_number"], 14);
 
 if __name__ == '__main__':
     unittest.main()

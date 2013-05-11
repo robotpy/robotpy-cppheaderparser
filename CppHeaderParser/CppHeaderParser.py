@@ -1975,6 +1975,40 @@ class CppHeader( _CppHeader ):
             headerFileStr = headerFileStr.replace(m, "\n" * num_newlines)        
         headerFileStr = re.sub(r'extern[ ]+"[Cc]"[ ]*', "", headerFileStr)
                 
+        #Filter out any ignore symbols that end with "()" to account for #define magic functions
+        for ignore in ignoreSymbols:
+            if not ignore.endswith("()"): continue
+            while True:
+                locStart = headerFileStr.find(ignore[:-1])
+                if locStart == -1:
+                    break;
+                locEnd = None
+                #Now walk till we find the last paren and account for sub parens
+                parenCount = 1
+                inQuotes = False
+                for i in xrange(locStart + len(ignore) - 1, len(headerFileStr)):
+                    c = headerFileStr[i]
+                    if not inQuotes:
+                        if c == "(":
+                            parenCount += 1
+                        elif c == ")":
+                            parenCount -= 1
+                        elif c == '"':
+                            inQuotes = True
+                        if parenCount == 0:
+                            locEnd = i + 1
+                            break;
+                    else:
+                        if c == '"' and headerFileStr[i-1] != '\\':
+                            inQuotes = False
+                        
+                if locEnd:
+                    #Strip it out but keep the linecount the same so line numbers are right
+                    match_str = headerFileStr[locStart:locEnd]
+                    debug_print("Striping out '%s'"%match_str)
+                    num_newlines = len(filter(lambda a: a=="\n", match_str))
+                    headerFileStr = headerFileStr.replace(headerFileStr[locStart:locEnd], "\n"*num_newlines)
+        
         self.braceDepth = 0
         lex.lex()
         lex.input(headerFileStr)
