@@ -2208,8 +2208,8 @@ class CppHeader( _CppHeader ):
         #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
         if not self.curClass and 'typedef' in self.nameStack:
             trace_print('STACK', self.stack)
-            if token == 'SEMI_COLON' and ('{' not in self.stack or '}' in self.stack): self.evaluate_typedef()
-            else: return
+            self.evaluate_typedef()
+            return
         
         elif (len(self.nameStack) == 0):
             debug_print( "trace" )

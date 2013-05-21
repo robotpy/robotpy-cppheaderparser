@@ -1360,6 +1360,24 @@ public:
     def test_line_num_is_correct(self):
         self.assertEqual(self.cppHeader.classes["FilterMagicMacro"]["methods"]["public"][0]["line_number"], 14);
 
+# Bug BitBucket #4
+class ClassRegularTypedefs_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_uint_exists(self):
+        self.assertEqual(self.cppHeader.typedefs.has_key("uint"), True)
+    
+    def test_string_array_exists(self):
+        self.assertEqual(self.cppHeader.typedefs.has_key("string_array"), True)
+    
+    def test_SmartObjPtr_exists(self):
+        self.assertEqual(self.cppHeader.typedefs.has_key("SmartObjPtr"), True)
+    
+    def test_StrStrMap_exists(self):
+        self.assertEqual(self.cppHeader.typedefs.has_key("StrStrMap"), True)
+
 if __name__ == '__main__':
     unittest.main()
 
