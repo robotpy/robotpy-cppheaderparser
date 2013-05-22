@@ -1377,6 +1377,9 @@ class ClassRegularTypedefs_TestCase(unittest.TestCase):
     
     def test_StrStrMap_exists(self):
         self.assertEqual(self.cppHeader.typedefs.has_key("StrStrMap"), True)
+    
+    def test_AfterTypedefClass_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("AfterTypedefClass"), True)
 
 if __name__ == '__main__':
     unittest.main()

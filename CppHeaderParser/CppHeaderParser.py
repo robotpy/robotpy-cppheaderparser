@@ -2167,9 +2167,8 @@ class CppHeader( _CppHeader ):
                     
                     
                     if (self.braceDepth < 10): self.evaluate_stack( tok.type )
-                    if not self.stack: continue
-                    if self.stack[0]=='typedef' and ( '{' not in self.stack or '}' in self.stack ): self.stack = []; trace_print( "REAL CLEAR")
-                    elif self.stack[0] != 'typedef': self.stack = []; trace_print('CLEAR STACK')
+                    self.stack = []
+                    self.nameStack = []
 
         except:
             if (debug): raise

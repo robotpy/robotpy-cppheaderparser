@@ -568,3 +568,8 @@ typedef unsigned int uint;
 typedef char ** string_array;
 typedef std::tr1::shared_ptr< ObjPtr > SmartObjPtr;
 typedef std::map<std::string, std::string> StrStrMap;
+
+class AfterTypedefClass
+{
+  public:
+}
