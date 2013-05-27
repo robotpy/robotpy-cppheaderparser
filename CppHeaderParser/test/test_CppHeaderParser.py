@@ -1381,6 +1381,15 @@ class ClassRegularTypedefs_TestCase(unittest.TestCase):
     def test_AfterTypedefClass_exists(self):
         self.assertEqual(self.cppHeader.classes.has_key("AfterTypedefClass"), True)
 
+# Bug BitBucket #6
+class LineNumAfterDivide_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_line_num(self):
+        self.assertEqual(self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1]["line_number"], 583)
+
 if __name__ == '__main__':
     unittest.main()
 

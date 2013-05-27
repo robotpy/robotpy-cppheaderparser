@@ -5,9 +5,13 @@ doc:
 	@python doc_generator.py
 
 test: gen
-	@echo -e "\n\nTesting Python 2.x"
+	@echo ""
+	@echo ""
+	@echo "Testing Python 2.x"
 	@(cd CppHeaderParser/test; python test_CppHeaderParser.py)
-	@echo -e "\n\nTesting Python 3.x"
+	@echo ""
+	@echo ""
+	@echo "Testing Python 3.x"
 	@if [ ! -e CppHeaderParser/python3-libs ]; \
 	then \
 	    echo "Can't test python3 version without CppHeaderParser/python3-libs containing"; \
@@ -28,12 +32,13 @@ upload: doc
 	@python setup.py sdist upload
 
 gen:
+	@echo "Auto generating python 3 version..."
 	@(cd CppHeaderParser; \
 	cp CppHeaderParser.py CppHeaderParser3.py; \
-	2to3 CppHeaderParser3.py -w -n >/dev/null; \
+	2to3 CppHeaderParser3.py -w -n >/dev/null 2>&1; \
 	cd test; \
 	cp test_CppHeaderParser.py test_CppHeaderParser3.py; \
-	2to3 test_CppHeaderParser3.py -w -n >/dev/null)
+	2to3 test_CppHeaderParser3.py -w -n >/dev/null 2>&1)
 
 help:
 	@echo "doc     - Build Documentation"

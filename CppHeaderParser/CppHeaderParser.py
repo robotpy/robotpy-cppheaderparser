@@ -129,7 +129,7 @@ def t_COMMENT_SINGLELINE(t):
 t_ASTERISK = r'\*'
 t_MINUS = r'\-'
 t_PLUS = r'\+'
-t_DIVIDE = r'/[^/]'
+t_DIVIDE = r'/(?!/)'
 t_AMPERSTAND = r'&'
 t_EQUALS = r'='
 t_CHAR_LITERAL = "'.'"
