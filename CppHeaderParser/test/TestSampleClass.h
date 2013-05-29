@@ -582,3 +582,12 @@ class LineNumAfterDivide
                  beta_num); }
   void func2();
 };
+
+// Bug BitBucket #5
+class Herb
+{
+};
+
+class Herb::Cilantro : public Plant
+{
+};

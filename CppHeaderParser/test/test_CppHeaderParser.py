@@ -460,11 +460,12 @@ class Bug3488360_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["BloodOrange"]["inherits"], [])
     
     def test_Bananna_inherits(self):
-        self.assertEqual(self.cppHeader.classes["Bananna"]["inherits"], [{'access': 'public', 'class': 'Citrus::BloodOrange'}])
+        self.assertEqual(self.cppHeader.classes["Bananna"]["inherits"], [{'access': 'public', 'class': 'Citrus::BloodOrange', 'virtual': False}])
     
     def test_ExcellentCake_inherits(self):
         self.assertEqual(self.cppHeader.classes["ExcellentCake"]["inherits"],
-            [{'access': 'private', 'class': 'Citrus::BloodOrange'}, {'access': 'private', 'class': 'Convoluted::Nested::Mixin'}])
+            [{'access': 'private', 'class': 'Citrus::BloodOrange', 'virtual': False},
+             {'access': 'private', 'class': 'Convoluted::Nested::Mixin', 'virtual': False}])
     
 class Bug3487551_TestCase(unittest.TestCase):
     
@@ -1389,6 +1390,15 @@ class LineNumAfterDivide_TestCase(unittest.TestCase):
     
     def test_line_num(self):
         self.assertEqual(self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1]["line_number"], 583)
+
+# Bug BitBucket #5
+class ClassHerbCilantro_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_HerbCilantro_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Herb::Cilantro"), True)
 
 if __name__ == '__main__':
     unittest.main()

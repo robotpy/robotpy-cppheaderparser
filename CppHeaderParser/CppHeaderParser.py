@@ -386,6 +386,25 @@ class CppClass(dict):
         if len(doxygenCommentCache):
             self["doxygen"] = doxygenCommentCache
             doxygenCommentCache = ""
+        
+        if "::" in "".join(nameStack):
+            #Re-Join class paths (ex  ['class', 'Bar', ':', ':', 'Foo'] -> ['class', 'Bar::Foo'] 
+            try:
+                new_nameStack = []
+                for name in nameStack:
+                    if len(new_nameStack) == 0: 
+                        new_nameStack.append(name)
+                    elif name == ":" and new_nameStack[-1].endswith(":"):
+                        new_nameStack[-1] += name
+                    elif new_nameStack[-1].endswith("::"):
+                        new_nameStack[-2] += new_nameStack[-1] + name
+                        del new_nameStack[-1]
+                    else:
+                        new_nameStack.append(name)
+                trace_print("Convert from namestack\n %s\nto\n%s"%(nameStack, new_nameStack))
+                nameStack = new_nameStack
+            except: pass
+        
         self["name"] = nameStack[1]
         self["line_number"] = detect_lineno(nameStack[0])
         
