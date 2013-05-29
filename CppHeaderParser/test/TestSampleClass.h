@@ -591,3 +591,9 @@ class Herb
 class Herb::Cilantro : public Plant
 {
 };
+
+// Bug BitBucket #7
+#include <iostream>
+int print_statement() {
+    cout << "Heyyy" << endl;
+}

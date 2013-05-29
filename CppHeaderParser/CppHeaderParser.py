@@ -2054,6 +2054,8 @@ class CppHeader( _CppHeader ):
                 if (tok.type in ('PRECOMP_MACRO', 'PRECOMP_MACRO_CONT')):
                     debug_print("PRECOMP: %s"%tok)
                     self._precomp_macro_buf.append(tok.value)
+                    self.stack = []
+                    self.nameStack = []
                     continue
                 if (tok.type == 'OPEN_BRACE'):
                     if len(self.nameStack) >= 2 and is_namespace(self.nameStack):    # namespace {} with no name used in boost, this sets default?

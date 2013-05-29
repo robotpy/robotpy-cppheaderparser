@@ -1400,6 +1400,18 @@ class ClassHerbCilantro_TestCase(unittest.TestCase):
     def test_HerbCilantro_exists(self):
         self.assertEqual(self.cppHeader.classes.has_key("Herb::Cilantro"), True)
 
+# Bug BitBucket #7
+class print_statement_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_function_name_type(self):
+        self.assertEqual(self.cppHeader.functions[7]["name"], "print_statement")
+        
+    def test_return_type(self):
+        self.assertEqual(self.cppHeader.functions[7]["returns"], "int")
+
 if __name__ == '__main__':
     unittest.main()
 
