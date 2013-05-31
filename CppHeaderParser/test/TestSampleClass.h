@@ -597,3 +597,12 @@ class Herb::Cilantro : public Plant
 int print_statement() {
     cout << "Heyyy" << endl;
 }
+
+// Bug BitBucket #8
+class Garlic {
+public:
+    friend int genNum(C& a)
+    {
+      return obj.meth().num();
+    }
+};

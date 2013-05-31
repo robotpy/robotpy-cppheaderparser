@@ -1412,6 +1412,15 @@ class print_statement_TestCase(unittest.TestCase):
     def test_return_type(self):
         self.assertEqual(self.cppHeader.functions[7]["returns"], "int")
 
+# Bug BitBucket #8
+class Garlic_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_function_exists(self):
+        self.assertEqual(self.cppHeader.classes["Garlic"]["methods"]["public"][0]["name"], "genNum")
+
 if __name__ == '__main__':
     unittest.main()
 

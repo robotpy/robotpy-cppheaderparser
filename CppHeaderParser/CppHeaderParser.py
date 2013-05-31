@@ -2238,7 +2238,7 @@ class CppHeader( _CppHeader ):
         elif (self.nameStack[0] == "namespace"):
             #Taken care of outside of here
             pass
-        elif self.nameStack[0] == "friend":
+        elif len(self.nameStack) == 2 and self.nameStack[0] == "friend":#friend class declaration
             pass
         elif len(self.nameStack) >= 2 and self.nameStack[0] == 'using' and self.nameStack[1] == 'namespace': pass    # TODO
 
