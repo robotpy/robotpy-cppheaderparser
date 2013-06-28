@@ -1421,6 +1421,15 @@ class Garlic_TestCase(unittest.TestCase):
     def test_function_exists(self):
         self.assertEqual(self.cppHeader.classes["Garlic"]["methods"]["public"][0]["name"], "genNum")
 
+# Bug SourceForge #54
+class Wheat_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_name(self):
+        self.assertEqual(self.cppHeader.enums[1]["name"], "Wheat")
+
 if __name__ == '__main__':
     unittest.main()
 

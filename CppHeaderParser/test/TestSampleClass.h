@@ -606,3 +606,11 @@ public:
       return obj.meth().num();
     }
 };
+
+// Bug SourceForge #54
+enum Wheat
+{
+   w1,
+   w2,
+   w3,
+} __attribute__((packed));
