@@ -1430,6 +1430,22 @@ class Wheat_TestCase(unittest.TestCase):
     def test_name(self):
         self.assertEqual(self.cppHeader.enums[1]["name"], "Wheat")
 
+# Bug SourceForge #55
+class PeachPlumb_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_Peach_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Peach"), True)
+            
+    def test_Plumb_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Plumb"), True)
+        
+    def test_function_exists(self):
+        self.assertEqual(self.cppHeader.classes["Plumb"]["methods"]["private"][0]["name"], "doSomethingGreat")
+    
+
 if __name__ == '__main__':
     unittest.main()
 

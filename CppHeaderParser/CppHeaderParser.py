@@ -2069,10 +2069,6 @@ class CppHeader( _CppHeader ):
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, lineno=tok.lineno)
                 #debug_print("TOK: %s"%tok)
-                #Detect when funky macros put the state machine in a bad state
-                if len(self.nameStack) and tok.value in ["class"]:
-                    debug_print("Unexpectedly ran across %s with content in the nameStack.  Must be following #define magic.  Process that before moving on"%tok)
-                    self.evaluate_stack()                    
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
                 self.stack.append( tok.value )
                 curLine = tok.lineno
@@ -2090,6 +2086,27 @@ class CppHeader( _CppHeader ):
                         self.nameSpaces.append(self.nameStack[1])
                         ns = self.cur_namespace(); self.stack = []
                         if ns not in self.namespaces: self.namespaces.append( ns )
+                    # Detect special condition of macro magic before class declaration so we
+                    # can filter it out
+                    if 'class' in self.nameStack and self.nameStack[0] != 'class':
+                        classLocationNS = self.nameStack.index("class")
+                        classLocationS = self.stack.index("class")
+                        if "(" not in self.nameStack[classLocationNS:]:
+                            debug_print("keyword 'class' found in unexpected location in nameStack, must be following #define magic.  Process that before moving on")
+                            origNameStack = self.nameStack
+                            origStack = self.stack
+                            #Process first part of stack which is probably #define macro magic and may cause issues
+                            self.nameStack = self.nameStack[:classLocationNS]
+                            self.stack = self.stack[:classLocationS]
+                            try:
+                                self.evaluate_stack()
+                            except:
+                                debug_print("Error processing #define magic... Oh well")
+                            #Process rest of stack
+                            self.nameStack = origNameStack[classLocationNS:]
+                            self.stack = origStack[classLocationS:]
+                        
+                    
                     if len(self.nameStack) and not is_enum_namestack(self.nameStack):
                         self.evaluate_stack()
                     else:

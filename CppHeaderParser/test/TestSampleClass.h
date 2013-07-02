@@ -614,3 +614,21 @@ enum Wheat
    w2,
    w3,
 } __attribute__((packed));
+
+
+// Bug SourceForge #55
+class Peach
+{
+  int abc;
+};
+
+class Plumb
+{
+  class Peach * doSomethingGreat( class Peach * pInCurPtr );
+  class Peach * var;
+};
+
+class Peach * Plumb::myMethod( class Peach * pInPtr )
+{
+  return pInPtr;
+}
