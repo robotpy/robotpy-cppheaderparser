@@ -1838,6 +1838,27 @@ class _CppHeader( Resolver ):
                 if len(filteredParseHistory) and filteredParseHistory[-1]["item_type"] == "class":
                     self.nameStack.insert(0, filteredParseHistory[-1]["item"]["name"])
                     debug_print("DEANONYMOIZING %s to type '%s'"%(self.nameStack[1], self.nameStack[0]))
+            if "," in self.nameStack: #Maybe we have a variable list
+                #Figure out what part is the variable separator but remember templates of function pointer
+                #First find left most comma outside of a > and )
+                leftMostComma = 0;
+                for i in xrange(0, len(self.nameStack)):
+                    name = self.nameStack[i]
+                    if name in (">", ")"): leftMostComma = 0
+                    if leftMostComma == 0 and name == ",": leftMostComma = i
+                # Is it really a list of variables?
+                if leftMostComma != 0:
+                    trace_print("Multiple variables for namestack in %s.  Separating processing"%self.nameStack)
+                    orig_nameStack = self.nameStack[:]
+                    orig_stack = self.stack[:]
+                    
+                    type_nameStack = orig_nameStack[:leftMostComma-1]
+                    for name in orig_nameStack[leftMostComma - 1::2]:
+                        self.nameStack = type_nameStack + [name]
+                        self.stack = orig_stack[:] # Not maintained for mucking, but this path it doesnt matter
+                        self.evaluate_property_stack()
+                    return
+
             newVar = CppVariable(self.nameStack)
             newVar['namespace'] = self.current_namespace()
             if self.curStruct:

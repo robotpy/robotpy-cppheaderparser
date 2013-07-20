@@ -1444,6 +1444,40 @@ class PeachPlumb_TestCase(unittest.TestCase):
         
     def test_function_exists(self):
         self.assertEqual(self.cppHeader.classes["Plumb"]["methods"]["private"][0]["name"], "doSomethingGreat")
+
+# Bug BitBucket #9
+class Grape_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_Grape_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Grape"), True)
+        
+    def test_a_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][0]["name"], "a")
+        
+    def test_a_type(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][0]["type"], "int")
+        
+    def test_b_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][1]["name"], "b")
+        
+    def test_b_type(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][1]["type"], "int")
+        
+    def test_c_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][2]["name"], "c")
+        
+    def test_d_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][3]["name"], "d")
+        
+    def test_e_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][4]["name"], "e")
+        
+    def test_f_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][5]["name"], "f")
+    
     
 
 if __name__ == '__main__':

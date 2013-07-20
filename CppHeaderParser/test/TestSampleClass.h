@@ -632,3 +632,12 @@ class Peach * Plumb::myMethod( class Peach * pInPtr )
 {
   return pInPtr;
 }
+
+// Bug BitBucket #9
+class Grape
+{
+public:
+    int a, b,c;
+    map<string, int> d;
+    map<string, int> e, f;
+};
