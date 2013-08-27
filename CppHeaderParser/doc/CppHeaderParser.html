@@ -6,7 +6,7 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.3.1)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.4)</font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py">/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py</a></font></td></tr></table>
     <p><tt>Parse&nbsp;C++&nbsp;header&nbsp;files&nbsp;and&nbsp;generate&nbsp;a&nbsp;data&nbsp;structure<br>
@@ -1379,6 +1379,7 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
 <td width="100%"><dl><dt><a name="-debug_print"><strong>debug_print</strong></a>(arg)</dt></dl>
  <dl><dt><a name="-detect_lineno"><strong>detect_lineno</strong></a>(s)</dt><dd><tt>Detect&nbsp;the&nbsp;line&nbsp;number&nbsp;for&nbsp;a&nbsp;given&nbsp;token&nbsp;string</tt></dd></dl>
  <dl><dt><a name="-error_print"><strong>error_print</strong></a>(arg)</dt></dl>
+ <dl><dt><a name="-filter_out_attribute_keyword"><strong>filter_out_attribute_keyword</strong></a>(stack)</dt><dd><tt>Strips&nbsp;__attribute__&nbsp;and&nbsp;its&nbsp;parenthetical&nbsp;expression&nbsp;from&nbsp;the&nbsp;stack</tt></dd></dl>
  <dl><dt><a name="-is_enum_namestack"><strong>is_enum_namestack</strong></a>(nameStack)</dt><dd><tt>Determines&nbsp;if&nbsp;a&nbsp;namestack&nbsp;is&nbsp;an&nbsp;enum&nbsp;namestack</tt></dd></dl>
  <dl><dt><a name="-is_function_pointer_stack"><strong>is_function_pointer_stack</strong></a>(stack)</dt><dd><tt>Count&nbsp;how&nbsp;many&nbsp;non-nested&nbsp;paranthesis&nbsp;are&nbsp;in&nbsp;the&nbsp;stack.&nbsp;&nbsp;Useful&nbsp;for&nbsp;determining&nbsp;if&nbsp;a&nbsp;stack&nbsp;is&nbsp;a&nbsp;function&nbsp;pointer</tt></dd></dl>
  <dl><dt><a name="-is_fundamental"><strong>is_fundamental</strong></a>(s)</dt></dl>
@@ -1401,7 +1402,7 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><strong>C99_NONSTANDARD</strong> = {'int16': 'short int', 'int32': 'int', 'int64': 'int64_t', 'int8': 'signed char', 'uint': 'unsigned int', 'uint16': 'unsigned short int', 'uint32': 'unsigned int', 'uint64': 'uint64_t', 'uint8': 'unsigned char'}<br>
-<strong>__version__</strong> = '2.3.1'<br>
+<strong>__version__</strong> = '2.4'<br>
 <strong>debug</strong> = 0<br>
 <strong>debug_trace</strong> = 0<br>
 <strong>doxygenCommentCache</strong> = ''<br>
@@ -1420,7 +1421,7 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
 <strong>t_CLOSE_SQUARE_BRACKET</strong> = r'\]'<br>
 <strong>t_COLON</strong> = ':'<br>
 <strong>t_COMMA</strong> = ','<br>
-<strong>t_DIVIDE</strong> = '/[^/]'<br>
+<strong>t_DIVIDE</strong> = '/(?!/)'<br>
 <strong>t_EQUALS</strong> = '='<br>
 <strong>t_EXCLAMATION</strong> = '!'<br>
 <strong>t_MINUS</strong> = r'\-'<br>
@@ -1440,5 +1441,5 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
 <strong>t_TAB</strong> = r'\t'<br>
 <strong>t_ignore</strong> = ' <font color="#c040c0">\r</font>.?@<font color="#c040c0">\x0c</font>'<br>
 <strong>tokens</strong> = ['NUMBER', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'OPEN_SQUARE_BRACKET', 'CLOSE_SQUARE_BRACKET', 'COLON', 'SEMI_COLON', 'COMMA', 'TAB', 'BACKSLASH', 'PIPE', 'PERCENT', 'EXCLAMATION', 'CARET', 'COMMENT_SINGLELINE', 'COMMENT_MULTILINE', 'PRECOMP_MACRO', ...]<br>
-<strong>version</strong> = '2.3.1'</td></tr></table>
+<strong>version</strong> = '2.4'</td></tr></table>
 </body></html>
