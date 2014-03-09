@@ -423,63 +423,63 @@ sys.path = [&quot;../&quot;] + sys.path
 import CppHeaderParser
 try:
     cppHeader = CppHeaderParser.CppHeader(&quot;SampleClass.h&quot;)
-except CppHeaderParser.CppParseError,  e:
-    print e
+except CppHeaderParser.CppParseError as e:
+    print(e)
     sys.exit(1)
 
-print &quot;CppHeaderParser view of %s&quot;%cppHeader
+print(&quot;CppHeaderParser view of %s&quot;%cppHeader)
 
 sampleClass = cppHeader.classes[&quot;SampleClass&quot;]
-print &quot;Number of public methods %d&quot;%(len(sampleClass[&quot;methods&quot;][&quot;public&quot;]))
-print &quot;Number of private properties %d&quot;%(len(sampleClass[&quot;properties&quot;][&quot;private&quot;]))
+print(&quot;Number of public methods %d&quot;%(len(sampleClass[&quot;methods&quot;][&quot;public&quot;])))
+print(&quot;Number of private properties %d&quot;%(len(sampleClass[&quot;properties&quot;][&quot;private&quot;])))
 meth3 = [m for m in sampleClass[&quot;methods&quot;][&quot;public&quot;] if m[&quot;name&quot;] == &quot;meth3&quot;][0] #get meth3
 meth3ParamTypes = [t[&quot;type&quot;] for t in meth3[&quot;parameters&quot;]] #get meth3s parameters
-print &quot;Parameter Types for public method meth3 %s&quot;%(meth3ParamTypes)
+print(&quot;Parameter Types for public method meth3 %s&quot;%(meth3ParamTypes))
 
-print &quot;\nReturn type for meth1:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][1][&quot;rtnType&quot;]
+print(&quot;\nReturn type for meth1:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][1][&quot;rtnType&quot;])
 
-print &quot;\nDoxygen for meth2:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][2][&quot;doxygen&quot;]
+print(&quot;\nDoxygen for meth2:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][2][&quot;doxygen&quot;])
 
-print &quot;\nParameters for meth3:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][3][&quot;parameters&quot;]
+print(&quot;\nParameters for meth3:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][3][&quot;parameters&quot;])
 
-print &quot;\nDoxygen for meth4:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][4][&quot;doxygen&quot;]
+print(&quot;\nDoxygen for meth4:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;public&quot;][4][&quot;doxygen&quot;])
 
-print &quot;\nReturn type for meth5:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;private&quot;][0][&quot;rtnType&quot;]
+print(&quot;\nReturn type for meth5:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;methods&quot;][&quot;private&quot;][0][&quot;rtnType&quot;])
 
-print &quot;\nDoxygen type for prop1:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;properties&quot;][&quot;private&quot;][0][&quot;doxygen&quot;]
+print(&quot;\nDoxygen type for prop1:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;properties&quot;][&quot;private&quot;][0][&quot;doxygen&quot;])
 
-print &quot;\nType for prop5:&quot;
-print cppHeader.classes[&quot;SampleClass&quot;][&quot;properties&quot;][&quot;private&quot;][1][&quot;type&quot;]
+print(&quot;\nType for prop5:&quot;)
+print(cppHeader.classes[&quot;SampleClass&quot;][&quot;properties&quot;][&quot;private&quot;][1][&quot;type&quot;])
 
-print &quot;\nNamespace for AlphaClass is:&quot;
-print cppHeader.classes[&quot;AlphaClass&quot;][&quot;namespace&quot;]
+print(&quot;\nNamespace for AlphaClass is:&quot;)
+print(cppHeader.classes[&quot;AlphaClass&quot;][&quot;namespace&quot;])
 
-print &quot;\nReturn type for alphaMethod is:&quot;
-print cppHeader.classes[&quot;AlphaClass&quot;][&quot;methods&quot;][&quot;public&quot;][0][&quot;rtnType&quot;]
+print(&quot;\nReturn type for alphaMethod is:&quot;)
+print(cppHeader.classes[&quot;AlphaClass&quot;][&quot;methods&quot;][&quot;public&quot;][0][&quot;rtnType&quot;])
 
-print &quot;\nNamespace for OmegaClass is:&quot;
-print cppHeader.classes[&quot;OmegaClass&quot;][&quot;namespace&quot;]
+print(&quot;\nNamespace for OmegaClass is:&quot;)
+print(cppHeader.classes[&quot;OmegaClass&quot;][&quot;namespace&quot;])
 
-print &quot;\nType for omegaString is:&quot;
-print cppHeader.classes[&quot;AlphaClass&quot;][&quot;properties&quot;][&quot;public&quot;][0][&quot;type&quot;]
+print(&quot;\nType for omegaString is:&quot;)
+print(cppHeader.classes[&quot;AlphaClass&quot;][&quot;properties&quot;][&quot;public&quot;][0][&quot;type&quot;])
 
-print &quot;\nFree functions are:&quot;
+print(&quot;\nFree functions are:&quot;)
 for func in cppHeader.functions:
-    print &quot; %s&quot;%func[&quot;name&quot;]
+    print(&quot; %s&quot;%func[&quot;name&quot;])
 
-print &quot;\n#includes are:&quot;
+print(&quot;\n#includes are:&quot;)
 for incl in cppHeader.includes:
-    print &quot; %s&quot;%incl
+    print(&quot; %s&quot;%incl)
 
-print &quot;\n#defines are:&quot;
+print(&quot;\n#defines are:&quot;)
 for define in cppHeader.defines:
-    print &quot; %s&quot;%define
+    print(&quot; %s&quot;%define)
 </pre>
 <p><strong>Output</strong>:</p>
 <pre class="literal-block" width="1200px" style="max-width: 1200px">

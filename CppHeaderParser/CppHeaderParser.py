@@ -125,7 +125,7 @@ def t_COMMENT_SINGLELINE(t):
             doxygenCommentCache += t.value[:-1]
         else:
             doxygenCommentCache += t.value
-    t.lexer.lineno += len(filter(lambda a: a=="\n", t.value))
+    t.lexer.lineno += len([a for a in t.value if a=="\n"])
 t_ASTERISK = r'\*'
 t_MINUS = r'\-'
 t_PLUS = r'\+'
@@ -147,13 +147,13 @@ def t_COMMENT_MULTILINE(t):
         #strip prefixing whitespace
         v = re.sub("\n[\s]+\*", "\n*", v)
         doxygenCommentCache += v
-    t.lexer.lineno += len(filter(lambda a: a=="\n", t.value))
+    t.lexer.lineno += len([a for a in t.value if a=="\n"])
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
 def t_error(v):
-    print( "Lex error: ", v )
+    print(( "Lex error: ", v ))
 
 lex.lex()
 # Controls error_print
@@ -166,14 +166,14 @@ debug = 0
 debug_trace = 0
 
 def error_print(arg):
-    if print_errors: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+    if print_errors: print(("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg)))
 
 def warning_print(arg):
-    if print_warnings: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+    if print_warnings: print(("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg)))
 
 def debug_print(arg):
     global debug
-    if debug: print("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg))
+    if debug: print(("[%4d] %s"%(inspect.currentframe().f_back.f_lineno, arg)))
 
 def trace_print(*arg):
     global debug_trace
@@ -292,7 +292,7 @@ def filter_out_attribute_keyword(stack):
         #Find final paren
         if stack[attr_index + 1] == '(':
             paren_count = 1
-            for i in xrange(attr_index + 2, len(stack)):
+            for i in range(attr_index + 2, len(stack)):
                 elm = stack[i]
                 if elm == '(':
                     paren_count += 1
@@ -556,10 +556,10 @@ class CppClass(dict):
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
-        if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
-        if 'parent' in self.keys() and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
+        if 'doxygen' in list(self.keys()): rtn += self["doxygen"] + '\n'
+        if 'parent' in list(self.keys()) and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
 
-        if "inherits" in self.keys():
+        if "inherits" in list(self.keys()):
             rtn += "  Inherits: "
             for inheritClass in self["inherits"]:
                 if inheritClass["virtual"]: rtn += "virtual "
@@ -584,7 +584,7 @@ class CppClass(dict):
             for method in self["methods"][accessSpecifier]:
                 rtn += "\t\t" + method.show() + '\n'
         rtn += "  }\n"
-        print rtn
+        print(rtn)
     
     def __repr__(self):
         """Convert class to a string"""
@@ -594,10 +594,10 @@ class CppClass(dict):
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
-        if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
-        if 'parent' in self.keys() and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
+        if 'doxygen' in list(self.keys()): rtn += self["doxygen"] + '\n'
+        if 'parent' in list(self.keys()) and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
 
-        if "inherits" in self.keys() and len(self["inherits"]):
+        if "inherits" in list(self.keys()) and len(self["inherits"]):
             rtn += "Inherits: "
             for inheritClass in self["inherits"]:
                 if inheritClass.get("virtual", False): rtn += "virtual "
@@ -647,13 +647,13 @@ class CppUnion( CppClass ):
         self["members"] = self["properties"]["public"]
     
     def transform_to_union_keys(self):
-        print "union keys: %s"%self.keys()
+        print("union keys: %s"%list(self.keys()))
         for key in ['inherits', 'parent', 'abstract', 'namespace', 'typedefs', 'methods']:
             del self[key] 
         
     def show(self):
         """Convert class to a string"""
-        print self
+        print(self)
     
     
     def __repr__(self):
@@ -664,8 +664,8 @@ class CppUnion( CppClass ):
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
-        if 'doxygen' in self.keys(): rtn += self["doxygen"] + '\n'
-        if 'parent' in self.keys() and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
+        if 'doxygen' in list(self.keys()): rtn += self["doxygen"] + '\n'
+        if 'parent' in list(self.keys()) and self['parent']: rtn += 'parent class: ' + self['parent'] + '\n'
 
         rtn += "{\n"
         for member in self["members"]:
@@ -802,7 +802,7 @@ class CppMethod( _CppMethod ):
         #See if there is a doxygen comment for the variable
         doxyVarDesc = {}
         
-        if self.has_key("doxygen"):
+        if "doxygen" in self:
             doxyLines = self["doxygen"].split("\n")
             lastParamDesc = ""
             for doxyLine in doxyLines:
@@ -845,11 +845,11 @@ class CppMethod( _CppMethod ):
             
             if param_separator:
                 param = CppVariable(paramsStack[0:param_separator],  doxyVarDesc=doxyVarDesc)
-                if len(param.keys()): params.append(param)
+                if len(list(param.keys())): params.append(param)
                 paramsStack = paramsStack[param_separator + 1:]
             else:
                 param = CppVariable(paramsStack,  doxyVarDesc=doxyVarDesc)
-                if len(param.keys()): params.append(param)
+                if len(list(param.keys())): params.append(param)
                 break
 
 
@@ -858,7 +858,7 @@ class CppMethod( _CppMethod ):
 
     def __repr__(self):
         filter_keys = ("parent", "defined", "operator", "returns_reference")
-        cpy = dict((k,v) for (k,v) in self.items() if k not in filter_keys)
+        cpy = dict((k,v) for (k,v) in list(self.items()) if k not in filter_keys)
         return "%s"%cpy
 
 
@@ -960,8 +960,8 @@ class CppVariable( _CppVariable ):
     
     def __repr__(self):
         keys_white_list = ['constant','name','reference','type','static','pointer','desc', 'line_number']
-        cpy = dict((k,v) for (k,v) in self.items() if k in keys_white_list)
-        if self.has_key("array_size"): cpy["array_size"] = self["array_size"]
+        cpy = dict((k,v) for (k,v) in list(self.items()) if k in keys_white_list)
+        if "array_size" in self: cpy["array_size"] = self["array_size"]
         return "%s"%cpy
 
 class _CppEnum(dict):
@@ -1266,7 +1266,7 @@ class Resolver(object):
                     nestedEnum = None
                     nestedStruct = None
                     nestedTypedef = None
-                    if 'method' in var and 'parent' in var['method'].keys():
+                    if 'method' in var and 'parent' in list(var['method'].keys()):
                         klass = var['method']['parent']
                         if tag in var['method']['parent']._public_enums:
                             nestedEnum = var['method']['parent']._public_enums[ tag ]
@@ -1518,7 +1518,7 @@ class _CppHeader( Resolver ):
     def finalize(self):
         self.finalize_vars()
         # finalize classes and method returns types
-        for cls in self.classes.values():
+        for cls in list(self.classes.values()):
             for meth in cls.get_all_methods():
                 if meth['pure_virtual']: cls['abstract'] = True
 
@@ -1606,7 +1606,7 @@ class _CppHeader( Resolver ):
                         trace_print( 'WARN: UNKNOWN RETURN', meth['name'], meth['returns'])
                         meth['returns_unknown'] = True
 
-        for cls in self.classes.values():
+        for cls in list(self.classes.values()):
             methnames = cls.get_all_method_names()
             pvm = cls.get_all_pure_virtual_methods()
 
@@ -1703,7 +1703,7 @@ class _CppHeader( Resolver ):
             klass = name[ : name.rindex('::') ]
             name = name.split('::')[-1]
             info['class'] = klass
-            if self.classes.has_key(klass) and not self.curClass:
+            if klass in self.classes and not self.curClass:
                  #Class function defined outside the class
                 return None
         #    info['name'] = name
@@ -1842,7 +1842,7 @@ class _CppHeader( Resolver ):
                 #Figure out what part is the variable separator but remember templates of function pointer
                 #First find left most comma outside of a > and )
                 leftMostComma = 0;
-                for i in xrange(0, len(self.nameStack)):
+                for i in range(0, len(self.nameStack)):
                     name = self.nameStack[i]
                     if name in (">", ")"): leftMostComma = 0
                     if leftMostComma == 0 and name == ",": leftMostComma = i
@@ -1953,7 +1953,7 @@ class CppHeader( _CppHeader ):
     IGNORE_NAMES = '__extension__'.split()
    
     def show(self):
-        for className in self.classes.keys():self.classes[className].show()
+        for className in list(self.classes.keys()):self.classes[className].show()
 
     def __init__(self, headerFileName, argType="file", **kwargs):
         """Create the parsed C++ header file parse tree
@@ -2023,7 +2023,7 @@ class CppHeader( _CppHeader ):
         is_define = re.compile(r'[ \t\v]*#[Dd][Ee][Ff][Ii][Nn][Ee]')
         for m in matches:
             #Keep the newlines so that linecount doesnt break
-            num_newlines = len(filter(lambda a: a=="\n", m))
+            num_newlines = len([a for a in m if a=="\n"])
             if is_define.match(m):
                 new_m = m.replace("\n", "<CppHeaderParser_newline_temp_replacement>\\n")
             else:
@@ -2037,7 +2037,7 @@ class CppHeader( _CppHeader ):
         matches = re.findall(re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), headerFileStr)
         for m in matches:
             #Keep the newlines so that linecount doesnt break
-            num_newlines = len(filter(lambda a: a=="\n", m))
+            num_newlines = len([a for a in m if a=="\n"])
             headerFileStr = headerFileStr.replace(m, "\n" * num_newlines)        
         headerFileStr = re.sub(r'extern[ ]+"[Cc]"[ ]*', "", headerFileStr)
                 
@@ -2052,7 +2052,7 @@ class CppHeader( _CppHeader ):
                 #Now walk till we find the last paren and account for sub parens
                 parenCount = 1
                 inQuotes = False
-                for i in xrange(locStart + len(ignore) - 1, len(headerFileStr)):
+                for i in range(locStart + len(ignore) - 1, len(headerFileStr)):
                     c = headerFileStr[i]
                     if not inQuotes:
                         if c == "(":
@@ -2072,7 +2072,7 @@ class CppHeader( _CppHeader ):
                     #Strip it out but keep the linecount the same so line numbers are right
                     match_str = headerFileStr[locStart:locEnd]
                     debug_print("Striping out '%s'"%match_str)
-                    num_newlines = len(filter(lambda a: a=="\n", match_str))
+                    num_newlines = len([a for a in match_str if a=="\n"])
                     headerFileStr = headerFileStr.replace(headerFileStr[locStart:locEnd], "\n"*num_newlines)
         
         self.braceDepth = 0
@@ -2370,7 +2370,7 @@ class CppHeader( _CppHeader ):
         """Create an Enum out of the name stack"""
         debug_print( "evaluating enum" )
         newEnum = CppEnum(self.nameStack)
-        if len(newEnum.keys()):
+        if len(list(newEnum.keys())):
             if len(self.curClass):
                 newEnum["namespace"] = self.cur_namespace(False)
                 klass = self.classes[self.curClass]
@@ -2382,9 +2382,9 @@ class CppHeader( _CppHeader ):
                 if 'name' in newEnum and newEnum['name']: self.global_enums[ newEnum['name'] ] = newEnum
 
             #This enum has instances, turn them into properties
-            if newEnum.has_key("instances"):
+            if "instances" in newEnum:
                 instanceType = "enum"
-                if newEnum.has_key("name"):
+                if "name" in newEnum:
                     instanceType = newEnum["name"]
                 for instance in newEnum["instances"]:
                     self.nameStack = [instanceType,  instance]
@@ -2394,7 +2394,7 @@ class CppHeader( _CppHeader ):
 
     def __repr__(self):
         rtn = ""
-        for className in self.classes.keys():
+        for className in list(self.classes.keys()):
             rtn += "%s\n"%self.classes[className]
         if self.functions:
             rtn += "// functions\n"
