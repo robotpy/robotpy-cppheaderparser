@@ -1477,7 +1477,21 @@ class Grape_TestCase(unittest.TestCase):
         
     def test_f_exists(self):
         self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][5]["name"], "f")
-    
+
+# Bug BitBucket #14
+class Avacado_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_Avacado_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Avacado"), True)
+        
+    def test_foo_return_type(self):
+        self.assertEqual(self.cppHeader.classes["Avacado"]["methods"]["public"][0]["returns"], "uint8_t")
+        
+    def test_bar_return_type(self):
+        self.assertEqual(self.cppHeader.classes["Avacado"]["methods"]["public"][1]["returns"], "::uint8_t")
     
 
 if __name__ == '__main__':

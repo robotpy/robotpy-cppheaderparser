@@ -1605,7 +1605,10 @@ class _CppHeader( Resolver ):
                     else:
                         trace_print( 'WARN: UNKNOWN RETURN', meth['name'], meth['returns'])
                         meth['returns_unknown'] = True
-
+        
+                if meth["returns"].startswith(": : "):
+                    meth["returns"] = meth["returns"].replace(": : ", "::")
+        
         for cls in list(self.classes.values()):
             methnames = cls.get_all_method_names()
             pvm = cls.get_all_pure_virtual_methods()
@@ -1644,7 +1647,7 @@ class _CppHeader( Resolver ):
     
     def parse_method_type( self, stack ):
         trace_print( 'meth type info', stack )
-        if stack[0] in ':;': stack = stack[1:]
+        if stack[0] in ':;' and stack[1] != ':': stack = stack[1:]
         info = { 
             'debug': ' '.join(stack).replace(' : : ', '::' ).replace(' < ', '<' ).replace(' > ', '> ' ).replace(" >",">").replace(">>", "> >").replace(">>", "> >"), 
             'class':None, 

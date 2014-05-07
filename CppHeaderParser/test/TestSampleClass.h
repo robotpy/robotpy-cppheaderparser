@@ -641,3 +641,9 @@ public:
     map<string, int> d;
     map<string, int> e, f;
 };
+
+// Bug BitBucket #14
+struct Avacado {
+    uint8_t foo() { return 4;}
+    ::uint8_t bar() { return 0; }
+};
