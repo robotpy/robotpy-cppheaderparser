@@ -1492,7 +1492,24 @@ class Avacado_TestCase(unittest.TestCase):
         
     def test_bar_return_type(self):
         self.assertEqual(self.cppHeader.classes["Avacado"]["methods"]["public"][1]["returns"], "::uint8_t")
+
+# Bug BitBucket #13
+class Raspberry_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
+    def test_anon_struct_1_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("<anon-struct-1>"), True)
+        
+    def test_beta_exists(self):
+        self.assertEqual(self.cppHeader.classes["<anon-struct-1>"]["properties"]["public"][0]["name"], "anon_struct_variable")
+    
+    def test_Raspberry_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Raspberry"), True)
+        
+    def test_a_exists(self):
+        self.assertEqual(self.cppHeader.classes["Raspberry"]["properties"]["public"][0]["name"], "a")
 
 if __name__ == '__main__':
     unittest.main()

@@ -647,3 +647,14 @@ struct Avacado {
     uint8_t foo() { return 4;}
     ::uint8_t bar() { return 0; }
 };
+
+// Bug BitBucket #13
+typedef struct
+{
+    int anon_struct_variable;
+};
+
+typedef struct
+{
+    int a;
+} Raspberry;

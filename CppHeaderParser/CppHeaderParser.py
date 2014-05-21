@@ -1861,7 +1861,7 @@ class _CppHeader( Resolver ):
                         self.stack = orig_stack[:] # Not maintained for mucking, but this path it doesnt matter
                         self.evaluate_property_stack()
                     return
-
+            
             newVar = CppVariable(self.nameStack)
             newVar['namespace'] = self.current_namespace()
             if self.curStruct:
@@ -1886,6 +1886,14 @@ class _CppHeader( Resolver ):
         elif self.braceDepth != len(self.nameSpaces):
             error_print( 'ERROR: WRONG BRACE DEPTH' )
             return
+        
+        # When dealing with typedefed structs, get rid of typedef keyword to handle later on
+        if self.nameStack[0] == "typedef":
+            del self.nameStack[0]
+            if len(self.nameStack) == 1:
+                self.anon_struct_counter += 1
+                # We cant handle more than 1 anonymous struct, so name them uniquely
+                self.nameStack.append("<anon-struct-%d>"%self.anon_struct_counter)
         
         if self.nameStack[0] == "class":
             self.curAccessSpecifier = 'private'
@@ -2004,7 +2012,9 @@ class CppHeader( _CppHeader ):
         self.accessSpecifierScratch = []
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         self.initextra()
-    
+        # Old namestacks for a given level
+        self.nameStackHistory = []
+        self.anon_struct_counter = 0    
         self.anon_union_counter = [-1, 0]
     
         if (len(self.headerFileName)):
@@ -2273,6 +2283,7 @@ class CppHeader( _CppHeader ):
         
         self.nameStack = filter_out_attribute_keyword(self.nameStack)
         self.stack = filter_out_attribute_keyword(self.stack)
+        nameStackCopy = self.nameStack[:]
         
         debug_print( "Evaluating stack %s\n       BraceDepth: %s (called from %d)" %(self.nameStack,self.braceDepth, inspect.currentframe().f_back.f_lineno))
         
@@ -2285,6 +2296,8 @@ class CppHeader( _CppHeader ):
         
         if (len(self.curClass)):
             debug_print( "%s (%s) "%(self.curClass, self.curAccessSpecifier))
+        else:
+            debug_print( "<anonymous> (%s) "%self.curAccessSpecifier)
 
         #Filter special case of array with casting in it
         try:
@@ -2297,7 +2310,7 @@ class CppHeader( _CppHeader ):
         except: pass
 
         #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
-        if not self.curClass and 'typedef' in self.nameStack:
+        if not self.curClass and 'typedef' in self.nameStack and 'struct' not in self.nameStack:
             trace_print('STACK', self.stack)
             self.evaluate_typedef()
             return
@@ -2329,21 +2342,27 @@ class CppHeader( _CppHeader ):
             else:
                 #Free function
                 self.evaluate_method_stack()
+        elif (len(self.nameStack) == 1 and len(self.nameStackHistory) > self.braceDepth
+              and self.nameStackHistory[self.braceDepth][0][0:2] == ["typedef", "struct"]):
+            # Look for the name of a typedef struct: struct typedef {...] StructName;
+            debug_print("found the naming of a struct")
+            struct_name_to_rename = self.nameStackHistory[self.braceDepth][1]
+            new_name = self.nameStack[0]
+            struct_to_rename = self.classes[struct_name_to_rename]
+            struct_to_rename["name"] = self.nameStack[0]
+            #Now re install it in its new location
+            self.classes[new_name] = struct_to_rename
+            del self.classes[struct_name_to_rename] 
         elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0] in ('class', 'struct') and len(self.stack) == 3: self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 
-        elif self.nameStack[0] in ("class", "struct", "union"):
+        elif self.nameStack[0] in ("class", "struct", "union") or self.nameStack[0] == 'typedef' and self.nameStack[1] == 'struct':
             #Parsing a union can reuse much of the class parsing
             debug_print( "trace" )
             self.evaluate_class_stack()
-        #elif (self.nameStack[0] == "struct"):
-        #    debug_print( "trace" )
-            ##this causes a bug when structs are nested in protected or private##self.curAccessSpecifier = "public"
-        #    self.evaluate_struct_stack()
-
 
         elif not self.curClass:
             debug_print( "trace" )
@@ -2351,20 +2370,21 @@ class CppHeader( _CppHeader ):
             elif self.curStruct and self.stack[-1] == ';': self.evaluate_property_stack()    # this catches fields of global structs
             self.nameStack = []
             doxygenCommentCache = ""
-            return
         elif (self.braceDepth < 1):
             debug_print( "trace" )
             #Ignore global stuff for now
             debug_print( "Global stuff: %s"%self.nameStack )
             self.nameStack = []
             doxygenCommentCache = ""
-            return
         elif (self.braceDepth > len(self.nameSpaces) + 1):
             debug_print( "trace" )
             self.nameStack = []
             doxygenCommentCache = ""
-            return
 
+        try:
+            self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
+        except:
+            self.nameStackHistory.append((nameStackCopy, self.curClass))
         self.nameStack = []        # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         doxygenCommentCache = ""
     
