@@ -59,10 +59,11 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.4.2"
+version = __version__ = "2.4.2+"
 
 tokens = [
     'NUMBER',
+    'FLOAT_NUMBER',
     'NAME',
     'OPEN_PAREN',
     'CLOSE_PAREN',
@@ -97,6 +98,7 @@ tokens = [
 
 t_ignore = " \r.?@\f"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
+t_FLOAT_NUMBER = r'[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
 t_OPEN_PAREN = r'\('
 t_CLOSE_PAREN = r'\)'
@@ -896,7 +898,7 @@ class CppVariable( _CppVariable ):
     self['namespace'] - Namespace containing the enum
     self['desc'] - Description of the variable if part of a method (optional)
     self['doxygen'] - Doxygen comments associated with the method if they exist
-    self['defaltValue'] - Default value of the variable, this key will only
+    self['defaultValue'] - Default value of the variable, this key will only
         exist if there is a default value
     """
     Vars = []
@@ -933,7 +935,7 @@ class CppVariable( _CppVariable ):
         elif ("=" in nameStack):
             self["type"] = " ".join(nameStack[:nameStack.index("=") - 1])
             self["name"] = nameStack[nameStack.index("=") - 1]
-            self["defaltValue"] = " ".join(nameStack[nameStack.index("=") + 1:])    # deprecate camelCase in dicts
+            self["defaultValue"] = " ".join(nameStack[nameStack.index("=") + 1:])    # deprecate camelCase in dicts
             self['default'] = " ".join(nameStack[nameStack.index("=") + 1:])
 
         elif is_fundamental(nameStack[-1]) or nameStack[-1] in ['>', '<' , ':', '.']:
@@ -2205,7 +2207,7 @@ class CppHeader( _CppHeader ):
                 elif (tok.type == 'EXCLAMATION'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'SQUOTE'): pass
-                elif (tok.type == 'NUMBER'):
+                elif (tok.type == 'NUMBER' or tok.type == 'FLOAT_NUMBER'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'MINUS'):
                     self.nameStack.append(tok.value)

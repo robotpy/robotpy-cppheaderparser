@@ -658,3 +658,11 @@ typedef struct
 {
     int a;
 } Raspberry;
+
+// Bug BitBucket #15 & 16
+class Hen
+{
+public:
+	void add(int a=100, b=0xfd, float c=1.7e-3, float d=3.14);
+	void join(string s1="", string s2="nothing");
+}

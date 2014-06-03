@@ -1511,6 +1511,30 @@ class Raspberry_TestCase(unittest.TestCase):
     def test_a_exists(self):
         self.assertEqual(self.cppHeader.classes["Raspberry"]["properties"]["public"][0]["name"], "a")
 
+# Bug BitBucket #15 & 16
+class Hen_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_default_a(self):
+        self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][0]["parameters"][0]["defaultValue"], "100")
+        
+    def test_default_b(self):
+        self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][0]["parameters"][1]["defaultValue"], "0xfd")
+                
+    def test_default_c(self):
+        self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][0]["parameters"][2]["defaultValue"], "1.7e-3")
+                
+    def test_default_d(self):
+        self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][0]["parameters"][3]["defaultValue"], "3.14")
+                
+    def test_default_s1(self):
+        self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][1]["parameters"][0]["defaultValue"], '""')
+                
+    def test_default_s2(self):
+        self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][1]["parameters"][1]["defaultValue"], '"nothing"')
+
 if __name__ == '__main__':
     unittest.main()
 
