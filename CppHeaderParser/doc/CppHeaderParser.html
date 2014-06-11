@@ -7,7 +7,7 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.4.2)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.4.3)</font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py">/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py</a></font></td></tr></table>
     <p><tt>Parse&nbsp;C++&nbsp;header&nbsp;files&nbsp;and&nbsp;generate&nbsp;a&nbsp;data&nbsp;structure<br>
@@ -66,6 +66,7 @@ representing&nbsp;the&nbsp;class</tt></p>
 </font></dt></dl>
 </dd>
 <dt><font face="helvetica, arial"><a href="CppHeaderParser.html#CppStruct">CppStruct</a>
+</font></dt><dt><font face="helvetica, arial"><a href="CppHeaderParser.html#DictMagicSubList">DictMagicSubList</a>
 </font></dt></dl>
 </dd>
 <dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
@@ -908,7 +909,7 @@ self['name']&nbsp;-&nbsp;Name&nbsp;of&nbsp;the&nbsp;variable&nbsp;(ex.&nbsp;"num
 self['namespace']&nbsp;-&nbsp;Namespace&nbsp;containing&nbsp;the&nbsp;enum<br>
 self['desc']&nbsp;-&nbsp;Description&nbsp;of&nbsp;the&nbsp;variable&nbsp;if&nbsp;part&nbsp;of&nbsp;a&nbsp;method&nbsp;(optional)<br>
 self['doxygen']&nbsp;-&nbsp;Doxygen&nbsp;comments&nbsp;associated&nbsp;with&nbsp;the&nbsp;method&nbsp;if&nbsp;they&nbsp;exist<br>
-self['defaltValue']&nbsp;-&nbsp;Default&nbsp;value&nbsp;of&nbsp;the&nbsp;variable,&nbsp;this&nbsp;key&nbsp;will&nbsp;only<br>
+self['defaultValue']&nbsp;-&nbsp;Default&nbsp;value&nbsp;of&nbsp;the&nbsp;variable,&nbsp;this&nbsp;key&nbsp;will&nbsp;only<br>
 &nbsp;&nbsp;&nbsp;&nbsp;exist&nbsp;if&nbsp;there&nbsp;is&nbsp;a&nbsp;default&nbsp;value<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%"><dl><dt>Method resolution order:</dt>
@@ -1018,6 +1019,114 @@ Data and other attributes inherited from <a href="__builtin__.html#dict">__built
 <dl><dt><strong>__hash__</strong> = None</dl>
 
 <dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#CppVariable-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="DictMagicSubList">class <strong>DictMagicSubList</strong></a>(<a href="__builtin__.html#dict">__builtin__.dict</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Dictionary&nbsp;that&nbsp;magically&nbsp;allows&nbsp;indexing&nbsp;into&nbsp;public/protected/private&nbsp;lists&nbsp;directly<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="CppHeaderParser.html#DictMagicSubList">DictMagicSubList</a></dd>
+<dd><a href="__builtin__.html#dict">__builtin__.dict</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="DictMagicSubList-__init__"><strong>__init__</strong></a>(self, *arg, **kw)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="__builtin__.html#dict">__builtin__.dict</a>:<br>
+<dl><dt><a name="DictMagicSubList-__cmp__"><strong>__cmp__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__cmp__">__cmp__</a>(y)&nbsp;&lt;==&gt;&nbsp;cmp(x,y)</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__contains__"><strong>__contains__</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-__contains__">__contains__</a>(k)&nbsp;-&gt;&nbsp;True&nbsp;if&nbsp;D&nbsp;has&nbsp;a&nbsp;key&nbsp;k,&nbsp;else&nbsp;False</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__delitem__"><strong>__delitem__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__delitem__">__delitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;del&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__eq__"><strong>__eq__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__eq__">__eq__</a>(y)&nbsp;&lt;==&gt;&nbsp;x==y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__ge__"><strong>__ge__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__ge__">__ge__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&gt;=y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__gt__"><strong>__gt__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__gt__">__gt__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&gt;y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__iter__"><strong>__iter__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__iter__">__iter__</a>()&nbsp;&lt;==&gt;&nbsp;iter(x)</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__le__"><strong>__le__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__le__">__le__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&lt;=y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__len__"><strong>__len__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__len__">__len__</a>()&nbsp;&lt;==&gt;&nbsp;len(x)</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__lt__"><strong>__lt__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__lt__">__lt__</a>(y)&nbsp;&lt;==&gt;&nbsp;x&lt;y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__ne__"><strong>__ne__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__ne__">__ne__</a>(y)&nbsp;&lt;==&gt;&nbsp;x!=y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__setitem__"><strong>__setitem__</strong></a>(...)</dt><dd><tt>x.<a href="#DictMagicSubList-__setitem__">__setitem__</a>(i,&nbsp;y)&nbsp;&lt;==&gt;&nbsp;x[i]=y</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-__sizeof__"><strong>__sizeof__</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-__sizeof__">__sizeof__</a>()&nbsp;-&gt;&nbsp;size&nbsp;of&nbsp;D&nbsp;in&nbsp;memory,&nbsp;in&nbsp;bytes</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-clear"><strong>clear</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-clear">clear</a>()&nbsp;-&gt;&nbsp;None.&nbsp;&nbsp;Remove&nbsp;all&nbsp;items&nbsp;from&nbsp;D.</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-copy"><strong>copy</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-copy">copy</a>()&nbsp;-&gt;&nbsp;a&nbsp;shallow&nbsp;copy&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-fromkeys"><strong>fromkeys</strong></a>(...)</dt><dd><tt><a href="__builtin__.html#dict">dict</a>.<a href="#DictMagicSubList-fromkeys">fromkeys</a>(S[,v])&nbsp;-&gt;&nbsp;New&nbsp;<a href="__builtin__.html#dict">dict</a>&nbsp;with&nbsp;keys&nbsp;from&nbsp;S&nbsp;and&nbsp;values&nbsp;equal&nbsp;to&nbsp;v.<br>
+v&nbsp;defaults&nbsp;to&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-get"><strong>get</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-get">get</a>(k[,d])&nbsp;-&gt;&nbsp;D[k]&nbsp;if&nbsp;k&nbsp;in&nbsp;D,&nbsp;else&nbsp;d.&nbsp;&nbsp;d&nbsp;defaults&nbsp;to&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-has_key"><strong>has_key</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-has_key">has_key</a>(k)&nbsp;-&gt;&nbsp;True&nbsp;if&nbsp;D&nbsp;has&nbsp;a&nbsp;key&nbsp;k,&nbsp;else&nbsp;False</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-items"><strong>items</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-items">items</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;D's&nbsp;(key,&nbsp;value)&nbsp;pairs,&nbsp;as&nbsp;2-tuples</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-iteritems"><strong>iteritems</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-iteritems">iteritems</a>()&nbsp;-&gt;&nbsp;an&nbsp;iterator&nbsp;over&nbsp;the&nbsp;(key,&nbsp;value)&nbsp;items&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-iterkeys"><strong>iterkeys</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-iterkeys">iterkeys</a>()&nbsp;-&gt;&nbsp;an&nbsp;iterator&nbsp;over&nbsp;the&nbsp;keys&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-itervalues"><strong>itervalues</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-itervalues">itervalues</a>()&nbsp;-&gt;&nbsp;an&nbsp;iterator&nbsp;over&nbsp;the&nbsp;values&nbsp;of&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-keys"><strong>keys</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-keys">keys</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;D's&nbsp;keys</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-pop"><strong>pop</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-pop">pop</a>(k[,d])&nbsp;-&gt;&nbsp;v,&nbsp;remove&nbsp;specified&nbsp;key&nbsp;and&nbsp;return&nbsp;the&nbsp;corresponding&nbsp;value.<br>
+If&nbsp;key&nbsp;is&nbsp;not&nbsp;found,&nbsp;d&nbsp;is&nbsp;returned&nbsp;if&nbsp;given,&nbsp;otherwise&nbsp;KeyError&nbsp;is&nbsp;raised</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-popitem"><strong>popitem</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-popitem">popitem</a>()&nbsp;-&gt;&nbsp;(k,&nbsp;v),&nbsp;remove&nbsp;and&nbsp;return&nbsp;some&nbsp;(key,&nbsp;value)&nbsp;pair&nbsp;as&nbsp;a<br>
+2-tuple;&nbsp;but&nbsp;raise&nbsp;KeyError&nbsp;if&nbsp;D&nbsp;is&nbsp;empty.</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-setdefault"><strong>setdefault</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-setdefault">setdefault</a>(k[,d])&nbsp;-&gt;&nbsp;D.<a href="#DictMagicSubList-get">get</a>(k,d),&nbsp;also&nbsp;set&nbsp;D[k]=d&nbsp;if&nbsp;k&nbsp;not&nbsp;in&nbsp;D</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-update"><strong>update</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-update">update</a>([E,&nbsp;]**F)&nbsp;-&gt;&nbsp;None.&nbsp;&nbsp;Update&nbsp;D&nbsp;from&nbsp;<a href="__builtin__.html#dict">dict</a>/iterable&nbsp;E&nbsp;and&nbsp;F.<br>
+If&nbsp;E&nbsp;present&nbsp;and&nbsp;has&nbsp;a&nbsp;.<a href="#DictMagicSubList-keys">keys</a>()&nbsp;method,&nbsp;does:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;k&nbsp;in&nbsp;E:&nbsp;D[k]&nbsp;=&nbsp;E[k]<br>
+If&nbsp;E&nbsp;present&nbsp;and&nbsp;lacks&nbsp;.<a href="#DictMagicSubList-keys">keys</a>()&nbsp;method,&nbsp;does:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(k,&nbsp;v)&nbsp;in&nbsp;E:&nbsp;D[k]&nbsp;=&nbsp;v<br>
+In&nbsp;either&nbsp;case,&nbsp;this&nbsp;is&nbsp;followed&nbsp;by:&nbsp;for&nbsp;k&nbsp;in&nbsp;F:&nbsp;D[k]&nbsp;=&nbsp;F[k]</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-values"><strong>values</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-values">values</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;D's&nbsp;values</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-viewitems"><strong>viewitems</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-viewitems">viewitems</a>()&nbsp;-&gt;&nbsp;a&nbsp;set-like&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;providing&nbsp;a&nbsp;view&nbsp;on&nbsp;D's&nbsp;items</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-viewkeys"><strong>viewkeys</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-viewkeys">viewkeys</a>()&nbsp;-&gt;&nbsp;a&nbsp;set-like&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;providing&nbsp;a&nbsp;view&nbsp;on&nbsp;D's&nbsp;keys</tt></dd></dl>
+
+<dl><dt><a name="DictMagicSubList-viewvalues"><strong>viewvalues</strong></a>(...)</dt><dd><tt>D.<a href="#DictMagicSubList-viewvalues">viewvalues</a>()&nbsp;-&gt;&nbsp;an&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;providing&nbsp;a&nbsp;view&nbsp;on&nbsp;D's&nbsp;values</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="__builtin__.html#dict">__builtin__.dict</a>:<br>
+<dl><dt><strong>__hash__</strong> = None</dl>
+
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#DictMagicSubList-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
 
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -1403,7 +1512,7 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><strong>C99_NONSTANDARD</strong> = {'int16': 'short int', 'int32': 'int', 'int64': 'int64_t', 'int8': 'signed char', 'uint': 'unsigned int', 'uint16': 'unsigned short int', 'uint32': 'unsigned int', 'uint64': 'uint64_t', 'uint8': 'unsigned char'}<br>
-<strong>__version__</strong> = '2.4.2'<br>
+<strong>__version__</strong> = '2.4.3'<br>
 <strong>debug</strong> = 0<br>
 <strong>debug_trace</strong> = 0<br>
 <strong>doxygenCommentCache</strong> = ''<br>
@@ -1425,6 +1534,7 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
 <strong>t_DIVIDE</strong> = '/(?!/)'<br>
 <strong>t_EQUALS</strong> = '='<br>
 <strong>t_EXCLAMATION</strong> = '!'<br>
+<strong>t_FLOAT_NUMBER</strong> = r'[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?'<br>
 <strong>t_MINUS</strong> = r'\-'<br>
 <strong>t_NAME</strong> = '[&lt;&gt;A-Za-z_~][A-Za-z0-9_]*'<br>
 <strong>t_NUMBER</strong> = '[0-9][0-9XxA-Fa-f]*'<br>
@@ -1441,6 +1551,6 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
 <strong>t_STRING_LITERAL</strong> = r'"([^"\\]|\\.)*"'<br>
 <strong>t_TAB</strong> = r'\t'<br>
 <strong>t_ignore</strong> = ' <font color="#c040c0">\r</font>.?@<font color="#c040c0">\x0c</font>'<br>
-<strong>tokens</strong> = ['NUMBER', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'OPEN_SQUARE_BRACKET', 'CLOSE_SQUARE_BRACKET', 'COLON', 'SEMI_COLON', 'COMMA', 'TAB', 'BACKSLASH', 'PIPE', 'PERCENT', 'EXCLAMATION', 'CARET', 'COMMENT_SINGLELINE', 'COMMENT_MULTILINE', 'PRECOMP_MACRO', ...]<br>
-<strong>version</strong> = '2.4.2'</td></tr></table>
+<strong>tokens</strong> = ['NUMBER', 'FLOAT_NUMBER', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'OPEN_SQUARE_BRACKET', 'CLOSE_SQUARE_BRACKET', 'COLON', 'SEMI_COLON', 'COMMA', 'TAB', 'BACKSLASH', 'PIPE', 'PERCENT', 'EXCLAMATION', 'CARET', 'COMMENT_SINGLELINE', 'COMMENT_MULTILINE', ...]<br>
+<strong>version</strong> = '2.4.3'</td></tr></table>
 </body></html>
