@@ -666,3 +666,18 @@ public:
 	void add(int a=100, b=0xfd, float c=1.7e-3, float d=3.14);
 	void join(string s1="", string s2="nothing");
 }
+
+// Bug BitBucket #19
+template<typename VALUE,
+         typename VALUE_SET_ITERATOR,
+         typename ACCESOR=Raddish::SimpleAccessor<VALUE,VALUE_SET_ITERATOR> >
+class Raddish_SetIterator : public Raddish_Iterator<VALUE>
+{
+protected:
+  VALUE_SET_ITERATOR _beg, _end;
+public:
+  Raddish_SetIterator(const VALUE_SET_ITERATOR & begin,
+                   const VALUE_SET_ITERATOR & end)
+  { init ( begin, end ); }
+
+};

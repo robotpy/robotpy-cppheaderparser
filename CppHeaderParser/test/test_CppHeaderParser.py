@@ -1535,6 +1535,16 @@ class Hen_TestCase(unittest.TestCase):
     def test_default_s2(self):
         self.assertEqual(self.cppHeader.classes["Hen"]["methods"]["public"][1]["parameters"][1]["defaultValue"], '"nothing"')
 
+
+# Bug BitBucket #19
+class Raddish_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_Avacado_exists(self):
+        self.assertEqual(self.cppHeader.classes["Raddish_SetIterator"]["properties"]["protected"][0]["name"], "_beg")
+
 if __name__ == '__main__':
     unittest.main()
 

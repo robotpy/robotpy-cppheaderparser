@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.4.3"
+version = __version__ = "2.4.4"
 
 tokens = [
     'NUMBER',
@@ -2030,7 +2030,34 @@ class CppHeader( _CppHeader ):
             supportedAccessSpecifier[i] = re.sub("[ ]+", " ", supportedAccessSpecifier[i]).strip()
         
         # Strip out template declarations
-        headerFileStr = re.sub("template[\t ]*<[^>]*>", "", headerFileStr)
+        templateSectionsToSliceOut = []
+        try:
+            for m in re.finditer("template[\t ]*<[^>]*>", headerFileStr):
+                start = m.start()
+                # Search for the final '>' which may or may not be caught in the case of nexted <>'s
+                for i in range(start, len(headerFileStr)):
+                    if headerFileStr[i] == '<':
+                        firstBracket = i
+                        break
+                ltgtStackCount = 1
+                #Now look for fianl '>'
+                for i in range(firstBracket + 1, len(headerFileStr)):
+                    if headerFileStr[i] == '<':
+                        ltgtStackCount += 1
+                    elif headerFileStr[i] == '>':
+                        ltgtStackCount -= 1
+                    if ltgtStackCount == 0:
+                        end = i
+                        break
+                templateSectionsToSliceOut.append((start, end))
+            
+            # Now strip out all instances of the template
+            templateSectionsToSliceOut.reverse()
+            for tslice in templateSectionsToSliceOut:
+                newlines = headerFileStr[tslice[0]: tslice[1]].count("\n") * "\n" #Keep line numbers the same
+                headerFileStr = headerFileStr[:tslice[0]] + newlines  + headerFileStr[tslice[1] + 1:]
+        except:
+            pass
 
         # Change multi line #defines and expressions to single lines maintaining line nubmers
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
