@@ -588,7 +588,7 @@ class CppClass(dict):
         rtn += "  }\n"
         print(rtn)
     
-    def __repr__(self):
+    def __str__(self):
         """Convert class to a string"""
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
@@ -658,7 +658,7 @@ class CppUnion( CppClass ):
         print(self)
     
     
-    def __repr__(self):
+    def __str__(self):
         """Convert class to a string"""
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
@@ -858,7 +858,7 @@ class CppMethod( _CppMethod ):
         self["parameters"] = params
         self._params_helper2( params )    # mods params inplace
 
-    def __repr__(self):
+    def __str__(self):
         filter_keys = ("parent", "defined", "operator", "returns_reference")
         cpy = dict((k,v) for (k,v) in list(self.items()) if k not in filter_keys)
         return "%s"%cpy
@@ -960,7 +960,7 @@ class CppVariable( _CppVariable ):
         self.init()
         CppVariable.Vars.append( self )        # save and resolve later
     
-    def __repr__(self):
+    def __str__(self):
         keys_white_list = ['constant','name','reference','type','static','pointer','desc', 'line_number']
         cpy = dict((k,v) for (k,v) in list(self.items()) if k in keys_white_list)
         if "array_size" in self: cpy["array_size"] = self["array_size"]
@@ -2445,6 +2445,14 @@ class CppHeader( _CppHeader ):
 
 
     def __repr__(self):
+        rtn = {
+          "classes": self.classes,
+          "functions": self.functions,
+          "enums": self.enums,
+        }
+        return repr(rtn)
+
+    def __str__(self):
         rtn = ""
         for className in list(self.classes.keys()):
             rtn += "%s\n"%self.classes[className]
