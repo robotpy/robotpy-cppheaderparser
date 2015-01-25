@@ -1545,6 +1545,20 @@ class Raddish_TestCase(unittest.TestCase):
     def test_Avacado_exists(self):
         self.assertEqual(self.cppHeader.classes["Raddish_SetIterator"]["properties"]["protected"][0]["name"], "_beg")
 
+
+# Bug bug 57
+class Carambola_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_name(self):
+        self.assertEqual(self.cppHeader.enums[2]["name"], "Carambola")
+    
+    def test_values(self):
+        self.assertEqual(self.cppHeader.enums[2]["values"], [
+            {'name': 'StarFruit', 'value': 0}])
+
 if __name__ == '__main__':
     unittest.main()
 

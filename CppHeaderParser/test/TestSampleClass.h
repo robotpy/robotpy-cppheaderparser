@@ -681,3 +681,6 @@ public:
   { init ( begin, end ); }
 
 };
+
+// Bug 57
+typedef enum{StarFruit} Carambola;

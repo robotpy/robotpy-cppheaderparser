@@ -2339,7 +2339,8 @@ class CppHeader( _CppHeader ):
         except: pass
 
         #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
-        if not self.curClass and 'typedef' in self.nameStack and 'struct' not in self.nameStack:
+        if (not self.curClass and 'typedef' in self.nameStack and 'struct' not in self.nameStack
+            and not is_enum_namestack(self.nameStack)):
             trace_print('STACK', self.stack)
             self.evaluate_typedef()
             return
