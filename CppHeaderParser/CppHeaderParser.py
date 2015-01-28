@@ -1071,10 +1071,12 @@ class CppEnum(_CppEnum):
         #Figure out if it has a name
         preBraceStack = nameStack[:nameStack.index("{")]
         postBraceStack = nameStack[nameStack.index("}") + 1:]
+        self["typedef"] = False
         if (len(preBraceStack) == 2 and "typedef" not in nameStack):
             self["name"] = preBraceStack[1]           
         elif len(postBraceStack) and "typedef" in nameStack:
-                self["name"] = " ".join(postBraceStack)
+            self["name"] = " ".join(postBraceStack)
+            self["typedef"] = True
         else: warning_print( 'WARN-enum: nameless enum %s'%nameStack )
         #See if there are instances of this
         if "typedef" not in nameStack and len(postBraceStack):

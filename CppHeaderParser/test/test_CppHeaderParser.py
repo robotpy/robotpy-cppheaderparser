@@ -1429,6 +1429,9 @@ class Wheat_TestCase(unittest.TestCase):
     
     def test_name(self):
         self.assertEqual(self.cppHeader.enums[1]["name"], "Wheat")
+    
+    def test_typedef(self):
+        self.assertEqual(self.cppHeader.enums[1]["typedef"], False)
 
 # Bug SourceForge #55
 class PeachPlumb_TestCase(unittest.TestCase):
@@ -1558,6 +1561,9 @@ class Carambola_TestCase(unittest.TestCase):
     def test_values(self):
         self.assertEqual(self.cppHeader.enums[2]["values"], [
             {'name': 'StarFruit', 'value': '( 2 + 2 ) / 2'}])
+     
+    def test_typedef(self):
+        self.assertEqual(self.cppHeader.enums[2]["typedef"], True)
 
 if __name__ == '__main__':
     unittest.main()
