@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.5"
+version = __version__ = "2.5d"
 
 tokens = [
     'NUMBER',
@@ -2224,6 +2224,8 @@ class CppHeader( _CppHeader ):
                 elif (tok.type == 'COMMA'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'BACKSLASH'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'DIVIDE'):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'PIPE'):
                     self.nameStack.append(tok.value)

@@ -1557,7 +1557,7 @@ class Carambola_TestCase(unittest.TestCase):
     
     def test_values(self):
         self.assertEqual(self.cppHeader.enums[2]["values"], [
-            {'name': 'StarFruit', 'value': 0}])
+            {'name': 'StarFruit', 'value': '( 2 + 2 ) / 2'}])
 
 if __name__ == '__main__':
     unittest.main()

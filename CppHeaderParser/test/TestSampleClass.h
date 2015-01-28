@@ -683,4 +683,4 @@ public:
 };
 
 // Bug 57
-typedef enum{StarFruit} Carambola;
+typedef enum{StarFruit = (2 + 2) / 2} Carambola;
