@@ -1565,6 +1565,24 @@ class Carambola_TestCase(unittest.TestCase):
     def test_typedef(self):
         self.assertEqual(self.cppHeader.enums[2]["typedef"], True)
 
+# globals
+class Globals_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_externVar_name(self):
+        self.assertEqual(self.cppHeader.variables[2]["name"], "externVar")
+    
+    def test_externVar_extern(self):
+        self.assertEqual(self.cppHeader.variables[2]["extern"], 1)
+    
+    def test_globalVar_name(self):
+        self.assertEqual(self.cppHeader.variables[3]["name"], "globalVar")
+    
+    def test_globalVar_extern(self):
+        self.assertEqual(self.cppHeader.variables[3]["extern"], 0)
+    
 if __name__ == '__main__':
     unittest.main()
 

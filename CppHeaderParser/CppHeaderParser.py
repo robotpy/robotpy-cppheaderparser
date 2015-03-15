@@ -408,6 +408,7 @@ class CppClass(dict):
         self['namespace'] = ""
 
         debug_print( "Class:   %s"%nameStack )
+        
         if (len(nameStack) < 2):
             nameStack.insert(1, "")#anonymous struct
         global doxygenCommentCache
@@ -900,9 +901,17 @@ class CppVariable( _CppVariable ):
     self['doxygen'] - Doxygen comments associated with the method if they exist
     self['defaultValue'] - Default value of the variable, this key will only
         exist if there is a default value
+    self['extern'] - True if its an extern, false if not
     """
     Vars = []
     def __init__(self, nameStack,  **kwargs):
+        
+        if len(nameStack) and nameStack[0] == "extern":
+            self['extern'] = True
+            del nameStack[0]
+        else:
+            self['extern'] = False
+        
         _stack_ = nameStack
         if "[" in nameStack: #strip off array informatin
             arrayStack = nameStack[nameStack.index("["):]
@@ -961,7 +970,7 @@ class CppVariable( _CppVariable ):
         CppVariable.Vars.append( self )        # save and resolve later
     
     def __str__(self):
-        keys_white_list = ['constant','name','reference','type','static','pointer','desc', 'line_number']
+        keys_white_list = ['constant','name','reference','type','static','pointer','desc', 'line_number', 'extern']
         cpy = dict((k,v) for (k,v) in list(self.items()) if k in keys_white_list)
         if "array_size" in self: cpy["array_size"] = self["array_size"]
         return "%s"%cpy
@@ -1829,6 +1838,7 @@ class _CppHeader( Resolver ):
         """Create a Property out of the name stack"""
         global parseHistory
         assert self.stack[-1] == ';'
+        debug_print( "trace" )
         if self.nameStack[0] == 'typedef':
             if self.curClass:
                 typedef = self._parse_typedef( self.stack )
@@ -1876,6 +1886,10 @@ class _CppHeader( Resolver ):
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar['property_of_class'] = klass['name']
             parseHistory.append({"braceDepth": self.braceDepth, "item_type": "variable", "item": newVar})
+        else:
+            debug_print( "Found Global variable" )
+            newVar = CppVariable(self.nameStack)
+            self.variables.append(newVar)
 
         self.stack = []        # CLEAR STACK
 
@@ -2008,6 +2022,7 @@ class CppHeader( _CppHeader ):
         self._precomp_macro_buf = [] #for internal purposes, will end up filling out pragmras and defines at the end
 
         self.enums = []
+        self.variables = []
         self.global_enums = {}
         self.nameStack = []
         self.nameSpaces = []
@@ -2454,6 +2469,7 @@ class CppHeader( _CppHeader ):
           "classes": self.classes,
           "functions": self.functions,
           "enums": self.enums,
+          "variables": self.variables,
         }
         return repr(rtn)
 
@@ -2464,6 +2480,10 @@ class CppHeader( _CppHeader ):
         if self.functions:
             rtn += "// functions\n"
             for f in self.functions:
+                rtn += "%s\n"%f
+        if self.variables:
+            rtn += "// variables\n"
+            for f in self.variables:
                 rtn += "%s\n"%f
         if self.enums:
             rtn += "// enums\n"

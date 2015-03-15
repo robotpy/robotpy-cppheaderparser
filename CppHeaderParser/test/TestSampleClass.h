@@ -684,3 +684,7 @@ public:
 
 // Bug 57
 typedef enum{StarFruit = (2 + 2) / 2} Carambola;
+
+// Add support for globals
+extern int externVar;
+int globalVar;
