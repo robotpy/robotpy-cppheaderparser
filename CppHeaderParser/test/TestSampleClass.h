@@ -688,3 +688,6 @@ typedef enum{StarFruit = (2 + 2) / 2} Carambola;
 // Add support for globals
 extern int externVar;
 int globalVar;
+
+// BitBucket bug 22
+typedef char TenCharArray[10];

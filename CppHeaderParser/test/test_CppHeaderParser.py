@@ -1582,6 +1582,19 @@ class Globals_TestCase(unittest.TestCase):
     
     def test_globalVar_extern(self):
         self.assertEqual(self.cppHeader.variables[3]["extern"], 0)
+
+# globals
+class TypedefArray_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_name(self):
+        self.assertEqual(self.cppHeader.typedefs.has_key("TenCharArray[10]"), True)
+    
+    def test_value(self):
+        self.assertEqual(self.cppHeader.typedefs["TenCharArray[10]"], "char")
+    
     
 if __name__ == '__main__':
     unittest.main()

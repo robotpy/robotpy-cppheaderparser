@@ -1810,7 +1810,15 @@ class _CppHeader( Resolver ):
         while stack and stack[-1].isdigit(): stack.pop()    # throw away array size for now
 
         idx = stack.index('typedef')
-        name = namespace + stack[-1]
+        if stack[-1] == "]":
+            try:
+                name = namespace + "".join(stack[-4:])
+                # Strip off the array part so the rest of the parsing is better
+                stack = stack[:-3]
+            except:
+                name = namespace + stack[-1]
+        else:
+            name = namespace + stack[-1]
         s = ''
         for a in stack[idx+1:-1]:
             if a == '{': break
