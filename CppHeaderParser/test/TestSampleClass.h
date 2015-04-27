@@ -695,3 +695,10 @@ typedef char TenCharArray[10];
 // Support typedef structs
 typedef struct SUPER_MAGIC_FILE MAGIC_FILE;
 typedef struct _IO_FILE FILE;
+
+// Sourceforge issue #10: Multi dimensional array sizes
+struct Picture
+{
+    char name[25];
+    unsigned int pdata[128][128];
+};

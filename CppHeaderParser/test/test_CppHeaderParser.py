@@ -1608,6 +1608,17 @@ class TypedefStruct_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.typedefs["MAGIC_FILE"], "struct SUPER_MAGIC_FILE")
         
     
+# Bug SourceForge #10
+class Picture_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_array_size(self):
+        self.assertEqual(self.cppHeader.classes["Picture"]["properties"]["public"][1]["array_size"], 16384)
+            
+    def test_multi_dimensional_array_size(self):
+        self.assertEqual(self.cppHeader.classes["Picture"]["properties"]["public"][1]["multi_dimensional_array_size"], "128x128")
     
 if __name__ == '__main__':
     unittest.main()

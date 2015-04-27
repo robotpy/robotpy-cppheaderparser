@@ -905,7 +905,7 @@ class CppVariable( _CppVariable ):
     """
     Vars = []
     def __init__(self, nameStack,  **kwargs):
-        
+        debug_print("trace %s"%nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self['extern'] = True
             del nameStack[0]
@@ -915,8 +915,22 @@ class CppVariable( _CppVariable ):
         _stack_ = nameStack
         if "[" in nameStack: #strip off array informatin
             arrayStack = nameStack[nameStack.index("["):]
-            if len(arrayStack) == 3:
-                self["array_size"] = arrayStack[1] 
+            if nameStack.count("[") > 1:
+                debug_print("Multi dimensional array")
+                debug_print("arrayStack=%s"%arrayStack)
+                nums = filter(lambda x: x.isdigit(), arrayStack)
+                # Calculate size by multiplying all dimensions
+                p = 1
+                for n in nums:
+                    p *= int(n)
+                #Multi dimensional array
+                self["array_size"] = p
+                self["multi_dimensional_array"] = 1
+                self["multi_dimensional_array_size"] = "x".join(nums)
+            else:
+                debug_print("Array")
+                if len(arrayStack) == 3:
+                    self["array_size"] = arrayStack[1] 
             nameStack = nameStack[:nameStack.index("[")]
             self["array"] = 1
         else:
