@@ -1594,6 +1594,19 @@ class TypedefArray_TestCase(unittest.TestCase):
     
     def test_value(self):
         self.assertEqual(self.cppHeader.typedefs["TenCharArray[10]"], "char")
+
+# typedef structs
+class TypedefStruct_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_name(self):
+        self.assertEqual(self.cppHeader.typedefs.has_key("MAGIC_FILE"), True)
+    
+    def test_value(self):
+        self.assertEqual(self.cppHeader.typedefs["MAGIC_FILE"], "struct SUPER_MAGIC_FILE")
+        
     
     
 if __name__ == '__main__':

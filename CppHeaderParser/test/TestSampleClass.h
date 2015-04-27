@@ -691,3 +691,7 @@ int globalVar;
 
 // BitBucket bug 22
 typedef char TenCharArray[10];
+
+// Support typedef structs
+typedef struct SUPER_MAGIC_FILE MAGIC_FILE;
+typedef struct _IO_FILE FILE;
