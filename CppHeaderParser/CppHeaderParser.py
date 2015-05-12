@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.5.1"
+version = __version__ = "2.5.1d"
 
 tokens = [
     'NUMBER',
@@ -2380,8 +2380,9 @@ class CppHeader( _CppHeader ):
         except: pass
 
         #if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
-        if (not self.curClass and 'typedef' in self.nameStack and ('struct' not in self.nameStack or self.stack[-1] == ";")
-            and not is_enum_namestack(self.nameStack)):
+        if (not self.curClass and 'typedef' in self.nameStack and 
+            (('struct' not in self.nameStack and 'union' not in self.nameStack) or self.stack[-1] == ";") and
+            not is_enum_namestack(self.nameStack)):
             trace_print('STACK', self.stack)
             self.evaluate_typedef()
             return
@@ -2414,23 +2415,24 @@ class CppHeader( _CppHeader ):
                 #Free function
                 self.evaluate_method_stack()
         elif (len(self.nameStack) == 1 and len(self.nameStackHistory) > self.braceDepth
-              and self.nameStackHistory[self.braceDepth][0][0:2] == ["typedef", "struct"]):
-            # Look for the name of a typedef struct: struct typedef {...] StructName;
-            debug_print("found the naming of a struct")
-            struct_name_to_rename = self.nameStackHistory[self.braceDepth][1]
+              and (self.nameStackHistory[self.braceDepth][0][0:2] == ["typedef", "struct"] or
+                   self.nameStackHistory[self.braceDepth][0][0:2] == ["typedef", "union"])):
+            # Look for the name of a typedef struct: struct typedef {...] StructName; or unions to get renamed
+            debug_print("found the naming of a union")
+            type_name_to_rename = self.nameStackHistory[self.braceDepth][1]
             new_name = self.nameStack[0]
-            struct_to_rename = self.classes[struct_name_to_rename]
-            struct_to_rename["name"] = self.nameStack[0]
+            type_to_rename = self.classes[type_name_to_rename]
+            type_to_rename["name"] = self.nameStack[0]
             #Now re install it in its new location
-            self.classes[new_name] = struct_to_rename
-            del self.classes[struct_name_to_rename] 
+            self.classes[new_name] = type_to_rename
+            del self.classes[type_name_to_rename] 
         elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0] in ('class', 'struct') and len(self.stack) == 3: self.evalute_forward_decl()
             elif len(self.nameStack) >= 2 and (self.nameStack[0]=='friend' and self.nameStack[1]=='class'): pass
             else: self.evaluate_property_stack()    # catches class props and structs in a namespace
 
-        elif self.nameStack[0] in ("class", "struct", "union") or self.nameStack[0] == 'typedef' and self.nameStack[1] == 'struct':
+        elif self.nameStack[0] in ("class", "struct", "union") or self.nameStack[0] == 'typedef' and self.nameStack[1] in ('struct', 'union'):
             #Parsing a union can reuse much of the class parsing
             debug_print( "trace" )
             self.evaluate_class_stack()

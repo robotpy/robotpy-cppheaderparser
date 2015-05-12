@@ -702,3 +702,11 @@ struct Picture
     char name[25];
     unsigned int pdata[128][128];
 };
+
+// SourceForge bug 58
+typedef union apricot_t
+{
+   int i;
+   float f;
+   char s[20];
+}Apricot;

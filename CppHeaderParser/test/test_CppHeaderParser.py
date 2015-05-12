@@ -1620,6 +1620,26 @@ class Picture_TestCase(unittest.TestCase):
     def test_multi_dimensional_array_size(self):
         self.assertEqual(self.cppHeader.classes["Picture"]["properties"]["public"][1]["multi_dimensional_array_size"], "128x128")
     
+
+
+# SourceForge bug 58
+class Apricot_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_Apricot_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Apricot"), True)
+        
+    def test_i_exists(self):
+        self.assertEqual(self.cppHeader.classes["Apricot"]["members"][0]["name"], "i")
+        
+    def test_f_exists(self):
+        self.assertEqual(self.cppHeader.classes["Apricot"]["members"][1]["name"], "f")
+        
+    def test_s_exists(self):
+        self.assertEqual(self.cppHeader.classes["Apricot"]["members"][2]["name"], "s")
+    
 if __name__ == '__main__':
     unittest.main()
 
