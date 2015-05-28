@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.5.2"
+version = __version__ = "2.6d"
 
 tokens = [
     'NUMBER',
@@ -434,6 +434,16 @@ class CppClass(dict):
                 nameStack = new_nameStack
             except: pass
         
+        # Handle final specifier
+        self["final"] = False
+        try:
+            final_index = nameStack.index("final")
+            # Dont trip up the rest of the logic
+            del nameStack[final_index]
+            self["final"] = True
+            trace_print("final")
+        except: pass
+        
         self["name"] = nameStack[1]
         self["line_number"] = detect_lineno(nameStack[0])
         
@@ -556,6 +566,7 @@ class CppClass(dict):
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
         rtn = "%s %s"%(self["declaration_method"], namespace_prefix + self["name"])
+        if self["final"]: rtn += " final"
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
@@ -594,6 +605,7 @@ class CppClass(dict):
         namespace_prefix = ""
         if self["namespace"]: namespace_prefix = self["namespace"] + "::"
         rtn = "%s %s"%(self["declaration_method"], namespace_prefix + self["name"])
+        if self["final"]: rtn += " final"
         if self['abstract']: rtn += '    (abstract)\n'
         else: rtn += '\n'
 
@@ -772,13 +784,14 @@ class CppMethod( _CppMethod ):
         self["rtnType"] = self["rtnType"].replace(" >",">").replace(">>", "> >").replace(">>", "> >")
         self["rtnType"] = self["rtnType"].replace(" ,",",")
         
-        self["const"] = False
-        for i in reversed(nameStack):
-            if i == "const":
-                self["const"] = True
-                break
-            elif i == ")":
-                break        
+        for spec in ["const", "final", "override"]:
+            self[spec] = False
+            for i in reversed(nameStack):
+                if i == spec:
+                    self[spec] = True
+                    break
+                elif i == ")":
+                    break
 
         self.update( methinfo )
         self["line_number"] = detect_lineno(nameStack[0])

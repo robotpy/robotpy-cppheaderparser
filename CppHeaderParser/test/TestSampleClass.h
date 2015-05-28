@@ -710,3 +710,16 @@ typedef union apricot_t
    float f;
    char s[20];
 }Apricot;
+
+// SourcForge bug 59
+struct Lemon
+{
+    virtual void foo() final;
+    virtual void foo2();
+};
+ 
+struct Lime final : Lemon
+{
+    void abc();
+    void foo2() override;
+};

@@ -1639,6 +1639,31 @@ class Apricot_TestCase(unittest.TestCase):
         
     def test_s_exists(self):
         self.assertEqual(self.cppHeader.classes["Apricot"]["members"][2]["name"], "s")
+
+
+# SourceForge bug 59
+class LemonLime_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        
+    def test_lemon_not_final(self):
+        self.assertEqual(self.cppHeader.classes["Lemon"]["final"], False)
+                
+    def test_lime_final(self):
+        self.assertEqual(self.cppHeader.classes["Lime"]["final"], True)
+        
+    def test_lemon_foo_is_final(self):
+        self.assertEqual(self.cppHeader.classes["Lemon"]["methods"]["public"][0]["final"], True)
+        
+    def test_lemon_foo2_is_not_final(self):
+        self.assertEqual(self.cppHeader.classes["Lemon"]["methods"]["public"][1]["final"], False)
+        
+    def test_lime_abc_is_not_override(self):
+        self.assertEqual(self.cppHeader.classes["Lime"]["methods"]["public"][0]["override"], False)
+        
+    def test_lime_foo2_is_not_override(self):
+        self.assertEqual(self.cppHeader.classes["Lime"]["methods"]["public"][1]["override"], True)
     
 if __name__ == '__main__':
     unittest.main()
