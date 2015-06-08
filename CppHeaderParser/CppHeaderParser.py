@@ -2359,6 +2359,13 @@ class CppHeader( _CppHeader ):
         self.finalize()
         global parseHistory
         parseHistory = []
+        # Delete some temporary variables
+        for key in ["_precomp_macro_buf", "nameStack", "nameSpaces", "curAccessSpecifier", "accessSpecifierStack",
+            "accessSpecifierScratch", "nameStackHistory", "anon_struct_counter", "anon_union_counter",
+            "_classes_brace_level", "_forward_decls", "stack", "mainClass", "curStruct", "_template_typenames",
+            "_method_body", "braceDepth", "_structs_brace_level", "typedefs_order"]:
+            del self.__dict__[key]
+        
 
     def evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -2499,6 +2506,46 @@ class CppHeader( _CppHeader ):
                     self.nameStack = [instanceType,  instance]
                     self.evaluate_property_stack()
                 del newEnum["instances"]
+
+    def strip_parent_keys(self):
+        """Strip all parent keys to prevent loops"""
+        obj_queue = [self]
+        while len(obj_queue):
+            obj = obj_queue.pop()
+            trace_print("pop %s type %s"%(obj, type(obj)))
+            try:
+                if "parent" in obj.keys():
+                    del obj["parent"]
+                    trace_print("Stripped parent from %s"%obj.keys())
+            except: pass
+            # Figure out what sub types are one of ours
+            try:
+                if not hasattr(obj, 'keys'):
+                    obj = obj.__dict__
+                for k in obj.keys():
+                    trace_print("-Try key %s"%(k))
+                    trace_print("-type  %s"%(type(obj[k])))
+                    if k in ["nameStackHistory", "parent", "_public_typedefs"]: continue
+                    if type(obj[k]) == list:
+                        for i in obj[k]:
+                            trace_print("push l %s"%i)
+                            obj_queue.append(i)
+                    elif type(obj[k]) == dict: 
+                        if len(obj):
+                            trace_print("push d %s"%obj[k])
+                            obj_queue.append(obj[k])
+                    trace_print("next key\n")
+            except:
+                trace_print("Exception")
+
+    def toJSON(self, indent=4):
+        """Converts a parsed structure to JSON"""
+        import json
+        self.strip_parent_keys()
+        try:
+            del self.__dict__["classes_order"]
+        except: pass
+        return json.dumps(self.__dict__, indent=indent)
 
 
     def __repr__(self):

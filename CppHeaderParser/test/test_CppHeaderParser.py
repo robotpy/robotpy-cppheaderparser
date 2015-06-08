@@ -1664,6 +1664,28 @@ class LemonLime_TestCase(unittest.TestCase):
         
     def test_lime_foo2_is_not_override(self):
         self.assertEqual(self.cppHeader.classes["Lime"]["methods"]["public"][1]["override"], True)
+
+
+class JSON_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(r"""
+struct Lemon
+{
+    virtual void foo() final;
+    virtual void foo2();
+};
+ 
+struct Lime final : Lemon
+{
+    void abc();
+    void foo2() override;
+};""", "string")
+        self.jsonString = self.cppHeader.toJSON()
+    
+    def test_hasLemon(self):
+        hasString = '        "Lemon": {' in self.jsonString
+        self.assertEqual(hasString, True)
     
 if __name__ == '__main__':
     unittest.main()
