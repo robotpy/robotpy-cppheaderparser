@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.6d"
+version = __version__ = "2.6"
 
 tokens = [
     'NUMBER',
