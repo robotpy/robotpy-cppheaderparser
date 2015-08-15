@@ -59,11 +59,12 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.6"
+version = __version__ = "2.7d"
 
 tokens = [
     'NUMBER',
     'FLOAT_NUMBER',
+    'TEMPLATE_NAME',
     'NAME',
     'OPEN_PAREN',
     'CLOSE_PAREN',
@@ -99,6 +100,7 @@ tokens = [
 t_ignore = " \r.?@\f"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_FLOAT_NUMBER = r'[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?'
+t_TEMPLATE_NAME = r'CppHeaderParser_template_[0-9]+'
 t_NAME = r'[<>A-Za-z_~][A-Za-z0-9_]*'
 t_OPEN_PAREN = r'\('
 t_CLOSE_PAREN = r'\)'
@@ -397,7 +399,7 @@ class CppClass(dict):
             if meth['pure_virtual']: r[ meth['name'] ] = meth
         return r
 
-    def __init__(self, nameStack):
+    def __init__(self, nameStack, curTemplate):
         self['nested_classes'] = []
         self['parent'] = None
         self['abstract'] = False
@@ -407,7 +409,8 @@ class CppClass(dict):
         self._public_forward_declares = []
         self['namespace'] = ""
 
-        debug_print( "Class:   %s"%nameStack )
+        debug_print( "Class:    %s"%nameStack )
+        debug_print( "Template: %s"%curTemplate)
         
         if (len(nameStack) < 2):
             nameStack.insert(1, "")#anonymous struct
@@ -538,6 +541,10 @@ class CppClass(dict):
 
         self['inherits'] = inheritList
 
+        if curTemplate:
+            self["template"] = curTemplate
+            trace_print("Setting template to '%s'"%self["template"])
+
         methodAccessSpecificList = {}
         propertyAccessSpecificList = {}
         enumAccessSpecificList = {}
@@ -657,7 +664,7 @@ class CppUnion( CppClass ):
     """
     
     def __init__(self, nameStack):
-        CppClass.__init__(self, nameStack)
+        CppClass.__init__(self, nameStack, None)
         self["name"] = "union " + self["name"]
         self["members"] = self["properties"]["public"]
     
@@ -762,8 +769,9 @@ class CppMethod( _CppMethod ):
         if self['destructor']: r.append( 'destructor' )
         return '\n\t\t  '.join( r )
 
-    def __init__(self, nameStack, curClass, methinfo):
+    def __init__(self, nameStack, curClass, methinfo, curTemplate):
         debug_print( "Method:   %s"%nameStack )
+        debug_print( "Template: %s"%curTemplate )
         global doxygenCommentCache
         if len(doxygenCommentCache):
             self["doxygen"] = doxygenCommentCache
@@ -813,6 +821,10 @@ class CppMethod( _CppMethod ):
         
         paramsStack = self._params_helper1( nameStack )
         
+        debug_print( "curTemplate: %s"%curTemplate)
+        if curTemplate:
+            self["template"] = curTemplate
+            debug_print( "SET self['template'] to `%s`"%self["template"]) 
 
         params = []
         #See if there is a doxygen comment for the variable
@@ -1800,11 +1812,11 @@ class _CppHeader( Resolver ):
             trace_print( 'WARN - struct contains methods - skipping' )
             trace_print( self.stack )
             assert 0
-
+        
         info = self.parse_method_type( self.stack )
         if info:
             if info[ 'class' ] and info['class'] in self.classes:     # case where methods are defined outside of class
-                newMethod = CppMethod(self.nameStack, info['name'], info)
+                newMethod = CppMethod(self.nameStack, info['name'], info, self.curTemplate)
                 klass = self.classes[ info['class'] ]
                 klass[ 'methods' ][ 'public' ].append( newMethod )
                 newMethod['parent'] = klass
@@ -1812,7 +1824,7 @@ class _CppHeader( Resolver ):
                 else: newMethod['path'] = klass['name']
                 
             elif self.curClass:    # normal case
-                newMethod = CppMethod(self.nameStack, self.curClass, info)
+                newMethod = CppMethod(self.nameStack, self.curClass, info, self.curTemplate)
                 klass = self.classes[self.curClass]
                 klass['methods'][self.curAccessSpecifier].append(newMethod)
                 newMethod['parent'] = klass
@@ -1820,7 +1832,7 @@ class _CppHeader( Resolver ):
                 else: newMethod['path'] = klass['name']
             else: #non class functions
                 debug_print("FREE FUNCTION")
-                newMethod = CppMethod(self.nameStack, None, info)
+                newMethod = CppMethod(self.nameStack, None, info, self.curTemplate)
                 self.functions.append(newMethod)
             global parseHistory
             parseHistory.append({"braceDepth": self.braceDepth, "item_type": "method", "item": newMethod})
@@ -1958,7 +1970,7 @@ class _CppHeader( Resolver ):
             self.anon_union_counter = [self.braceDepth, 2]
             trace_print( 'NEW UNION', newClass['name'] )
         else:
-            newClass = CppClass(self.nameStack)
+            newClass = CppClass(self.nameStack, self.curTemplate)
             trace_print( 'NEW CLASS', newClass['name'] )
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append( newClass )    # good idea to save ordering
@@ -2062,6 +2074,7 @@ class CppHeader( _CppHeader ):
         self.nameStack = []
         self.nameSpaces = []
         self.curAccessSpecifier = 'private'    # private is default
+        self.curTemplate = None
         self.accessSpecifierStack = []
         self.accessSpecifierScratch = []
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
@@ -2070,6 +2083,7 @@ class CppHeader( _CppHeader ):
         self.nameStackHistory = []
         self.anon_struct_counter = 0    
         self.anon_union_counter = [-1, 0]
+        self.templateRegistry = []
     
         if (len(self.headerFileName)):
             fd = open(self.headerFileName)
@@ -2106,8 +2120,11 @@ class CppHeader( _CppHeader ):
             # Now strip out all instances of the template
             templateSectionsToSliceOut.reverse()
             for tslice in templateSectionsToSliceOut:
+                # Replace the template symbol with a single symbol
+                template_symbol="CppHeaderParser_template_%d"%len(self.templateRegistry)
+                self.templateRegistry.append(headerFileStr[tslice[0]: tslice[1]+1])
                 newlines = headerFileStr[tslice[0]: tslice[1]].count("\n") * "\n" #Keep line numbers the same
-                headerFileStr = headerFileStr[:tslice[0]] + newlines  + headerFileStr[tslice[1] + 1:]
+                headerFileStr = headerFileStr[:tslice[0]] + newlines + " " + template_symbol + " " + headerFileStr[tslice[1] + 1:]
         except:
             pass
 
@@ -2185,7 +2202,8 @@ class CppHeader( _CppHeader ):
                 tok.value = TagStr(tok.value, lineno=tok.lineno)
                 #debug_print("TOK: %s"%tok)
                 if tok.type == 'NAME' and tok.value in self.IGNORE_NAMES: continue
-                self.stack.append( tok.value )
+                if tok.type != 'TEMPLATE_NAME':
+                    self.stack.append( tok.value )
                 curLine = tok.lineno
                 curChar = tok.lexpos
                 if (tok.type in ('PRECOMP_MACRO', 'PRECOMP_MACRO_CONT')):
@@ -2194,6 +2212,11 @@ class CppHeader( _CppHeader ):
                     self.stack = []
                     self.nameStack = []
                     continue
+                if tok.type == 'TEMPLATE_NAME':
+                    try:
+                        templateId = int(tok.value.replace("CppHeaderParser_template_",""))
+                        self.curTemplate = self.templateRegistry[templateId]
+                    except: pass 
                 if (tok.type == 'OPEN_BRACE'):
                     if len(self.nameStack) >= 2 and is_namespace(self.nameStack):    # namespace {} with no name used in boost, this sets default?
                         if self.nameStack[1] == "__IGNORED_NAMESPACE__CppHeaderParser__":#Used in filtering extern "C"
@@ -2363,7 +2386,7 @@ class CppHeader( _CppHeader ):
         for key in ["_precomp_macro_buf", "nameStack", "nameSpaces", "curAccessSpecifier", "accessSpecifierStack",
             "accessSpecifierScratch", "nameStackHistory", "anon_struct_counter", "anon_union_counter",
             "_classes_brace_level", "_forward_decls", "stack", "mainClass", "curStruct", "_template_typenames",
-            "_method_body", "braceDepth", "_structs_brace_level", "typedefs_order"]:
+            "_method_body", "braceDepth", "_structs_brace_level", "typedefs_order", "curTemplate", "templateRegistry"]:
             del self.__dict__[key]
         
 
@@ -2480,6 +2503,7 @@ class CppHeader( _CppHeader ):
             self.nameStackHistory.append((nameStackCopy, self.curClass))
         self.nameStack = []        # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         doxygenCommentCache = ""
+        self.curTemplate = None
     
 
     def evaluate_enum_stack(self):

@@ -574,6 +574,9 @@ class Chicken_TestCase(unittest.TestCase):
         
     def test_num_protected_methods(self):
         self.assertEqual(len(self.cppHeader.classes["Chicken"]["methods"]["protected"]), 0)
+                        
+    def test_template(self):
+        self.assertEqual(self.cppHeader.classes["Chicken"]["methods"]["private"][0]['template'], "template <typename T>")
 
 
 
@@ -807,6 +810,9 @@ class CarrotClass_TestCase(unittest.TestCase):
         self.assertEqual(
             filter_pameters(self.cppHeader.classes["CarrotClass"]["methods"]["private"][0]["parameters"]),
             [])
+        
+    def test_class_template(self):
+        self.assertEqual(self.cppHeader.classes["CarrotClass"]["template"], "template<class T>")
 
 
 # Bug 3517289
@@ -1136,6 +1142,9 @@ class Onion_TestCase(unittest.TestCase):
 
     def test_num_public_properties_sweet(self):
         self.assertEqual(len(self.cppHeader.classes["Onion<Sweet,Plant>"]["properties"]["public"]), 1)
+
+    def test_class_template(self):
+        self.assertEqual(self.cppHeader.classes["Onion<Sweet,Plant>"]["template"], "template <typename Plant>")
     
 # Bug 3536067
 class BlueJay_TestCase(unittest.TestCase):
@@ -1547,6 +1556,13 @@ class Raddish_TestCase(unittest.TestCase):
         
     def test_Avacado_exists(self):
         self.assertEqual(self.cppHeader.classes["Raddish_SetIterator"]["properties"]["protected"][0]["name"], "_beg")
+        
+    def test_class_template(self):
+        template_str = \
+        "template<typename VALUE,\n" \
+        "         typename VALUE_SET_ITERATOR,\n" \
+        "         typename ACCESOR=Raddish::SimpleAccessor<VALUE,VALUE_SET_ITERATOR> >"
+        self.assertEqual(self.cppHeader.classes["Raddish_SetIterator"]["template"], template_str)
 
 
 # Bug bug 57
@@ -1564,6 +1580,7 @@ class Carambola_TestCase(unittest.TestCase):
      
     def test_typedef(self):
         self.assertEqual(self.cppHeader.enums[2]["typedef"], True)
+        
 
 # globals
 class Globals_TestCase(unittest.TestCase):
@@ -1686,6 +1703,11 @@ struct Lime final : Lemon
     def test_hasLemon(self):
         hasString = '        "Lemon": {' in self.jsonString
         self.assertEqual(hasString, True)
+    
+    #def test_can_parse_complex_file(self):
+    #    self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    #    j = self.cppHeader.toJSON()
+    #    self.assertGreater(len(j), 100)
     
 if __name__ == '__main__':
     unittest.main()
