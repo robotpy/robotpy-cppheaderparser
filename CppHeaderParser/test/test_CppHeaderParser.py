@@ -1704,10 +1704,10 @@ struct Lime final : Lemon
         hasString = '        "Lemon": {' in self.jsonString
         self.assertEqual(hasString, True)
     
-    #def test_can_parse_complex_file(self):
-    #    self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
-    #    j = self.cppHeader.toJSON()
-    #    self.assertGreater(len(j), 100)
+    def test_can_parse_complex_file(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        j = self.cppHeader.toJSON()
+        self.assertGreater(len(j), 100)
     
 if __name__ == '__main__':
     unittest.main()

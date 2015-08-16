@@ -882,7 +882,7 @@ class CppMethod( _CppMethod ):
 
 
         self["parameters"] = params
-        self._params_helper2( params )    # mods params inplace
+        #self._params_helper2( params )    # mods params inplace
 
     def __str__(self):
         filter_keys = ("parent", "defined", "operator", "returns_reference")
@@ -2558,6 +2558,13 @@ class CppHeader( _CppHeader ):
                         if len(obj):
                             trace_print("push d %s"%obj[k])
                             obj_queue.append(obj[k])
+                    elif type(obj[k]) == type(type(0)):
+                        if type(obj[k]) == int:
+                            obj[k] = "int"
+                        elif type(obj[k]) == str:
+                            obj[k] = "string"
+                        else:
+                            obj[k] = "???"
                     trace_print("next key\n")
             except:
                 trace_print("Exception")
