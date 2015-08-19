@@ -7,7 +7,7 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.6)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>CppHeaderParser</strong></big></big> (version 2.7)</font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py">/home/senex/workspace/cppheaderparser/CppHeaderParser/CppHeaderParser.py</a></font></td></tr></table>
     <p><tt>Parse&nbsp;C++&nbsp;header&nbsp;files&nbsp;and&nbsp;generate&nbsp;a&nbsp;data&nbsp;structure<br>
@@ -143,7 +143,7 @@ An&nbsp;example&nbsp;of&nbsp;how&nbsp;this&nbsp;could&nbsp;look&nbsp;is&nbsp;as&
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="CppClass-__init__"><strong>__init__</strong></a>(self, nameStack)</dt></dl>
+<dl><dt><a name="CppClass-__init__"><strong>__init__</strong></a>(self, nameStack, curTemplate)</dt></dl>
 
 <dl><dt><a name="CppClass-__str__"><strong>__str__</strong></a>(self)</dt><dd><tt>Convert&nbsp;class&nbsp;to&nbsp;a&nbsp;string</tt></dd></dl>
 
@@ -502,7 +502,7 @@ self['parameters']&nbsp;-&nbsp;List&nbsp;of&nbsp;CppVariables<br>&nbsp;</tt></td
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="CppMethod-__init__"><strong>__init__</strong></a>(self, nameStack, curClass, methinfo)</dt></dl>
+<dl><dt><a name="CppMethod-__init__"><strong>__init__</strong></a>(self, nameStack, curClass, methinfo, curTemplate)</dt></dl>
 
 <dl><dt><a name="CppMethod-__str__"><strong>__str__</strong></a>(self)</dt></dl>
 
@@ -1418,7 +1418,7 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><strong>C99_NONSTANDARD</strong> = {'int16': 'short int', 'int32': 'int', 'int64': 'int64_t', 'int8': 'signed char', 'uint': 'unsigned int', 'uint16': 'unsigned short int', 'uint32': 'unsigned int', 'uint64': 'uint64_t', 'uint8': 'unsigned char'}<br>
-<strong>__version__</strong> = '2.6'<br>
+<strong>__version__</strong> = '2.7'<br>
 <strong>debug</strong> = 0<br>
 <strong>debug_trace</strong> = 0<br>
 <strong>doxygenCommentCache</strong> = ''<br>
@@ -1456,7 +1456,8 @@ of&nbsp;the&nbsp;specified&nbsp;width.&nbsp;&nbsp;The&nbsp;string&nbsp;S&nbsp;is
 <strong>t_SQUOTE</strong> = "'"<br>
 <strong>t_STRING_LITERAL</strong> = r'"([^"\\]|\\.)*"'<br>
 <strong>t_TAB</strong> = r'\t'<br>
+<strong>t_TEMPLATE_NAME</strong> = 'CppHeaderParser_template_[0-9]+'<br>
 <strong>t_ignore</strong> = ' <font color="#c040c0">\r</font>.?@<font color="#c040c0">\x0c</font>'<br>
-<strong>tokens</strong> = ['NUMBER', 'FLOAT_NUMBER', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'OPEN_SQUARE_BRACKET', 'CLOSE_SQUARE_BRACKET', 'COLON', 'SEMI_COLON', 'COMMA', 'TAB', 'BACKSLASH', 'PIPE', 'PERCENT', 'EXCLAMATION', 'CARET', 'COMMENT_SINGLELINE', 'COMMENT_MULTILINE', ...]<br>
-<strong>version</strong> = '2.6'</td></tr></table>
+<strong>tokens</strong> = ['NUMBER', 'FLOAT_NUMBER', 'TEMPLATE_NAME', 'NAME', 'OPEN_PAREN', 'CLOSE_PAREN', 'OPEN_BRACE', 'CLOSE_BRACE', 'OPEN_SQUARE_BRACKET', 'CLOSE_SQUARE_BRACKET', 'COLON', 'SEMI_COLON', 'COMMA', 'TAB', 'BACKSLASH', 'PIPE', 'PERCENT', 'EXCLAMATION', 'CARET', 'COMMENT_SINGLELINE', ...]<br>
+<strong>version</strong> = '2.7'</td></tr></table>
 </body></html>
