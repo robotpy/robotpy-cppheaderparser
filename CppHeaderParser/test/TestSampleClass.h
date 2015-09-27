@@ -723,3 +723,14 @@ struct Lime final : Lemon
     void abc();
     void foo2() override;
 };
+
+// BitBucket bug 24
+namespace MouseNS
+{
+  class MouseClass
+  {
+   public:
+    typedef std::vector<int> mouse_typedef;
+    void meth(mouse_typedef *tptr) {};
+  };
+};

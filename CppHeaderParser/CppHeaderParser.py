@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.7"
+version = __version__ = "2.7.1"
 
 tokens = [
     'NUMBER',
@@ -882,7 +882,7 @@ class CppMethod( _CppMethod ):
 
 
         self["parameters"] = params
-        #self._params_helper2( params )    # mods params inplace
+        self._params_helper2( params )    # mods params inplace
 
     def __str__(self):
         filter_keys = ("parent", "defined", "operator", "returns_reference")
@@ -2532,7 +2532,7 @@ class CppHeader( _CppHeader ):
                 del newEnum["instances"]
 
     def strip_parent_keys(self):
-        """Strip all parent keys to prevent loops"""
+        """Strip all parent (and method) keys to prevent loops"""
         obj_queue = [self]
         while len(obj_queue):
             obj = obj_queue.pop()
@@ -2541,6 +2541,11 @@ class CppHeader( _CppHeader ):
                 if "parent" in obj.keys():
                     del obj["parent"]
                     trace_print("Stripped parent from %s"%obj.keys())
+            except: pass
+            try:
+                if "method" in obj.keys():
+                    del obj["method"]
+                    trace_print("Stripped method from %s"%obj.keys())
             except: pass
             # Figure out what sub types are one of ours
             try:

@@ -1707,7 +1707,19 @@ struct Lime final : Lemon
     def test_can_parse_complex_file(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         j = self.cppHeader.toJSON()
-        self.assertGreater(len(j), 100)
+
+# BitBucket bug 24
+class Mouse_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_Apricot_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("MouseClass"), True)
+        
+    def test_mouse_typedef_correct_value(self):
+        self.assertEqual(self.cppHeader.classes["MouseClass"]["methods"]["public"][0]["parameters"][0]['raw_type'],
+                         "MouseNS::MouseClass::mouse_typedef")
     
 if __name__ == '__main__':
     unittest.main()
