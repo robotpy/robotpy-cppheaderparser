@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import sys, glob
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 DESCRIPTION = (
     'Parse C++ header files and generate a data structure '
@@ -39,5 +42,6 @@ setup(
     keywords = 'c++ header parser ply',
     classifiers = CLASSIFIERS,
     requires = ['ply'],
+    install_requires=['ply'],
     package_data = { 'CppHeaderParser': ['README', 'README.html', 'doc/*.*', 'examples/*.*'], },
     )
