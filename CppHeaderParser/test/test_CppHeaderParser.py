@@ -1714,12 +1714,24 @@ class Mouse_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
-    def test_Apricot_exists(self):
+    def test_MouseClass_exists(self):
         self.assertEqual(self.cppHeader.classes.has_key("MouseClass"), True)
         
     def test_mouse_typedef_correct_value(self):
         self.assertEqual(self.cppHeader.classes["MouseClass"]["methods"]["public"][0]["parameters"][0]['raw_type'],
                          "MouseNS::MouseClass::mouse_typedef")
+
+# BitBucket bug 26
+class Fig_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_Fig_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("Fig"), True)
+        
+    def test_a_exists(self):
+        self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][0]["name"], "a")
     
 if __name__ == '__main__':
     unittest.main()

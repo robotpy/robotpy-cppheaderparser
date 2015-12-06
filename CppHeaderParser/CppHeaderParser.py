@@ -59,7 +59,7 @@ def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
 
-version = __version__ = "2.7.1"
+version = __version__ = "2.7.2d"
 
 tokens = [
     'NUMBER',
@@ -2468,7 +2468,8 @@ class CppHeader( _CppHeader ):
             type_to_rename["name"] = self.nameStack[0]
             #Now re install it in its new location
             self.classes[new_name] = type_to_rename
-            del self.classes[type_name_to_rename] 
+            if new_name != type_name_to_rename:
+                del self.classes[type_name_to_rename] 
         elif is_property_namestack(self.nameStack) and self.stack[-1] == ';':
             debug_print( "trace" )
             if self.nameStack[0] in ('class', 'struct') and len(self.stack) == 3: self.evalute_forward_decl()

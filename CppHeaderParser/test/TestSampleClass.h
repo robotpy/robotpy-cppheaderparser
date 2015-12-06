@@ -734,3 +734,8 @@ namespace MouseNS
     void meth(mouse_typedef *tptr) {};
   };
 };
+
+// BitBucket bug 26
+typedef struct Fig {
+    int a;
+} Fig;
