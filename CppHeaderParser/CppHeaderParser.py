@@ -1541,13 +1541,13 @@ class Resolver(object):
             try:
                 if macro.lower().startswith("#define"):
                     trace_print("Adding #define %s"%macro)
-                    self.defines.append(macro.split(" ", 1)[1].strip())
+                    self.defines.append(re.split("[\t ]+", macro, 1)[1].strip())
                 elif macro.lower().startswith("#pragma"):
                     trace_print("Adding #pragma %s"%macro)
-                    self.pragmas.append(macro.split(" ", 1)[1].strip())
+                    self.pragmas.append(re.split("[\t ]+", macro, 1)[1].strip())
                 elif macro.lower().startswith("#include"):
                     trace_print("Adding #include %s"%macro)
-                    self.includes.append(macro.split(" ", 1)[1].strip())
+                    self.includes.append(re.split("[\t ]+", macro, 1)[1].strip())
                 else:
                     debug_print("Cant detect what to do with precomp macro '%s'"%macro)
             except: pass
