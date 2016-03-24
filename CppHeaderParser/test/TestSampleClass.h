@@ -739,3 +739,8 @@ namespace MouseNS
 typedef struct Fig {
     int a;
 } Fig;
+
+// BitBucket bug 27
+union olive {
+    int x;
+};

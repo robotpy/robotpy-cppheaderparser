@@ -1967,7 +1967,10 @@ class _CppHeader( Resolver ):
         debug_print("curAccessSpecifier changed/defaulted to %s"%self.curAccessSpecifier)
         if self.nameStack[0] == "union":
             newClass = CppUnion(self.nameStack)
-            self.anon_union_counter = [self.braceDepth, 2]
+            if newClass['name'] == 'union ':
+                self.anon_union_counter = [self.braceDepth, 2]
+            else:
+                self.anon_union_counter = [self.braceDepth, 1]
             trace_print( 'NEW UNION', newClass['name'] )
         else:
             newClass = CppClass(self.nameStack, self.curTemplate)

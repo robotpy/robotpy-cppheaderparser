@@ -1732,6 +1732,21 @@ class Fig_TestCase(unittest.TestCase):
         
     def test_a_exists(self):
         self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][0]["name"], "a")
+
+# BitBucket bug 27
+class Olive_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_Olive_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("union olive"), True)
+        
+    def test_union_member_x(self):
+        cmp_values = {'constant': 0, 'name': 'x', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}
+        self.assertEqual(filter_dict_keys(self.cppHeader.classes["union olive"]["members"][0], cmp_values.keys()), cmp_values)
+    
+    
     
 if __name__ == '__main__':
     unittest.main()
