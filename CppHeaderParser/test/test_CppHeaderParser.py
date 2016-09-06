@@ -1745,6 +1745,18 @@ class Olive_TestCase(unittest.TestCase):
     def test_union_member_x(self):
         cmp_values = {'constant': 0, 'name': 'x', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}
         self.assertEqual(filter_dict_keys(self.cppHeader.classes["union olive"]["members"][0], cmp_values.keys()), cmp_values)
+
+# BitBucket bug 61
+class Beet_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_Beet_exists(self):
+        self.assertEqual(self.cppHeader.classes.has_key("BeetStruct"), True)
+        
+    def test_BeetEnum_exists(self):
+        self.assertEqual(self.cppHeader.classes["BeetStruct"]["enums"]["public"][0]["name"], "BeetEnum")
     
     
     

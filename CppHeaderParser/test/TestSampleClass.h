@@ -744,3 +744,13 @@ typedef struct Fig {
 union olive {
     int x;
 };
+
+// Sourceforge bug 61
+typedef struct
+{ 
+    enum BeetEnum : int 
+    { 
+        FAIL = 0,
+        PASS = 1
+    }; 
+} BeetStruct;

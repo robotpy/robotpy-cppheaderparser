@@ -1120,7 +1120,12 @@ class CppEnum(_CppEnum):
         preBraceStack = nameStack[:nameStack.index("{")]
         postBraceStack = nameStack[nameStack.index("}") + 1:]
         self["typedef"] = False
-        if (len(preBraceStack) == 2 and "typedef" not in nameStack):
+        if (len(preBraceStack) == 4 and ":" in nameStack and "typedef" not in nameStack):
+            # C++11 specify enum type with "enum <enum_name> : <type> ..." syntax
+            self["name"] = preBraceStack[1]
+            self["type"] = preBraceStack[3]
+        elif (len(preBraceStack) == 2 and "typedef" not in nameStack):
+            # enum "enum <enum_name> ..." syntax
             self["name"] = preBraceStack[1]           
         elif len(postBraceStack) and "typedef" in nameStack:
             self["name"] = " ".join(postBraceStack)
