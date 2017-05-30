@@ -756,3 +756,15 @@ typedef struct
 } BeetStruct;
 
 void set_callback(int* b, long (*callback) (struct test_st *, int, const char*, int long, long, long));
+
+// Bitbucket bug 35
+struct Grackle
+{
+    void no_noexcept();
+    void just_noexcept() noexcept;
+    void const_noexcept() const noexcept;
+    void noexcept_bool() noexcept(true);
+    void const_noexcept_bool() const noexcept(true);
+    void noexcept_noexceptOperator() noexcept(noexcept(Grackle()));
+    void const_noexcept_noexceptOperator() const noexcept(noexcept(Grackle()));
+};
