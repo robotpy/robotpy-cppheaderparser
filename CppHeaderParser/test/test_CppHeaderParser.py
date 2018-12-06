@@ -1754,8 +1754,31 @@ class Beet_TestCase(unittest.TestCase):
         
     def test_BeetEnum_exists(self):
         self.assertEqual(self.cppHeader.classes["BeetStruct"]["enums"]["public"][0]["name"], "BeetEnum")
+
+# BitBucket bug 45
+class HALControlWord_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("""\
+            struct HAL_ControlWord {
+                int x : 1;
+                int y : 1;
+            };
+            typedef struct HAL_ControlWord HAL_ControlWord;
+            int HAL_GetControlWord(HAL_ControlWord* controlWord);
+        """, "string")
     
+    def test_functions(self):
+        self.assertEqual(len(self.cppHeader.functions), 1)
+        self.assertEqual(self.cppHeader.functions[0]["name"], "HAL_GetControlWord")
     
+    def test_classes(self):
+        self.assertEqual(len(self.cppHeader.classes), 1)
+        self.assertEqual(self.cppHeader.classes["HAL_ControlWord"]["name"], "HAL_ControlWord")
+
+    def test_num_typedefs(self):
+        self.assertEqual(len(self.cppHeader.typedefs), 1)
+        self.assertEqual(self.cppHeader.typedefs["HAL_ControlWord"], "struct HAL_ControlWord")
     
 if __name__ == '__main__':
     unittest.main()
