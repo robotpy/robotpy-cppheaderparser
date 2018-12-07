@@ -1791,8 +1791,19 @@ class HALControlWord_TestCase(unittest.TestCase):
     def test_num_typedefs(self):
         self.assertEqual(len(self.cppHeader.typedefs), 1)
         self.assertEqual(self.cppHeader.typedefs["HAL_ControlWord"], "struct HAL_ControlWord")
-    
-    
+
+# Bitbucket bug 47
+class CommentEOF_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("""
+namespace a {
+}  // namespace a""", "string")
+
+    def test_comment(self):
+        self.assertTrue('a' in self.cppHeader.namespaces)
+
+
 if __name__ == '__main__':
     unittest.main()
 
