@@ -2,7 +2,6 @@
 import unittest
 import sys
 
-sys.path = [".."] + sys.path
 import CppHeaderParser as CppHeaderParser
 
 
