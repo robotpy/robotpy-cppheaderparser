@@ -125,7 +125,7 @@ t_EXCLAMATION = r'!'
 t_PRECOMP_MACRO = r'\#.*'
 t_PRECOMP_MACRO_CONT = r'.*\\\n'
 def t_COMMENT_SINGLELINE(t):
-    r'\/\/.*\n'
+    r'\/\/.*\n?'
     global doxygenCommentCache
     if t.value.startswith("///") or t.value.startswith("//!"):
         if doxygenCommentCache:
