@@ -1330,7 +1330,7 @@ class Fly_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("FruitFly<int>"), True)
+        self.assertEqual("FruitFly<int>" in self.cppHeader.classes, True)
 
 # Bug BitBucket #2
 class ClassAfterMagicMacro_TestCase(unittest.TestCase):
@@ -1339,7 +1339,7 @@ class ClassAfterMagicMacro_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_class_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("ClassAfterMagicMacro"), True)
+        self.assertEqual("ClassAfterMagicMacro" in self.cppHeader.classes, True)
 
 # Bug BitBucket #3
 class FilterMagicMacro_TestCase(unittest.TestCase):
@@ -1377,19 +1377,19 @@ class ClassRegularTypedefs_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_uint_exists(self):
-        self.assertEqual(self.cppHeader.typedefs.has_key("uint"), True)
+        self.assertEqual("uint" in self.cppHeader.typedefs, True)
     
     def test_string_array_exists(self):
-        self.assertEqual(self.cppHeader.typedefs.has_key("string_array"), True)
+        self.assertEqual("string_array" in self.cppHeader.typedefs, True)
     
     def test_SmartObjPtr_exists(self):
-        self.assertEqual(self.cppHeader.typedefs.has_key("SmartObjPtr"), True)
+        self.assertEqual("SmartObjPtr" in self.cppHeader.typedefs, True)
     
     def test_StrStrMap_exists(self):
-        self.assertEqual(self.cppHeader.typedefs.has_key("StrStrMap"), True)
+        self.assertEqual("StrStrMap" in self.cppHeader.typedefs, True)
     
     def test_AfterTypedefClass_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("AfterTypedefClass"), True)
+        self.assertEqual("AfterTypedefClass" in self.cppHeader.classes, True)
 
 # Bug BitBucket #6
 class LineNumAfterDivide_TestCase(unittest.TestCase):
@@ -1407,7 +1407,7 @@ class ClassHerbCilantro_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         
     def test_HerbCilantro_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Herb::Cilantro"), True)
+        self.assertEqual("Herb::Cilantro" in self.cppHeader.classes, True)
 
 # Bug BitBucket #7
 class print_statement_TestCase(unittest.TestCase):
@@ -1449,10 +1449,10 @@ class PeachPlumb_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         
     def test_Peach_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Peach"), True)
+        self.assertEqual("Peach" in self.cppHeader.classes, True)
             
     def test_Plumb_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Plumb"), True)
+        self.assertEqual("Plumb" in self.cppHeader.classes, True)
         
     def test_function_exists(self):
         self.assertEqual(self.cppHeader.classes["Plumb"]["methods"]["private"][0]["name"], "doSomethingGreat")
@@ -1464,7 +1464,7 @@ class Grape_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         
     def test_Grape_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Grape"), True)
+        self.assertEqual("Grape" in self.cppHeader.classes, True)
         
     def test_a_exists(self):
         self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][0]["name"], "a")
@@ -1497,7 +1497,7 @@ class Avacado_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         
     def test_Avacado_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Avacado"), True)
+        self.assertEqual("Avacado" in self.cppHeader.classes, True)
         
     def test_foo_return_type(self):
         self.assertEqual(self.cppHeader.classes["Avacado"]["methods"]["public"][0]["returns"], "uint8_t")
@@ -1512,13 +1512,13 @@ class Raspberry_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_anon_struct_1_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("<anon-struct-1>"), True)
+        self.assertEqual("<anon-struct-1>" in self.cppHeader.classes, True)
         
     def test_beta_exists(self):
         self.assertEqual(self.cppHeader.classes["<anon-struct-1>"]["properties"]["public"][0]["name"], "anon_struct_variable")
     
     def test_Raspberry_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Raspberry"), True)
+        self.assertEqual("Raspberry" in self.cppHeader.classes, True)
         
     def test_a_exists(self):
         self.assertEqual(self.cppHeader.classes["Raspberry"]["properties"]["public"][0]["name"], "a")
@@ -1607,7 +1607,7 @@ class TypedefArray_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         
     def test_name(self):
-        self.assertEqual(self.cppHeader.typedefs.has_key("TenCharArray[10]"), True)
+        self.assertEqual("TenCharArray[10]" in self.cppHeader.typedefs, True)
     
     def test_value(self):
         self.assertEqual(self.cppHeader.typedefs["TenCharArray[10]"], "char")
@@ -1619,7 +1619,7 @@ class TypedefStruct_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
         
     def test_name(self):
-        self.assertEqual(self.cppHeader.typedefs.has_key("MAGIC_FILE"), True)
+        self.assertEqual("MAGIC_FILE" in self.cppHeader.typedefs, True)
     
     def test_value(self):
         self.assertEqual(self.cppHeader.typedefs["MAGIC_FILE"], "struct SUPER_MAGIC_FILE")
@@ -1646,7 +1646,7 @@ class Apricot_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_Apricot_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Apricot"), True)
+        self.assertEqual("Apricot" in self.cppHeader.classes, True)
         
     def test_i_exists(self):
         self.assertEqual(self.cppHeader.classes["Apricot"]["members"][0]["name"], "i")
@@ -1715,7 +1715,7 @@ class Mouse_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_MouseClass_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("MouseClass"), True)
+        self.assertEqual("MouseClass" in self.cppHeader.classes, True)
         
     def test_mouse_typedef_correct_value(self):
         self.assertEqual(self.cppHeader.classes["MouseClass"]["methods"]["public"][0]["parameters"][0]['raw_type'],
@@ -1728,7 +1728,7 @@ class Fig_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_Fig_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Fig"), True)
+        self.assertEqual("Fig" in self.cppHeader.classes, True)
         
     def test_a_exists(self):
         self.assertEqual(self.cppHeader.classes["Grape"]["properties"]["public"][0]["name"], "a")
@@ -1740,7 +1740,7 @@ class Olive_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_Olive_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("union olive"), True)
+        self.assertEqual("union olive" in self.cppHeader.classes, True)
         
     def test_union_member_x(self):
         cmp_values = {'constant': 0, 'name': 'x', 'reference': 0, 'type': 'int', 'static': 0, 'pointer': 0}
@@ -1753,7 +1753,7 @@ class Beet_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
     
     def test_Beet_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("BeetStruct"), True)
+        self.assertEqual("BeetStruct" in self.cppHeader.classes, True)
         
     def test_BeetEnum_exists(self):
         self.assertEqual(self.cppHeader.classes["BeetStruct"]["enums"]["public"][0]["name"], "BeetEnum")

@@ -943,7 +943,7 @@ class CppVariable( _CppVariable ):
             if nameStack.count("[") > 1:
                 debug_print("Multi dimensional array")
                 debug_print("arrayStack=%s"%arrayStack)
-                nums = filter(lambda x: x.isdigit(), arrayStack)
+                nums = [x for x in arrayStack if x.isdigit()]
                 # Calculate size by multiplying all dimensions
                 p = 1
                 for n in nums:
