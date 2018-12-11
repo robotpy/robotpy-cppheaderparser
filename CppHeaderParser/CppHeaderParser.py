@@ -1282,6 +1282,9 @@ class Resolver(object):
         #    result['forward_decl'] = True
         if alias == '__extension__': result['fundamental_extension'] = True
         elif alias:
+            if alias in result['aliases']:
+                # already resolved
+                return
             result['aliases'].append( alias )
             if alias in C99_NONSTANDARD:
                 result['type'] = C99_NONSTANDARD[ alias ]
