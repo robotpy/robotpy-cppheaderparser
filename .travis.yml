@@ -1,0 +1,44 @@
+language: python
+sudo: required
+dist: xenial
+
+python:
+  - "3.7"
+  - "3.6"
+  - "3.5"
+  - "2.7"
+
+matrix:
+  fast_finish: true
+
+# jobs:
+#   include:
+#   - stage: format-check
+#     python:
+#     - "3.6"
+#     install:
+#     - pip install black
+#     script:
+#     - black --check --diff .
+
+# command to install dependencies
+install:
+  - "pip install -e ."
+# command to run tests
+script:
+  - cd CppHeaderParser/test/ && python test_CppHeaderParser.py
+deploy:
+- provider: pypi
+  user: $PYPI_USERNAME
+  password: $PYPI_PASSWORD
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
+    python: "3.6"
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/2fb1c026e64fdd70d27b
+    on_success: change
+    on_failure: always
+    on_start: never

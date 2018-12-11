@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import unittest
 import sys
-if sys.version_info[0] == 2:
-    sys.path = [".."] + sys.path
-    import CppHeaderParser as CppHeaderParser
-else:
-    sys.path = ["..", "../python3-libs"] + sys.path    
-    import CppHeaderParser3 as CppHeaderParser
+
+sys.path = [".."] + sys.path
+import CppHeaderParser as CppHeaderParser
+
 
 def filter_pameters(p):
     "Reduce a list of dictionaries to the desired keys for function parameter testing"
