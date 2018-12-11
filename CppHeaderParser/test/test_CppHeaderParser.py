@@ -1810,7 +1810,7 @@ class Grackle_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
     def test_Grackle_exists(self):
-        self.assertEqual(self.cppHeader.classes.has_key("Grackle"), True)
+        self.assertEqual("Grackle" in self.cppHeader.classes, True)
 
     def test_Grackle_no_noexcept_None(self):
         self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][0]["noexcept"], None)

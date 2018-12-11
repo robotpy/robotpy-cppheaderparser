@@ -794,7 +794,7 @@ class CppMethod( _CppMethod ):
         cleaned = []
         hit = False; parentCount = 0
         self['noexcept'] = ''
-        for a in stack:
+        for a in nameStack:
             if a == 'noexcept': hit = True
             if hit:
                 if a == '(': parentCount += 1
@@ -804,7 +804,7 @@ class CppMethod( _CppMethod ):
                 self['noexcept'] += a
             else:
                 cleaned.append( a )
-        stack = cleaned
+        nameStack = cleaned
         self['noexcept'] = self['noexcept'] if self['noexcept'] else None
         
         for spec in ["const", "final", "override"]:
