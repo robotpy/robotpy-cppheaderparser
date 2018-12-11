@@ -26,7 +26,7 @@ install:
   - "pip install -e ."
 # command to run tests
 script:
-  - cd CppHeaderParser/test/ && python test_CppHeaderParser.py
+  - ./run_tests.sh
 deploy:
 - provider: pypi
   user: $PYPI_USERNAME
