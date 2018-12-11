@@ -738,14 +738,7 @@ class _CppMethod( dict ):
         stack = stack[ : len(stack)-(_end_+1) ]
         if '(' not in stack: return stack    # safe to return, no defaults that init a class
 
-        # transforms ['someclass', '(', '0', '0', '0', ')'] into "someclass(0,0,0)'"
-        r = []; hit=False
-        for a in stack:
-            if a == '(': hit=True
-            elif a == ')': hit=False
-            if hit or a == ')': r[-1] = r[-1] + a
-            else: r.append( a )
-        return r
+        return stack
 
     def _params_helper2( self, params ):
         for p in params:
@@ -864,6 +857,7 @@ class CppMethod( _CppMethod ):
         while (len(paramsStack)):
             # Find commas that are not nexted in <>'s like template types
             open_template_count = 0
+            open_paren_count = 0
             param_separator = 0
             i = 0
             for elm in paramsStack:
@@ -871,7 +865,11 @@ class CppMethod( _CppMethod ):
                     open_template_count += 1
                 elif '>' in elm:
                     open_template_count -= 1
-                elif elm == ',' and open_template_count == 0:
+                elif '(' in elm :
+                    open_paren_count += 1
+                elif ')' in elm:
+                    open_paren_count -= 1
+                elif elm == ',' and open_template_count == 0 and open_paren_count==0:
                     param_separator = i
                     break
                 i += 1

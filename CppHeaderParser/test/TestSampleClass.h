@@ -754,3 +754,5 @@ typedef struct
         PASS = 1
     }; 
 } BeetStruct;
+
+void set_callback(int* b, long (*callback) (struct test_st *, int, const char*, int long, long, long));

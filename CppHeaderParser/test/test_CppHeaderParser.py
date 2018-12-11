@@ -1755,6 +1755,18 @@ class Beet_TestCase(unittest.TestCase):
     def test_BeetEnum_exists(self):
         self.assertEqual(self.cppHeader.classes["BeetStruct"]["enums"]["public"][0]["name"], "BeetEnum")
 
+# BitBucket bug 40
+class set_callback_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+    
+    def test_set_callback(self):
+        self.assertEqual(self.cppHeader.functions[8]["name"], "set_callback")
+        self.assertEqual(self.cppHeader.functions[8]["parameters"][1]["name"], "callback")
+        self.assertEqual(self.cppHeader.functions[8]["parameters"][1]["function_pointer"], 1)
+        self.assertEqual(self.cppHeader.functions[8]["parameters"][1]["type"], "long ( * ) ( struct test_st *, int, const char *, int long, long, long )")
+
 # BitBucket bug 45
 class HALControlWord_TestCase(unittest.TestCase):
 
@@ -1779,6 +1791,7 @@ class HALControlWord_TestCase(unittest.TestCase):
     def test_num_typedefs(self):
         self.assertEqual(len(self.cppHeader.typedefs), 1)
         self.assertEqual(self.cppHeader.typedefs["HAL_ControlWord"], "struct HAL_ControlWord")
+    
     
 if __name__ == '__main__':
     unittest.main()
