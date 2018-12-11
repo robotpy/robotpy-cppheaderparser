@@ -3,5 +3,7 @@
 build
 dist
 
+/CppHeaderParser/version.py
+
 __pycache__
 .vscode
