@@ -790,6 +790,23 @@ class CppMethod( _CppMethod ):
         self["rtnType"] = self["rtnType"].replace(" >",">").replace(">>", "> >").replace(">>", "> >")
         self["rtnType"] = self["rtnType"].replace(" ,",",")
         
+        # deal with "noexcept" specifier/operator
+        cleaned = []
+        hit = False; parentCount = 0
+        self['noexcept'] = ''
+        for a in nameStack:
+            if a == 'noexcept': hit = True
+            if hit:
+                if a == '(': parentCount += 1
+                elif a == ')': parentCount -= 1
+                elif parentCount == 0 and a != 'noexcept': hit = False; cleaned.append( a ); continue  # noexcept without parenthesis
+                if a==')' and parentCount == 0: hit = False
+                self['noexcept'] += a
+            else:
+                cleaned.append( a )
+        nameStack = cleaned
+        self['noexcept'] = self['noexcept'] if self['noexcept'] else None
+        
         for spec in ["const", "final", "override"]:
             self[spec] = False
             for i in reversed(nameStack):

@@ -1803,6 +1803,39 @@ namespace a {
     def test_comment(self):
         self.assertTrue('a' in self.cppHeader.namespaces)
 
+# BitBucket bug 35
+class Grackle_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_Grackle_exists(self):
+        self.assertEqual("Grackle" in self.cppHeader.classes, True)
+
+    def test_Grackle_no_noexcept_None(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][0]["noexcept"], None)
+
+    def test_Grackle_noexcept(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][1]["noexcept"], 'noexcept')
+
+    def test_Grackle_const_noexcept(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][2]["const"], True)
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][2]["noexcept"], 'noexcept')
+
+    def test_Grackle_noexcept_true(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][3]["noexcept"], 'noexcept(true)')
+
+    def test_Grackle_const_noexcept_true(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][4]["const"], True)
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][4]["noexcept"], 'noexcept(true)')
+
+    def test_Grackle_noexcept_noexcept_operator(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][5]["noexcept"], 'noexcept(noexcept(Grackle()))')
+
+    def test_Grackle_const_noexcept_noexcept_operator(self):
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][6]["const"], True)
+        self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][6]["noexcept"], 'noexcept(noexcept(Grackle()))')
+
 
 if __name__ == '__main__':
     unittest.main()
