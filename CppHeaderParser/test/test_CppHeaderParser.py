@@ -1837,6 +1837,19 @@ class Grackle_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][6]["noexcept"], 'noexcept(noexcept(Grackle()))')
 
 
+class VarargFunc_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_vararg_func(self):
+        vf = next(x for x in self.cppHeader.functions if x['name'] == 'vararg_func')
+        nvf = next(x for x in self.cppHeader.functions if x['name'] == 'non_vararg_func')
+        self.assertTrue(vf['vararg'])
+        self.assertFalse(nvf['vararg'])
+        self.assertEqual(len(vf['parameters']), len(nvf['parameters']));
+
+
 if __name__ == '__main__':
     unittest.main()
 

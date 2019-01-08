@@ -768,3 +768,8 @@ struct Grackle
     void noexcept_noexceptOperator() noexcept(noexcept(Grackle()));
     void const_noexcept_noexceptOperator() const noexcept(noexcept(Grackle()));
 };
+
+// Two prototypes that are the same apart from the ...
+int vararg_func(int foo, const char* fmt, ...);
+
+int non_vararg_func(int foo, const char* fmt);
