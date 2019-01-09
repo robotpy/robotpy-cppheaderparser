@@ -100,9 +100,11 @@ tokens = [
     'STRING_LITERAL',
     'NEW_LINE',
     'SQUOTE',
+    'ELLIPSIS',
+    'DOT',
 ]
 
-t_ignore = " \r.?@\f"
+t_ignore = " \r?@\f"
 t_NUMBER = r'[0-9][0-9XxA-Fa-f]*'
 t_FLOAT_NUMBER = r'[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?'
 t_TEMPLATE_NAME = r'CppHeaderParser_template_[0-9]+'
@@ -143,6 +145,8 @@ t_AMPERSTAND = r'&'
 t_EQUALS = r'='
 t_CHAR_LITERAL = "'.'"
 t_SQUOTE = "'"
+t_ELLIPSIS = r'\.\.\.'
+t_DOT = r'\.'
 #found at http://wordaligned.org/articles/string-literals-and-regular-expressions
 #TODO: This does not work with the string "bla \" bla"
 t_STRING_LITERAL = r'"([^"\\]|\\.)*"'
@@ -869,7 +873,9 @@ class CppMethod( _CppMethod ):
                         doxyLine = doxyLine[doxyLine.find(" ") + 1:]
                         doxyVarDesc[lastParamDesc] += " " + doxyLine
                     except: pass
-        
+
+        # non-vararg by default
+        self["vararg"] = False
         #Create the variable now
         while (len(paramsStack)):
             # Find commas that are not nexted in <>'s like template types
@@ -895,6 +901,9 @@ class CppMethod( _CppMethod ):
                 param = CppVariable(paramsStack[0:param_separator],  doxyVarDesc=doxyVarDesc)
                 if len(list(param.keys())): params.append(param)
                 paramsStack = paramsStack[param_separator + 1:]
+            elif len(paramsStack) and paramsStack[0] == "...":
+                self["vararg"] = True
+                paramsStack = paramsStack[1:]
             else:
                 param = CppVariable(paramsStack,  doxyVarDesc=doxyVarDesc)
                 if len(list(param.keys())): params.append(param)
@@ -2350,6 +2359,9 @@ class CppHeader( _CppHeader ):
                     self.nameStack.append(tok.value)
                 elif (tok.type == 'STRING_LITERAL'):
                     self.nameStack.append(tok.value)
+                elif (tok.type == 'ELLIPSIS'):
+                    self.nameStack.append(tok.value)
+                elif (tok.type == 'DOT'): pass # preserve behaviour and eat individual fullstops
                 elif (tok.type == 'NAME' or tok.type == 'AMPERSTAND' or tok.type == 'ASTERISK' or tok.type == 'CHAR_LITERAL'):
                     if tok.value in ignoreSymbols:
                         debug_print("Ignore symbol %s"%tok.value)
