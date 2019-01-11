@@ -2071,7 +2071,7 @@ class CppHeader( _CppHeader ):
     def show(self):
         for className in list(self.classes.keys()):self.classes[className].show()
 
-    def __init__(self, headerFileName, argType="file", **kwargs):
+    def __init__(self, headerFileName, argType="file", encoding=None, **kwargs):
         """Create the parsed C++ header file parse tree
         
         headerFileName - Name of the file to parse OR actual file contents (depends on argType)
@@ -2126,7 +2126,7 @@ class CppHeader( _CppHeader ):
         self.templateRegistry = []
     
         if (len(self.headerFileName)):
-            fd = open(self.headerFileName)
+            fd = open(self.headerFileName, encoding=encoding)
             headerFileStr = "".join(fd.readlines())
             fd.close()     
         
