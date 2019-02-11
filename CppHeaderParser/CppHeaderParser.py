@@ -2124,19 +2124,19 @@ class CppHeader( _CppHeader ):
         self.anon_struct_counter = 0    
         self.anon_union_counter = [-1, 0]
         self.templateRegistry = []
-    
+
         if (len(self.headerFileName)):
-			# Python 3.x
-			if sys.version_info >= (3, 0):
-				fd = open(self.headerFileName, encoding=encoding)
-				headerFileStr = "".join(fd.readlines())
-				fd.close()
-			# Python 2.x
-			else:
-				import codecs
-				fd = codecs.open(self.headerFileName, 'r', encoding=encoding)
-				headerFileStr = "".join(fd.readlines())
-				fd.close()
+            # Python 3.x
+            if sys.version_info >= (3, 0):
+                fd = open(self.headerFileName, encoding=encoding)
+                headerFileStr = "".join(fd.readlines())
+                fd.close()
+            # Python 2.x
+            else:
+                import codecs
+                fd = codecs.open(self.headerFileName, 'r', encoding=encoding)
+                headerFileStr = "".join(fd.readlines())
+                fd.close()
 				
         # Make sure supportedAccessSpecifier are sane
         for i in range(0, len(supportedAccessSpecifier)):
