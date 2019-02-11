@@ -2133,8 +2133,8 @@ class CppHeader( _CppHeader ):
                 fd.close()
             # Python 2.x
             else:
-                import codecs
-                fd = codecs.open(self.headerFileName, 'r', encoding=encoding)
+                import io
+                fd = io.open(self.headerFileName, 'r', encoding=encoding)
                 headerFileStr = "".join(fd.readlines())
                 fd.close()
 				
