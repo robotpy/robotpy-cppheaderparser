@@ -2126,10 +2126,18 @@ class CppHeader( _CppHeader ):
         self.templateRegistry = []
     
         if (len(self.headerFileName)):
-            fd = open(self.headerFileName, encoding=encoding)
-            headerFileStr = "".join(fd.readlines())
-            fd.close()     
-        
+			# Python 3.x
+			if sys.version_info >= (3, 0):
+				fd = open(self.headerFileName, encoding=encoding)
+				headerFileStr = "".join(fd.readlines())
+				fd.close()
+			# Python 2.x
+			else:
+				import codecs
+				fd = codecs.open(self.headerFileName, 'r', encoding=encoding)
+				headerFileStr = "".join(fd.readlines())
+				fd.close()
+				
         # Make sure supportedAccessSpecifier are sane
         for i in range(0, len(supportedAccessSpecifier)):
             if " " not in supportedAccessSpecifier[i]: continue
