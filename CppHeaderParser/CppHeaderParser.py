@@ -52,6 +52,7 @@ import ply.lex as lex
 import os
 import sys
 import re
+import io
 
 import inspect
 
@@ -2071,7 +2072,7 @@ class CppHeader( _CppHeader ):
     def show(self):
         for className in list(self.classes.keys()):self.classes[className].show()
 
-    def __init__(self, headerFileName, argType="file", **kwargs):
+    def __init__(self, headerFileName, argType="file", encoding=None, **kwargs):
         """Create the parsed C++ header file parse tree
         
         headerFileName - Name of the file to parse OR actual file contents (depends on argType)
@@ -2124,12 +2125,12 @@ class CppHeader( _CppHeader ):
         self.anon_struct_counter = 0    
         self.anon_union_counter = [-1, 0]
         self.templateRegistry = []
-    
+
         if (len(self.headerFileName)):
-            fd = open(self.headerFileName)
+            fd = io.open(self.headerFileName, 'r', encoding=encoding)
             headerFileStr = "".join(fd.readlines())
-            fd.close()     
-        
+            fd.close()
+				
         # Make sure supportedAccessSpecifier are sane
         for i in range(0, len(supportedAccessSpecifier)):
             if " " not in supportedAccessSpecifier[i]: continue
