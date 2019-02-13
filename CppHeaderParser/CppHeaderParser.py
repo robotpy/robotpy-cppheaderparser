@@ -52,6 +52,7 @@ import ply.lex as lex
 import os
 import sys
 import re
+import io
 
 import inspect
 
@@ -2126,17 +2127,9 @@ class CppHeader( _CppHeader ):
         self.templateRegistry = []
 
         if (len(self.headerFileName)):
-            # Python 3.x
-            if sys.version_info >= (3, 0):
-                fd = open(self.headerFileName, encoding=encoding)
-                headerFileStr = "".join(fd.readlines())
-                fd.close()
-            # Python 2.x
-            else:
-                import io
-                fd = io.open(self.headerFileName, 'r', encoding=encoding)
-                headerFileStr = "".join(fd.readlines())
-                fd.close()
+            fd = io.open(self.headerFileName, 'r', encoding=encoding)
+            headerFileStr = "".join(fd.readlines())
+            fd.close()
 				
         # Make sure supportedAccessSpecifier are sane
         for i in range(0, len(supportedAccessSpecifier)):
