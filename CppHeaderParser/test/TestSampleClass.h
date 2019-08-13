@@ -773,3 +773,19 @@ struct Grackle
 int vararg_func(int foo, const char* fmt, ...);
 
 int non_vararg_func(int foo, const char* fmt);
+
+// Sample class for testing default constructor destructor
+class DefaultConstDest {
+public:
+    DefaultConstDest() =default ;     // spacing check
+    DefaultConstDest() = default  ;   // spacing check
+};
+// default constructor on a class containing "default" as name (edge case check)
+class default_class_tricky {
+public:
+    default_class_tricky();
+    default_class_tricky();
+
+    void randomMethod1_default();
+    void defaultrandomMethod2();
+};

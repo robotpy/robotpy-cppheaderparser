@@ -1744,12 +1744,13 @@ class _CppHeader( Resolver ):
             'namespace':self.cur_namespace(add_double_colon=True),
         }
 
-        for tag in 'defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class'.split(): info[tag]=False
+        for tag in 'defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default'.split(): info[tag]=False
         header = stack[ : stack.index('(') ]
         header = ' '.join( header )
         header = header.replace(' : : ', '::' )
         header = header.replace(' < ', '<' )
         header = header.replace(' > ', '> ' )
+        header = header.replace('default ', 'default' )
         header = header.strip()
 
         if '{' in stack:
@@ -1804,9 +1805,15 @@ class _CppHeader( Resolver ):
 
         if name.startswith('~'):
             info['destructor'] = True
+            if 'default;' in stack:
+                info['defined'] = True
+                info['default'] = True
             name = name[1:]
         elif not a or (name == self.curClass and len(self.curClass)):
             info['constructor'] = True
+            if 'default;' in stack:
+                info['defined'] = True
+                info['default'] = True
 
         info['name'] = name
 

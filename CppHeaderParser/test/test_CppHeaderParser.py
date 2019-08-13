@@ -1836,6 +1836,41 @@ class Grackle_TestCase(unittest.TestCase):
         self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][6]["const"], True)
         self.assertEqual(self.cppHeader.classes["Grackle"]["methods"]["public"][6]["noexcept"], 'noexcept(noexcept(Grackle()))')
 
+# Test enhancement 13 (default constructor / destructor)
+class DefaultConstDest_TestCase():
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+
+    def test_DefaultConstDest_exists(self):
+        self.assertEqual("DefaultConstDest" in self.cppHeader.classes, True)
+        self.assertEqual("default_class_tricky" in self.cppHeader.classes, True)
+    
+    def test_DefaultConstDest_constructor_default(self):
+        self.assertEqual(self.cppHeader.classes["DefaultConstDest"]["methods"]["public"][0]["constructor"], True)
+        self.assertEqual(self.cppHeader.classes["DefaultConstDest"]["methods"]["public"][0]["default"], True)
+        self.assertEqual(self.cppHeader.classes["DefaultConstDest"]["methods"]["public"][0]["defined"], True)
+
+    def test_DefaultConstDest_destructor_default(self):
+        self.assertEqual(self.cppHeader.classes["DefaultConstDest"]["methods"]["public"][1]["destructor"], True)
+        self.assertEqual(self.cppHeader.classes["DefaultConstDest"]["methods"]["public"][1]["default"], True)
+        self.assertEqual(self.cppHeader.classes["DefaultConstDest"]["methods"]["public"][1]["defined"], True)
+
+    def test_DefaultConstDest_default_edgeCaseNaming(self):
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][0]["constructor"], True)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][0]["default"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][0]["defined"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][1]["destructor"], True)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][1]["default"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][1]["defined"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][2]["name"], "randomMethod1_default")
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][2]["destructor"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][2]["default"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][2]["defined"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][3]["name"], "defaultrandomMethod2")
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][3]["destructor"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][3]["default"], False)
+        self.assertEqual(self.cppHeader.classes["default_class_tricky"]["methods"]["public"][3]["defined"], False)
+
 
 class VarargFunc_TestCase(unittest.TestCase):
 
@@ -1847,7 +1882,7 @@ class VarargFunc_TestCase(unittest.TestCase):
         nvf = next(x for x in self.cppHeader.functions if x['name'] == 'non_vararg_func')
         self.assertTrue(vf['vararg'])
         self.assertFalse(nvf['vararg'])
-        self.assertEqual(len(vf['parameters']), len(nvf['parameters']));
+        self.assertEqual(len(vf['parameters']), len(nvf['parameters']))
 
 
 if __name__ == '__main__':
