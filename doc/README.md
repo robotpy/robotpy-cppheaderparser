@@ -120,6 +120,43 @@ for define in cppHeader.defines:
 * **"methods"**     : containing all the methods of the class, described in more details [here](#methods).
 * **"properties"**  : containing all the properties of the class, described in more details [here](#properties).
 
+<details>
+  <summary>example (Click to expand!)</summary>
+
+~~~ cpp
+// classData.hh
+
+namespace testing {
+  class Data : BaseClass {
+    public:
+        void pubMethod1();
+        void pubMethod2();
+
+    private:
+        void privMethod1();
+        void privMethod2();
+        void privMethod3();
+
+    protected:
+        void protecMethod1();
+  };
+
+}
+
+~~~  
+
+~~~ python
+cppHeader = CppHeaderParser.CppHeader("classData.hh") 
+classData = cppHeader["Data"]
+
+print(classData["name"])          # Data
+print(classData["inherits"])      # ["BaseClass"]
+print(classData["abstract"])      # False
+print(len(classData["methods"]))  # ["BaseClass"]
+~~~  
+
+</details>
+
 ## methods
 
 "methods" is a dictionnary containing different array, those contains dictionaries with the details of a each specific method, this dictionary contains the keys representing the accessibility of the method (encapsulation):  
@@ -151,9 +188,9 @@ protected:
 header = CppHeaderParser.CppHeader("TestingMethod.hh") 
 # access data
 len(header.classes)                  # equal 1 (only one class defined)
-len(header.classes[0]["public"])     # equal 2 (2 public methods in the first class defined)
-len(header.classes[0]["private"])    # equal 3 (3 private methods in the first class defined)
-len(header.classes[0]["protected"])  # equal 1 (1 protected method in the first class defined)
+len(header.classes["TestingMethod"]["public"])     # equal 2 (2 public methods in the first class defined)
+len(header.classes["TestingMethod"]["private"])    # equal 3 (3 private methods in the first class defined)
+len(header.classes["TestingMethod"]["protected"])  # equal 1 (1 protected method in the first class defined)
 ~~~
 
 </details>
@@ -162,7 +199,7 @@ Those arrays are python dictionaries containing all the details about a specific
 * **"parent"**      : [class data](#class-data) : data related to the class owning this method
 * **"rtnType"**     : string : return type of the method
 * **"name"**        : string : name of the method
-* **"parameters"**  : custom : parameters of the function, described in more details [here](#parameter-type)
+* **"parameters"**  : custom : parameters of the method, described in more details [here](#parameter-type)
 * **"doxygen"**     : string : documentation above the method  
 * **"namespace"**   : string : namespace of the class (doesn't contains the name of the class)  
 * **"path"**        : string : give the name composed of the namespace, the class name, and the method name.
@@ -185,7 +222,6 @@ Those arrays are python dictionaries containing all the details about a specific
 * **"returns_fundamental"** : bool  : set to true if the method return a primitive type (fundamental).  
 * **"returns_reference"**   : bool  : set to true if the method return a reference.
 * **"returns_class"**       : bool  : set to true if the method return a class object.
-
 * **"line_number"**         : int : line at which the method has been declared in the header file
   
 ## properties
@@ -207,20 +243,21 @@ A property dictionary contained in those arrays contains the following keys:
 
 ## parameter type
 
+todo
+
 ## functions
 
 "functions" is stored as an array of python dictionaries containing all the details about a specific function, those dictionaries contains the following keys:  
 * **"returns"**     : string : return type   
-* **""**
-* **""**
+* **"parameters"**  : custom : parameters of the function, described in more details [here](#parameter-type)
+* **"path"**        : string : give the name composed of the namespace and the function name.
+* **"debug"**       : string : give the exact string representing the function declaration
+* **"doxygen"**     : string : documentation above the function  
 * **"defined"**     : bool  : set to true if the function is directly defined in the header file  
 * **"inline"**      : bool  : set to true if the function is declared as inlined  
 
-
-## Used By
-
-CppHeaderParser is currently used by different projects[^1]: 
-* [FSeam](https://github.com/FreeYourSoul/FSeam/) : A mocking library using the parser in order to generate mocking version of a class
-* []() 
-
-[^1] if you also use CppHeaderParser, don't hesitate to provide a pull request in order to update the following list
+* **"returns_pointer"**     : bool  : set to true if the method return a pointer.  
+* **"returns_fundamental"** : bool  : set to true if the method return a primitive type (fundamental).  
+* **"returns_reference"**   : bool  : set to true if the method return a reference.
+* **"returns_class"**       : bool  : set to true if the method return a class object.
+* **"line_number"**         : int : line at which the method has been declared in the header file
