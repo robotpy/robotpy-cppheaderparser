@@ -44,9 +44,7 @@
 #
 #   http://www.opensource.org/licenses/bsd-license.php
 #
-"""Parse C++ header files and generate a data structure
-representing the class
-"""
+
 
 import ply.lex as lex
 import os
@@ -176,7 +174,7 @@ def t_NEWLINE(t):
 
 
 def t_error(v):
-    print(("Lex error: ", v))
+    print("Lex error: ", v)
 
 
 lex.lex()
@@ -215,9 +213,10 @@ def trace_print(*arg):
         sys.stdout.write("\n")
 
 
+#: Access specifiers
 supportedAccessSpecifier = ["public", "protected", "private"]
 
-# Symbols to ignore, usually special macros
+#: Symbols to ignore, usually special macros
 ignoreSymbols = ["Q_OBJECT"]
 
 doxygenCommentCache = ""
@@ -404,47 +403,53 @@ class CppParseError(Exception):
 
 
 class CppClass(dict):
-    """Takes a name stack and turns it into a class
-    
-    Contains the following Keys:
-    self['name'] - Name of the class
-    self['doxygen'] - Doxygen comments associated with the class if they exist
-    self['inherits'] - List of Classes that this one inherits where the values
-        are of the form {"access": Anything in supportedAccessSpecifier
-                                  "class": Name of the class
-    self['methods'] - Dictionary where keys are from supportedAccessSpecifier
-        and values are a lists of CppMethod's
-    self['properties'] - Dictionary where keys are from supportedAccessSpecifier
-        and values are lists of CppVariable's 
-    self['enums'] - Dictionary where keys are from supportedAccessSpecifier and
-        values are lists of CppEnum's
-    self['structs'] - Dictionary where keys are from supportedAccessSpecifier and
-        values are lists of nested Struct's
-    
-    An example of how this could look is as follows:
-    #self =
-    {
-        'name': ""
-        'inherits':[]
-        'methods':
-        {
-            'public':[],
-            'protected':[], 
-            'private':[]
-        }, 
-        'properties':
-        {
-            'public':[],
-            'protected':[], 
-            'private':[]
-        },
-        'enums':
-        {
-            'public':[],
-            'protected':[], 
-            'private':[]
-        }
-    }
+    """
+        Dictionary that contains at least the following keys:
+
+        * ``name`` - Name of the class
+        * ``doxygen`` - Doxygen comments associated with the class if they exist
+        * ``inherits`` - List of Classes that this one inherits. Values are
+          dictionaries with the following key/values:
+
+        - ``access`` - Anything in supportedAccessSpecifier
+        - ``class`` - Name of the class
+
+        * ``methods`` - Dictionary where keys are from supportedAccessSpecifier
+          and values are a lists of :class:`.CppMethod`
+        * ``namespace`` - Namespace of class
+        * ``properties`` - Dictionary where keys are from supportedAccessSpecifier
+          and values are lists of :class:`.CppVariable`
+        * ``enums`` - Dictionary where keys are from supportedAccessSpecifier and
+          values are lists of :class:`.CppEnum`
+        * ``structs`` - Dictionary where keys are from supportedAccessSpecifier and
+          values are lists of nested :class:`.CppStruct`
+        * ``final`` - True if final
+        * ``abstract`` - True if abstract
+        
+        An example of how this could look is as follows::
+
+            {
+                'name': ""
+                'inherits':[]
+                'methods':
+                {
+                    'public':[],
+                    'protected':[], 
+                    'private':[]
+                }, 
+                'properties':
+                {
+                    'public':[],
+                    'protected':[], 
+                    'private':[]
+                },
+                'enums':
+                {
+                    'public':[],
+                    'protected':[], 
+                    'private':[]
+                }
+            }
     """
 
     def get_all_methods(self):
@@ -476,6 +481,7 @@ class CppClass(dict):
         return r
 
     def __init__(self, nameStack, curTemplate):
+        #: hm
         self["nested_classes"] = []
         self["parent"] = None
         self["abstract"] = False
@@ -754,19 +760,12 @@ class CppClass(dict):
 
 
 class CppUnion(CppClass):
-    """Takes a name stack and turns it into a union
-    
-    Contains the following Keys:
-    self['name'] - Name of the union
-    self['doxygen'] - Doxygen comments associated with the union if they exist
-    self['members'] - List of members the union has 
-    
-    An example of how this could look is as follows:
-    #self =
-    {
-        'name': ""
-        'members': []
-    }
+    """
+        Dictionary that contains at least the following keys:
+
+        * ``name`` - Name of the union
+        * ``doxygen`` - Doxygen comments associated with the union if they exist
+        * ``members`` - List of members of the union
     """
 
     def __init__(self, nameStack):
@@ -877,13 +876,13 @@ class _CppMethod(dict):
 
 
 class CppMethod(_CppMethod):
-    """Takes a name stack and turns it into a method
-    
-    Contains the following Keys:
-    self['rtnType'] - Return type of the method (ex. "int")
-    self['name'] - Name of the method (ex. "getSize")
-    self['doxygen'] - Doxygen comments associated with the method if they exist
-    self['parameters'] - List of CppVariables
+    """
+        Dictionary that contains at least the following keys:
+
+        * ``rtnType`` - Return type of the method (ex. "int")
+        * ``name`` - Name of the method
+        * ``doxygen`` - Doxygen comments associated with the method if they exist
+        * ``parameters`` - List of :class:`.CppVariable`
     """
 
     def show(self):
@@ -1104,17 +1103,17 @@ class _CppVariable(dict):
 
 
 class CppVariable(_CppVariable):
-    """Takes a name stack and turns it into a method
+    """
+        Dictionary that contains at least the following keys:
     
-    Contains the following Keys:
-    self['type'] - Type for the variable (ex. "const string &")
-    self['name'] - Name of the variable (ex. "numItems")
-    self['namespace'] - Namespace containing the enum
-    self['desc'] - Description of the variable if part of a method (optional)
-    self['doxygen'] - Doxygen comments associated with the method if they exist
-    self['defaultValue'] - Default value of the variable, this key will only
-        exist if there is a default value
-    self['extern'] - True if its an extern, false if not
+        * ``type`` - Type for the variable (ex. "const string &")
+        * ``name`` - Name of the variable (ex. "numItems")
+        * ``namespace`` - Namespace
+        * ``desc`` - Description of the variable if part of a method (optional)
+        * ``doxygen`` - Doxygen comments associated with the method if they exist
+        * ``defaultValue`` - Default value of the variable, this key will only
+          exist if there is a default value
+        * ``extern`` - True if its an extern, False if not
     """
 
     Vars = []
@@ -1235,7 +1234,7 @@ class _CppEnum(dict):
         """Evaluates the values list of dictionaries passed in and figures out what the enum value
         for each enum is editing in place:
         
-        Example:
+        Example
         From: [{'name': 'ORANGE'},
                {'name': 'RED'},
                {'name': 'GREEN', 'value': '8'}]
@@ -1289,14 +1288,16 @@ class _CppEnum(dict):
 class CppEnum(_CppEnum):
     """Takes a name stack and turns it into an Enum
     
-    Contains the following Keys:
-    self['name'] - Name of the enum (ex. "ItemState")
-    self['namespace'] - Namespace containing the enum
-    self['values'] - List of values where the values are a dictionary of the
-        form {"name": name of the key (ex. "PARSING_HEADER"),
-                  "value": Specified value of the enum, this key will only exist
-                    if a value for a given enum value was defined
-                }
+    Contains the following keys:
+
+    * ``name`` - Name of the enum (ex. "ItemState")
+    * ``namespace`` - Namespace containing the enum
+    * ``values`` - List of values. The values are a dictionary with 
+      the following key/values:
+      
+      - ``name`` - name of the key (ex. "PARSING_HEADER"),
+      - ``value`` - Specified value of the enum, this key will only exist
+        if a value for a given enum value was defined
     """
 
     def __init__(self, nameStack):
@@ -1372,6 +1373,14 @@ class CppEnum(_CppEnum):
 
 
 class CppStruct(dict):
+    """
+        Dictionary that contains at least the following keys:
+
+        * ``type`` - Name of this struct
+        * ``fields`` - List of :class:`.CppVariable`
+        * ``line_number`` - Line number this struct was found on
+    """
+
     Structs = []
 
     def __init__(self, nameStack):
@@ -2478,12 +2487,7 @@ class _CppHeader(Resolver):
 
 
 class CppHeader(_CppHeader):
-    """Parsed C++ class header
-    
-    Variables produced:
-    self.classes - Dictionary of classes found in a given header file where the
-        key is the name of the class
-    """
+    """Parsed C++ class header"""
 
     IGNORE_NAMES = "__extension__".split()
 
@@ -2519,21 +2523,35 @@ class CppHeader(_CppHeader):
         # nested classes have parent::nested, but no extra namespace,
         # this keeps the API compatible, TODO proper namespace for everything.
         Resolver.CLASSES = {}
+
+        #: Dictionary of classes found in the header file. The key is the name
+        #: of the class, value is :class:`.CppClass`
         self.classes = Resolver.CLASSES
-        # Functions that are not part of a class
+
+        #: List of free functions as :class:`.CppMethod`
         self.functions = []
 
+        #: List of #pragma directives found as strings
         self.pragmas = []
+
+        #: List of #define directives found
         self.defines = []
+
+        #: List of #include directives found
         self.includes = []
         self._precomp_macro_buf = (
             []
         )  # for internal purposes, will end up filling out pragmras and defines at the end
 
+        #: List of enums in this header as :class:`.CppEnum`
         self.enums = []
+
+        #: List of variables in this header as :class:`.CppVariable`
         self.variables = []
         self.global_enums = {}
         self.nameStack = []
+
+        #: Namespaces in this header
         self.nameSpaces = []
         self.curAccessSpecifier = "private"  # private is default
         self.curTemplate = None
@@ -3191,7 +3209,7 @@ class CppHeader(_CppHeader):
             except:
                 trace_print("Exception")
 
-    def toJSON(self, indent=4):
+    def toJSON(self, indent=4, separators=None):
         """Converts a parsed structure to JSON"""
         import json
 
@@ -3200,7 +3218,7 @@ class CppHeader(_CppHeader):
             del self.__dict__["classes_order"]
         except:
             pass
-        return json.dumps(self.__dict__, indent=indent)
+        return json.dumps(self.__dict__, indent=indent, separators=separators)
 
     def __repr__(self):
         rtn = {

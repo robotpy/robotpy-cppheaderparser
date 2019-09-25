@@ -67,7 +67,7 @@ setup(
     maintainer_email="robotpy@googlegroups.com",
     url="https://github.com/robotpy/robotpy-cppheaderparser",
     description=DESCRIPTION,
-    long_description=open("README.md").read(),
+    long_description=open("README.rst").read(),
     license="BSD",
     platforms="Platform Independent",
     packages=["CppHeaderParser"],
@@ -75,7 +75,5 @@ setup(
     classifiers=CLASSIFIERS,
     requires=["ply"],
     install_requires=["ply"],
-    package_data={
-        "CppHeaderParser": ["README", "README.html", "doc/*.*", "examples/*.*"]
-    },
+    package_data={"CppHeaderParser": ["README", "README.html", "examples/*.*"]},
 )
