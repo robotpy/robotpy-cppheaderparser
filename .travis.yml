@@ -11,15 +11,15 @@ python:
 matrix:
   fast_finish: true
 
-# jobs:
-#   include:
-#   - stage: format-check
-#     python:
-#     - "3.6"
-#     install:
-#     - pip install black
-#     script:
-#     - black --check --diff .
+jobs:
+  include:
+  - stage: format-check
+    python:
+    - "3.6"
+    install:
+    - pip install black
+    script:
+    - black --check --diff .
 
 # command to install dependencies
 install:
