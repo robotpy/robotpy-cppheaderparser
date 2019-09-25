@@ -165,7 +165,7 @@ def t_COMMENT_MULTILINE(t):
         # not sure why, but get double new lines
         v = t.value.replace("\n\n", "\n")
         # strip prefixing whitespace
-        v = re.sub("\n[\s]+\*", "\n*", v)
+        v = re.sub("\n[\\s]+\\*", "\n*", v)
         doxygenCommentCache += v
     t.lexer.lineno += len([a for a in t.value if a == "\n"])
 
@@ -997,7 +997,7 @@ class CppMethod(_CppMethod):
             doxyLines = self["doxygen"].split("\n")
             lastParamDesc = ""
             for doxyLine in doxyLines:
-                if " @param " in doxyLine or " \param " in doxyLine:
+                if " @param " in doxyLine or " \\param " in doxyLine:
                     try:
                         # Strip out the param
                         doxyLine = doxyLine[doxyLine.find("param ") + 6 :]
