@@ -2049,7 +2049,7 @@ class _CppHeader(Resolver):
                             cls["abstract"] = True
                             break
 
-    def evaluate_struct_stack(self):
+    def _evaluate_struct_stack(self):
         """Create a Struct out of the name stack (but not its parts)"""
         # print( 'eval struct stack', self.nameStack )
         # if self.braceDepth != len(self.nameSpaces): return
@@ -2209,7 +2209,7 @@ class _CppHeader(Resolver):
         info["returns_fundamental"] = is_fundamental(info["returns"])
         return info
 
-    def evaluate_method_stack(self):
+    def _evaluate_method_stack(self):
         """Create a method out of the name stack"""
 
         if self.curStruct:
@@ -2302,7 +2302,7 @@ class _CppHeader(Resolver):
         if s:
             return r
 
-    def evaluate_typedef(self):
+    def _evaluate_typedef(self):
         ns = self.cur_namespace(add_double_colon=True)
         res = self._parse_typedef(self.stack, ns)
         if res:
@@ -2311,7 +2311,7 @@ class _CppHeader(Resolver):
             if name not in self.typedefs_order:
                 self.typedefs_order.append(name)
 
-    def evaluate_property_stack(self):
+    def _evaluate_property_stack(self):
         """Create a Property out of the name stack"""
         global parseHistory
         assert self.stack[-1] == ";"
@@ -2367,7 +2367,7 @@ class _CppHeader(Resolver):
                         self.stack = orig_stack[
                             :
                         ]  # Not maintained for mucking, but this path it doesnt matter
-                        self.evaluate_property_stack()
+                        self._evaluate_property_stack()
                     return
 
             newVar = CppVariable(self.nameStack)
@@ -2389,7 +2389,7 @@ class _CppHeader(Resolver):
 
         self.stack = []  # CLEAR STACK
 
-    def evaluate_class_stack(self):
+    def _evaluate_class_stack(self):
         """Create a Class out of the name stack (but not its parts)"""
         # dont support sub classes today
         # print( 'eval class stack', self.nameStack )
@@ -2737,7 +2737,7 @@ class CppHeader(_CppHeader):
                             self.nameStack = self.nameStack[:classLocationNS]
                             self.stack = self.stack[:classLocationS]
                             try:
-                                self.evaluate_stack()
+                                self._evaluate_stack()
                             except:
                                 debug_print("Error processing #define magic... Oh well")
                             # Process rest of stack
@@ -2745,7 +2745,7 @@ class CppHeader(_CppHeader):
                             self.stack = origStack[classLocationS:]
 
                     if len(self.nameStack) and not is_enum_namestack(self.nameStack):
-                        self.evaluate_stack()
+                        self._evaluate_stack()
                     else:
                         self.nameStack.append(tok.value)
                     if self.stack and self.stack[0] == "class":
@@ -2761,7 +2761,7 @@ class CppHeader(_CppHeader):
                     if len(self.nameStack) and is_enum_namestack(self.nameStack):
                         self.nameStack.append(tok.value)
                     elif self.braceDepth < 10:
-                        self.evaluate_stack()
+                        self._evaluate_stack()
                     else:
                         self.nameStack = []
                     self.braceDepth -= 1
@@ -2906,14 +2906,14 @@ class CppHeader(_CppHeader):
                         self.stack = self.nameStack + [";"]
                         self.nameStack = self.nameStack[0:1]
                         debug_print("pre eval anon stack")
-                        self.evaluate_stack(tok.type)
+                        self._evaluate_stack(tok.type)
                         debug_print("post eval anon stack")
                         self.nameStack = saved_namestack
                         self.stack = saved_stack
                         self.anon_union_counter = [-1, 0]
 
                     if self.braceDepth < 10:
-                        self.evaluate_stack(tok.type)
+                        self._evaluate_stack(tok.type)
                     self.stack = []
                     self.nameStack = []
 
@@ -2954,7 +2954,7 @@ class CppHeader(_CppHeader):
         ]:
             del self.__dict__[key]
 
-    def evaluate_stack(self, token=None):
+    def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
         global doxygenCommentCache
 
@@ -2992,7 +2992,7 @@ class CppHeader(_CppHeader):
         except:
             pass
 
-        # if 'typedef' in self.nameStack: self.evaluate_typedef()        # allows nested typedefs, probably a bad idea
+        # if 'typedef' in self.nameStack: self._evaluate_typedef()        # allows nested typedefs, probably a bad idea
         if (
             not self.curClass
             and "typedef" in self.nameStack
@@ -3003,7 +3003,7 @@ class CppHeader(_CppHeader):
             and not is_enum_namestack(self.nameStack)
         ):
             trace_print("STACK", self.stack)
-            self.evaluate_typedef()
+            self._evaluate_typedef()
             return
 
         elif len(self.nameStack) == 0:
@@ -3026,7 +3026,7 @@ class CppHeader(_CppHeader):
 
         elif is_enum_namestack(self.nameStack):
             debug_print("trace")
-            self.evaluate_enum_stack()
+            self._evaluate_enum_stack()
 
         elif self._method_body and (self.braceDepth + 1) > self._method_body:
             trace_print("INSIDE METHOD DEF")
@@ -3046,10 +3046,10 @@ class CppHeader(_CppHeader):
                     # Special case of a method defined outside a class that has a body
                     pass
                 else:
-                    self.evaluate_method_stack()
+                    self._evaluate_method_stack()
             else:
                 # Free function
-                self.evaluate_method_stack()
+                self._evaluate_method_stack()
         elif (
             len(self.nameStack) == 1
             and len(self.nameStackHistory) > self.braceDepth
@@ -3078,7 +3078,7 @@ class CppHeader(_CppHeader):
             ):
                 pass
             else:
-                self.evaluate_property_stack()  # catches class props and structs in a namespace
+                self._evaluate_property_stack()  # catches class props and structs in a namespace
 
         elif (
             self.nameStack[0] in ("class", "struct", "union")
@@ -3087,14 +3087,14 @@ class CppHeader(_CppHeader):
         ):
             # Parsing a union can reuse much of the class parsing
             debug_print("trace")
-            self.evaluate_class_stack()
+            self._evaluate_class_stack()
 
         elif not self.curClass:
             debug_print("trace")
             if is_enum_namestack(self.nameStack):
-                self.evaluate_enum_stack()
+                self._evaluate_enum_stack()
             elif self.curStruct and self.stack[-1] == ";":
-                self.evaluate_property_stack()  # this catches fields of global structs
+                self._evaluate_property_stack()  # this catches fields of global structs
             self.nameStack = []
             doxygenCommentCache = ""
         elif self.braceDepth < 1:
@@ -3118,7 +3118,7 @@ class CppHeader(_CppHeader):
         doxygenCommentCache = ""
         self.curTemplate = None
 
-    def evaluate_enum_stack(self):
+    def _evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""
         debug_print("evaluating enum")
         newEnum = CppEnum(self.nameStack)
@@ -3142,10 +3142,10 @@ class CppHeader(_CppHeader):
                     instanceType = newEnum["name"]
                 for instance in newEnum["instances"]:
                     self.nameStack = [instanceType, instance]
-                    self.evaluate_property_stack()
+                    self._evaluate_property_stack()
                 del newEnum["instances"]
 
-    def strip_parent_keys(self):
+    def _strip_parent_keys(self):
         """Strip all parent (and method) keys to prevent loops"""
         obj_queue = [self]
         while len(obj_queue):
@@ -3195,7 +3195,7 @@ class CppHeader(_CppHeader):
         """Converts a parsed structure to JSON"""
         import json
 
-        self.strip_parent_keys()
+        self._strip_parent_keys()
         try:
             del self.__dict__["classes_order"]
         except:
