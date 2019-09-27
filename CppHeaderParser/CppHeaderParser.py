@@ -377,6 +377,48 @@ def filter_out_attribute_keyword(stack):
         return stack
 
 
+_nhack = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _split_namespace(namestack):
+    """
+        Given a list of name elements, find the namespace portion
+        and return that as a string
+
+        :rtype: Tuple[str, list]
+    """
+    last_colon = None
+    for i, n in enumerate(namestack):
+        if n == ":":
+            last_colon = i
+        if i and n != ":" and not _nhack.match(n):
+            break
+
+    if last_colon:
+        ns, namestack = (
+            "".join(namestack[: last_colon + 1]),
+            namestack[last_colon + 1 :],
+        )
+    else:
+        ns = ""
+
+    return ns, namestack
+
+
+def _iter_ns_str_reversed(namespace):
+    """
+        Take a namespace string, and yield successively smaller portions
+        of it (ex foo::bar::baz::, foo::bar::, foo::). The last item yielded
+        will always be an empty string
+    """
+    if namespace:
+        parts = namespace.split("::")
+        for i in range(len(parts) - 1, 0, -1):
+            yield "::".join(parts[:i]) + "::"
+
+    yield ""
+
+
 class TagStr(str):
     """Wrapper for a string that allows us to store the line number associated with it"""
 
@@ -1577,6 +1619,19 @@ class Resolver(object):
                 result["fundamental"] = False
                 result["class"] = klass
                 result["unresolved"] = False
+            elif self.using:
+                # search for type in all enclosing namespaces
+                for ns in _iter_ns_str_reversed(result.get("namespace", "")):
+                    nsalias = ns + alias
+                    used = self.using.get(nsalias)
+                    if used:
+                        for i in ("type", "namespace", "ctypes_type", "raw_type"):
+                            if i in used:
+                                result[i] = used[i]
+                        result["unresolved"] = False
+                        break
+                else:
+                    result["unresolved"] = True
             else:
                 result["unresolved"] = True
         else:
@@ -2567,6 +2622,10 @@ class CppHeader(_CppHeader):
         self.anon_union_counter = [-1, 0]
         self.templateRegistry = []
 
+        #: Using directives in this header: key is full name for lookup, value
+        #: is :class:`.CppVariable`
+        self.using = {}
+
         if len(self.headerFileName):
             fd = io.open(self.headerFileName, "r", encoding=encoding)
             headerFileStr = "".join(fd.readlines())
@@ -3035,12 +3094,25 @@ class CppHeader(_CppHeader):
             len(self.nameStack) == 2 and self.nameStack[0] == "friend"
         ):  # friend class declaration
             pass
-        elif (
-            len(self.nameStack) >= 2
-            and self.nameStack[0] == "using"
-            and self.nameStack[1] == "namespace"
-        ):
-            pass  # TODO
+        elif len(self.nameStack) >= 2 and self.nameStack[0] == "using":
+            if self.nameStack[1] == "namespace":
+                pass
+            else:
+                if len(self.nameStack) > 3 and self.nameStack[2] == "=":
+                    # using foo = ns::bar
+                    alias = self.nameStack[1]
+                    ns, stack = _split_namespace(self.nameStack[3:])
+                    atype = CppVariable(stack)
+                else:
+                    # using foo::bar
+                    ns, stack = _split_namespace(self.nameStack[1:])
+                    atype = CppVariable(stack)
+                    alias = atype["type"]
+
+                atype["namespace"] = ns
+                atype["raw_type"] = ns + atype["type"]
+                alias = self.current_namespace() + alias
+                self.using[alias] = atype
 
         elif is_enum_namestack(self.nameStack):
             debug_print("trace")
