@@ -5,11 +5,14 @@ import sys
 import CppHeaderParser as CppHeaderParser
 
 
-def filter_pameters(p):
+def filter_pameters(p, extra=[]):
     "Reduce a list of dictionaries to the desired keys for function parameter testing"
     rtn = []
     for d in p:
-        rtn.append({"name": d["name"], "desc": d["desc"], "type": d["type"]})
+        rd = {}
+        for k in ["name", "desc", "type"] + extra:
+            rd[k] = d.get(k)
+        rtn.append(rd)
     return rtn
 
 
@@ -2757,6 +2760,59 @@ class VarargFunc_TestCase(unittest.TestCase):
         self.assertTrue(vf["vararg"])
         self.assertFalse(nvf["vararg"])
         self.assertEqual(len(vf["parameters"]), len(nvf["parameters"]))
+
+
+class UsingNamespace_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+using std::thing;
+namespace a {
+    using std::string;
+    using VoidFunction = std::function<void()>;
+
+    void fn(string &s, VoidFunction fn, thing * t);
+}
+""",
+            "string",
+        )
+
+    def test_using(self):
+        self.assertIn("a::string", self.cppHeader.using)
+        self.assertIn("a::VoidFunction", self.cppHeader.using)
+        self.assertIn("thing", self.cppHeader.using)
+
+    def test_fn(self):
+        self.maxDiff = None
+        self.assertEqual(len(self.cppHeader.functions), 1)
+        fn = self.cppHeader.functions[0]
+        self.assertEqual(fn["name"], "fn")
+        self.assertEqual(
+            filter_pameters(fn["parameters"], ["namespace", "raw_type"]),
+            [
+                {
+                    "type": "string",
+                    "name": "s",
+                    "desc": None,
+                    "namespace": "std::",
+                    "raw_type": "std::string",
+                },
+                {
+                    "type": "function<void ( )>",
+                    "name": "fn",
+                    "desc": None,
+                    "namespace": "std::",
+                    "raw_type": "std::function<void ( )>",
+                },
+                {
+                    "type": "thing",
+                    "name": "t",
+                    "desc": None,
+                    "namespace": "std::",
+                    "raw_type": "std::thing",
+                },
+            ],
+        )
 
 
 if __name__ == "__main__":
