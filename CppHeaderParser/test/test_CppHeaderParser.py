@@ -2815,5 +2815,22 @@ namespace a {
         )
 
 
+class StaticFn_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class A {
+    static int fn();
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        m = self.cppHeader.classes["A"]["methods"]["private"][0]
+        self.assertEqual(m["static"], True)
+        self.assertEqual(m["rtnType"], "int")
+
+
 if __name__ == "__main__":
     unittest.main()
