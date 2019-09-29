@@ -1153,7 +1153,7 @@ class CppVariable(_CppVariable):
         * ``namespace`` - Namespace
         * ``desc`` - Description of the variable if part of a method (optional)
         * ``doxygen`` - Doxygen comments associated with the method if they exist
-        * ``defaultValue`` - Default value of the variable, this key will only
+        * ``default`` - Default value of the variable, this key will only
           exist if there is a default value
         * ``extern`` - True if its an extern, False if not
     """
@@ -1223,10 +1223,9 @@ class CppVariable(_CppVariable):
         elif "=" in nameStack:
             self["type"] = " ".join(nameStack[: nameStack.index("=") - 1])
             self["name"] = nameStack[nameStack.index("=") - 1]
-            self["defaultValue"] = " ".join(
-                nameStack[nameStack.index("=") + 1 :]
-            )  # deprecate camelCase in dicts
             self["default"] = " ".join(nameStack[nameStack.index("=") + 1 :])
+            # backwards compat; deprecate camelCase in dicts
+            self["defaultValue"] = self["default"]
 
         elif is_fundamental(nameStack[-1]) or nameStack[-1] in [">", "<", ":", "."]:
             # Un named parameter
