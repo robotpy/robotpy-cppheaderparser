@@ -2832,5 +2832,24 @@ class A {
         self.assertEqual(m["rtnType"], "int")
 
 
+class ConstExpr_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class A {
+    static constexpr double kThing = 0.02;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        p = self.cppHeader.classes["A"]["properties"]["private"][0]
+        self.assertEqual(p["static"], 1)
+        self.assertEqual(p["constexpr"], 1)
+        self.assertEqual(p["raw_type"], "double")
+        self.assertEqual(p["defaultValue"], "0.02")
+
+
 if __name__ == "__main__":
     unittest.main()

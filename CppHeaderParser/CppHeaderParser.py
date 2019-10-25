@@ -1137,7 +1137,7 @@ class _CppVariable(dict):
         self["typedef"] = None
         for (
             key
-        ) in "constant reference pointer static typedefs class fundamental unresolved".split():
+        ) in "constant constexpr reference pointer static typedefs class fundamental unresolved".split():
             self[key] = 0
         for b in self["type"].split():
             if b == "__const__":
@@ -1580,6 +1580,7 @@ class Resolver(object):
         ## these come before a template
         s = string.split("<")[0]
         result["constant"] += s.split().count("const")
+        result["constexpr"] += s.split().count("constexpr")
         result["static"] += s.split().count("static")
         result["mutable"] = "mutable" in s.split()
 
@@ -1590,7 +1591,7 @@ class Resolver(object):
 
         x = string
         alias = False
-        for a in "* & const static mutable".split():
+        for a in "* & const constexpr static mutable".split():
             x = x.replace(a, "")
         for y in x.split():
             if y not in self.C_FUNDAMENTAL:
@@ -1877,7 +1878,7 @@ class Resolver(object):
                         var["method"]["unresolved_parameters"] = True
 
         # create stripped raw_type #
-        p = "* & const static mutable".split()  # +++ new July7: "mutable"
+        p = "* & const constexpr static mutable".split()  # +++ new July7: "mutable"
         for var in CppVariable.Vars:
             if "raw_type" not in var:
                 raw = []
