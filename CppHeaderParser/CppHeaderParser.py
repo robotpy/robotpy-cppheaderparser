@@ -419,6 +419,17 @@ def _iter_ns_str_reversed(namespace):
     yield ""
 
 
+def _split_by_comma(namestack):
+    while namestack:
+        if "," not in namestack:
+            yield namestack
+            break
+        idx = namestack.index(",")
+        ns = namestack[:idx]
+        yield ns
+        namestack = namestack[idx + 1 :]
+
+
 class TagStr(str):
     """Wrapper for a string that allows us to store the line number associated with it"""
 
@@ -1351,7 +1362,7 @@ class CppEnum(_CppEnum):
         if len(nameStack) == 3 and nameStack[0] == "enum":
             debug_print("Created enum as just name/value")
             self["name"] = nameStack[1]
-            self["instances"] = [nameStack[2]]
+            self["instances"] = [[nameStack[2]]]
         if len(nameStack) < 4 or "{" not in nameStack or "}" not in nameStack:
             # Not enough stuff for an enum
             debug_print("Bad enum")
@@ -1407,11 +1418,8 @@ class CppEnum(_CppEnum):
             warning_print("WARN-enum: nameless enum %s" % nameStack)
         # See if there are instances of this
         if "typedef" not in nameStack and len(postBraceStack):
-            self["instances"] = []
-            for var in postBraceStack:
-                if "," in var:
-                    continue
-                self["instances"].append(var)
+            self["instances"] = list(_split_by_comma(postBraceStack))
+
         self["namespace"] = ""
 
 
@@ -1506,9 +1514,7 @@ class Resolver(object):
         else:
             u = ""
         if "long" in a and "double" in a:
-            b = (
-                "longdouble"
-            )  # there is no ctypes.c_ulongdouble (this is a 64bit float?)
+            b = "longdouble"  # there is no ctypes.c_ulongdouble (this is a 64bit float?)
         elif a.count("long") == 2 and "int" in a:
             b = "%sint64" % u
         elif a.count("long") == 2:
@@ -1556,9 +1562,7 @@ class Resolver(object):
             b = "void_p"
 
         elif string in "struct union".split():
-            b = (
-                "void_p"
-            )  # what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
+            b = "void_p"  # what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
         else:
             b = "void_p"
 
@@ -2377,10 +2381,10 @@ class _CppHeader(Resolver):
             if name not in self.typedefs_order:
                 self.typedefs_order.append(name)
 
-    def _evaluate_property_stack(self):
+    def _evaluate_property_stack(self, clearStack=True, addToVar=None):
         """Create a Property out of the name stack"""
         global parseHistory
-        assert self.stack[-1] == ";"
+        assert self.stack and self.stack[-1] == ";"
         debug_print("trace")
         if self.nameStack[0] == "typedef":
             if self.curClass:
@@ -2425,15 +2429,13 @@ class _CppHeader(Resolver):
                         % self.nameStack
                     )
                     orig_nameStack = self.nameStack[:]
-                    orig_stack = self.stack[:]
 
                     type_nameStack = orig_nameStack[: leftMostComma - 1]
                     for name in orig_nameStack[leftMostComma - 1 :: 2]:
                         self.nameStack = type_nameStack + [name]
-                        self.stack = orig_stack[
-                            :
-                        ]  # Not maintained for mucking, but this path it doesnt matter
-                        self._evaluate_property_stack()
+                        self._evaluate_property_stack(
+                            clearStack=False, addToVar=addToVar
+                        )
                     return
 
             newVar = CppVariable(self.nameStack)
@@ -2448,12 +2450,17 @@ class _CppHeader(Resolver):
             parseHistory.append(
                 {"braceDepth": self.braceDepth, "item_type": "variable", "item": newVar}
             )
+            if addToVar:
+                newVar.update(addToVar)
         else:
             debug_print("Found Global variable")
             newVar = CppVariable(self.nameStack)
+            if addToVar:
+                newVar.update(addToVar)
             self.variables.append(newVar)
 
-        self.stack = []  # CLEAR STACK
+        if clearStack:
+            self.stack = []  # CLEAR STACK
 
     def _evaluate_class_stack(self):
         """Create a Class out of the name stack (but not its parts)"""
@@ -3232,9 +3239,10 @@ class CppHeader(_CppHeader):
                 instanceType = "enum"
                 if "name" in newEnum:
                     instanceType = newEnum["name"]
+                addToVar = {"enum_type": newEnum}
                 for instance in newEnum["instances"]:
-                    self.nameStack = [instanceType, instance]
-                    self._evaluate_property_stack()
+                    self.nameStack = [instanceType] + instance
+                    self._evaluate_property_stack(clearStack=False, addToVar=addToVar)
                 del newEnum["instances"]
 
     def _strip_parent_keys(self):
