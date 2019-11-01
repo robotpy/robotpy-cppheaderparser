@@ -245,24 +245,29 @@ def is_enum_namestack(nameStack):
     return False
 
 
+_fundamentals = set(
+    [
+        "size_t",
+        "struct",
+        "union",
+        "unsigned",
+        "signed",
+        "bool",
+        "char",
+        "short",
+        "int",
+        "float",
+        "double",
+        "long",
+        "void",
+        "*",
+    ]
+)
+
+
 def is_fundamental(s):
     for a in s.split():
-        if a not in [
-            "size_t",
-            "struct",
-            "union",
-            "unsigned",
-            "signed",
-            "bool",
-            "char",
-            "short",
-            "int",
-            "float",
-            "double",
-            "long",
-            "void",
-            "*",
-        ]:
+        if a not in _fundamentals:
             return False
     return True
 
@@ -1122,6 +1127,12 @@ class CppMethod(_CppMethod):
         return "%s" % cpy
 
 
+_var_keywords = {
+    n: 0
+    for n in "constant constexpr reference pointer static typedefs class fundamental unresolved".split()
+}
+
+
 class _CppVariable(dict):
     def _name_stack_helper(self, stack):
         stack = list(stack)
@@ -1146,10 +1157,7 @@ class _CppVariable(dict):
         self["aliases"] = []
         self["parent"] = None
         self["typedef"] = None
-        for (
-            key
-        ) in "constant constexpr reference pointer static typedefs class fundamental unresolved".split():
-            self[key] = 0
+        self.update(_var_keywords)
         for b in self["type"].split():
             if b == "__const__":
                 b = "const"
@@ -1468,6 +1476,12 @@ def standardize_fundamental(s):
 class Resolver(object):
     C_FUNDAMENTAL = "size_t unsigned signed bool char wchar short int float double long void".split()
     C_FUNDAMENTAL += "struct union enum".split()
+    C_FUNDAMENTAL = set(C_FUNDAMENTAL)
+
+    C_MODIFIERS = "* & const constexpr static mutable".split()
+    C_MODIFIERS = set(C_MODIFIERS)
+
+    C_KEYWORDS = "extern virtual static explicit inline friend".split()
 
     SubTypedefs = {}  # TODO deprecate?
     NAMESPACES = []
@@ -1561,7 +1575,7 @@ class Resolver(object):
         elif "void" in a:
             b = "void_p"
 
-        elif string in "struct union".split():
+        elif string in ("struct", "union"):
             b = "void_p"  # what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
         else:
             b = "void_p"
@@ -1582,11 +1596,11 @@ class Resolver(object):
         """
         ## be careful with templates, what is inside <something*> can be a pointer but the overall type is not a pointer
         ## these come before a template
-        s = string.split("<")[0]
-        result["constant"] += s.split().count("const")
-        result["constexpr"] += s.split().count("constexpr")
-        result["static"] += s.split().count("static")
-        result["mutable"] = "mutable" in s.split()
+        s = string.split("<")[0].split()
+        result["constant"] += s.count("const")
+        result["constexpr"] += s.count("constexpr")
+        result["static"] += s.count("static")
+        result["mutable"] = "mutable" in s
 
         ## these come after a template
         s = string.split(">")[-1]
@@ -1595,7 +1609,7 @@ class Resolver(object):
 
         x = string
         alias = False
-        for a in "* & const constexpr static mutable".split():
+        for a in self.C_MODIFIERS:
             x = x.replace(a, "")
         for y in x.split():
             if y not in self.C_FUNDAMENTAL:
@@ -1882,12 +1896,11 @@ class Resolver(object):
                         var["method"]["unresolved_parameters"] = True
 
         # create stripped raw_type #
-        p = "* & const constexpr static mutable".split()  # +++ new July7: "mutable"
         for var in CppVariable.Vars:
             if "raw_type" not in var:
                 raw = []
                 for x in var["type"].split():
-                    if x not in p:
+                    if x not in self.C_MODIFIERS:
                         raw.append(x)
                 var["raw_type"] = " ".join(raw)
 
@@ -2136,6 +2149,11 @@ class _CppHeader(Resolver):
         self.curStruct = struct
         self._structs_brace_level[struct["type"]] = self.braceDepth
 
+    _method_type_defaults = {
+        n: False
+        for n in "defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default".split()
+    }
+
     def parse_method_type(self, stack):
         trace_print("meth type info", stack)
         if stack[0] in ":;" and stack[1] != ":":
@@ -2152,10 +2170,8 @@ class _CppHeader(Resolver):
             "namespace": self.cur_namespace(add_double_colon=True),
         }
 
-        for (
-            tag
-        ) in "defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default".split():
-            info[tag] = False
+        info.update(self._method_type_defaults)
+
         header = stack[: stack.index("(")]
         header = " ".join(header)
         header = header.replace(" : : ", "::")
@@ -2234,7 +2250,7 @@ class _CppHeader(Resolver):
 
         info["name"] = name
 
-        for tag in "extern virtual static explicit inline friend".split():
+        for tag in self.C_KEYWORDS:
             if tag in a:
                 info[tag] = True
                 a.remove(tag)  # inplace
