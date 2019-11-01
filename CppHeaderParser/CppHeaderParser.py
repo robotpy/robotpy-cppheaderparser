@@ -1514,9 +1514,7 @@ class Resolver(object):
         else:
             u = ""
         if "long" in a and "double" in a:
-            b = (
-                "longdouble"
-            )  # there is no ctypes.c_ulongdouble (this is a 64bit float?)
+            b = "longdouble"  # there is no ctypes.c_ulongdouble (this is a 64bit float?)
         elif a.count("long") == 2 and "int" in a:
             b = "%sint64" % u
         elif a.count("long") == 2:
@@ -1564,9 +1562,7 @@ class Resolver(object):
             b = "void_p"
 
         elif string in "struct union".split():
-            b = (
-                "void_p"
-            )  # what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
+            b = "void_p"  # what should be done here? don't trust struct, it could be a class, no need to expose via ctypes
         else:
             b = "void_p"
 
