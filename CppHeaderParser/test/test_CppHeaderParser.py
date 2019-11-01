@@ -2851,5 +2851,61 @@ class A {
         self.assertEqual(p["defaultValue"], "0.02")
 
 
+class DefaultEnum_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class A {
+    enum {
+        v1,
+        v2,
+    } m_v1 = v1;
+
+    enum {
+        vv1,
+        vv2, vv3
+    } m_v2 = vv2, m_v3 = vv3;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        p = self.cppHeader.classes["A"]["properties"]["private"][0]
+        self.assertEqual("enum", p["type"])
+        self.assertEqual("m_v1", p["name"])
+        self.assertEqual("v1", p["default"])
+        self.assertEqual(
+            p.get("enum_type", {}).get("values"),
+            [{"name": "v1", "value": 0}, {"name": "v2", "value": 1}],
+        )
+
+        p = self.cppHeader.classes["A"]["properties"]["private"][1]
+        self.assertEqual("enum", p["type"])
+        self.assertEqual("m_v2", p["name"])
+        self.assertEqual("vv2", p["default"])
+        self.assertEqual(
+            p.get("enum_type", {}).get("values"),
+            [
+                {"name": "vv1", "value": 0},
+                {"name": "vv2", "value": 1},
+                {"name": "vv3", "value": 2},
+            ],
+        )
+
+        p = self.cppHeader.classes["A"]["properties"]["private"][2]
+        self.assertEqual("enum", p["type"])
+        self.assertEqual("m_v3", p["name"])
+        self.assertEqual("vv3", p["default"])
+        self.assertEqual(
+            p.get("enum_type", {}).get("values"),
+            [
+                {"name": "vv1", "value": 0},
+                {"name": "vv2", "value": 1},
+                {"name": "vv3", "value": 2},
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
