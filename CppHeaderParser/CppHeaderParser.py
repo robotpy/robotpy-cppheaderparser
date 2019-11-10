@@ -1961,14 +1961,15 @@ class Resolver(object):
         trace_print("Processing precomp_macro_buf: %s" % self._precomp_macro_buf)
         for m in self._precomp_macro_buf:
             macro = m.replace("<CppHeaderParser_newline_temp_replacement>\\n", "\n")
+            ml = macro.lower()
             try:
-                if macro.lower().startswith("#define"):
+                if ml.startswith("#define"):
                     trace_print("Adding #define %s" % macro)
                     self.defines.append(re.split("[\t ]+", macro, 1)[1].strip())
-                elif macro.lower().startswith("#pragma"):
+                elif ml.startswith("#pragma"):
                     trace_print("Adding #pragma %s" % macro)
                     self.pragmas.append(re.split("[\t ]+", macro, 1)[1].strip())
-                elif macro.lower().startswith("#include"):
+                elif ml.startswith("#include"):
                     trace_print("Adding #include %s" % macro)
                     self.includes.append(re.split("[\t ]+", macro, 1)[1].strip())
                 else:
