@@ -655,7 +655,7 @@ class CppClass(dict):
                     if ">" in tmpStack:
                         pass  # allow skip templates for now
                     else:
-                        raise NotImplemented
+                        raise NotImplementedError
 
                 if "class" in tmpInheritClass:
                     inheritList.append(tmpInheritClass)
