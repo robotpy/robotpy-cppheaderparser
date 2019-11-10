@@ -46,7 +46,6 @@
 #
 
 
-import ply.lex as lex
 import os
 import sys
 import re
@@ -54,11 +53,8 @@ import io
 
 import inspect
 
-
-def lineno():
-    """Returns the current line number in our program."""
-    return inspect.currentframe().f_back.f_lineno
-
+from .lexer import Lexer
+from .doxygen import extract_doxygen_method_params
 
 try:
     from .version import __version__
@@ -67,117 +63,6 @@ except ImportError:
 
 version = __version__
 
-tokens = [
-    "NUMBER",
-    "FLOAT_NUMBER",
-    "TEMPLATE_NAME",
-    "NAME",
-    "OPEN_PAREN",
-    "CLOSE_PAREN",
-    "OPEN_BRACE",
-    "CLOSE_BRACE",
-    "OPEN_SQUARE_BRACKET",
-    "CLOSE_SQUARE_BRACKET",
-    "COLON",
-    "SEMI_COLON",
-    "COMMA",
-    "TAB",
-    "BACKSLASH",
-    "PIPE",
-    "PERCENT",
-    "EXCLAMATION",
-    "CARET",
-    "COMMENT_SINGLELINE",
-    "COMMENT_MULTILINE",
-    "PRECOMP_MACRO",
-    "PRECOMP_MACRO_CONT",
-    "ASTERISK",
-    "AMPERSTAND",
-    "EQUALS",
-    "MINUS",
-    "PLUS",
-    "DIVIDE",
-    "CHAR_LITERAL",
-    "STRING_LITERAL",
-    "NEW_LINE",
-    "SQUOTE",
-    "ELLIPSIS",
-    "DOT",
-]
-
-t_ignore = " \r?@\f"
-t_NUMBER = r"[0-9][0-9XxA-Fa-f]*"
-t_FLOAT_NUMBER = r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?"
-t_TEMPLATE_NAME = r"CppHeaderParser_template_[0-9]+"
-t_NAME = r"[<>A-Za-z_~][A-Za-z0-9_]*"
-t_OPEN_PAREN = r"\("
-t_CLOSE_PAREN = r"\)"
-t_OPEN_BRACE = r"{"
-t_CLOSE_BRACE = r"}"
-t_OPEN_SQUARE_BRACKET = r"\["
-t_CLOSE_SQUARE_BRACKET = r"\]"
-t_SEMI_COLON = r";"
-t_COLON = r":"
-t_COMMA = r","
-t_TAB = r"\t"
-t_BACKSLASH = r"\\"
-t_PIPE = r"\|"
-t_PERCENT = r"%"
-t_CARET = r"\^"
-t_EXCLAMATION = r"!"
-t_PRECOMP_MACRO = r"\#.*"
-t_PRECOMP_MACRO_CONT = r".*\\\n"
-
-
-def t_COMMENT_SINGLELINE(t):
-    r"\/\/.*\n?"
-    global doxygenCommentCache
-    if t.value.startswith("///") or t.value.startswith("//!"):
-        if doxygenCommentCache:
-            doxygenCommentCache += "\n"
-        if t.value.endswith("\n"):
-            doxygenCommentCache += t.value[:-1]
-        else:
-            doxygenCommentCache += t.value
-    t.lexer.lineno += len([a for a in t.value if a == "\n"])
-
-
-t_ASTERISK = r"\*"
-t_MINUS = r"\-"
-t_PLUS = r"\+"
-t_DIVIDE = r"/(?!/)"
-t_AMPERSTAND = r"&"
-t_EQUALS = r"="
-t_CHAR_LITERAL = "'.'"
-t_SQUOTE = "'"
-t_ELLIPSIS = r"\.\.\."
-t_DOT = r"\."
-# found at http://wordaligned.org/articles/string-literals-and-regular-expressions
-# TODO: This does not work with the string "bla \" bla"
-t_STRING_LITERAL = r'"([^"\\]|\\.)*"'
-# Found at http://ostermiller.org/findcomment.html
-def t_COMMENT_MULTILINE(t):
-    r"/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/"
-    global doxygenCommentCache
-    if t.value.startswith("/**") or t.value.startswith("/*!"):
-        # not sure why, but get double new lines
-        v = t.value.replace("\n\n", "\n")
-        # strip prefixing whitespace
-        v = re.sub("\n[\\s]+\\*", "\n*", v)
-        doxygenCommentCache += v
-    t.lexer.lineno += len([a for a in t.value if a == "\n"])
-
-
-def t_NEWLINE(t):
-    r"\n+"
-    t.lexer.lineno += len(t.value)
-
-
-def t_error(v):
-    print("Lex error: ", v)
-
-
-lex.lex()
 # Controls error_print
 print_errors = 1
 # Controls warning_print
@@ -199,13 +84,11 @@ def warning_print(arg):
 
 
 def debug_print(arg):
-    global debug
     if debug:
         print(("[%4d] %s" % (inspect.currentframe().f_back.f_lineno, arg)))
 
 
 def trace_print(*arg):
-    global debug_trace
     if debug_trace:
         sys.stdout.write("[%s] " % (inspect.currentframe().f_back.f_lineno))
         for a in arg:
@@ -219,7 +102,6 @@ supportedAccessSpecifier = ["public", "protected", "private"]
 #: Symbols to ignore, usually special macros
 ignoreSymbols = ["Q_OBJECT"]
 
-doxygenCommentCache = ""
 
 # Track what was added in what order and at what depth
 parseHistory = []
@@ -538,7 +420,7 @@ class CppClass(dict):
                 r[meth["name"]] = meth
         return r
 
-    def __init__(self, nameStack, curTemplate):
+    def __init__(self, nameStack, curTemplate, doxygen):
         #: hm
         self["nested_classes"] = []
         self["parent"] = None
@@ -554,10 +436,8 @@ class CppClass(dict):
 
         if len(nameStack) < 2:
             nameStack.insert(1, "")  # anonymous struct
-        global doxygenCommentCache
-        if len(doxygenCommentCache):
-            self["doxygen"] = doxygenCommentCache
-            doxygenCommentCache = ""
+        if doxygen:
+            self["doxygen"] = doxygen
 
         if "::" in "".join(nameStack):
             # Re-Join class paths (ex  ['class', 'Bar', ':', ':', 'Foo'] -> ['class', 'Bar::Foo']
@@ -826,8 +706,8 @@ class CppUnion(CppClass):
         * ``members`` - List of members of the union
     """
 
-    def __init__(self, nameStack):
-        CppClass.__init__(self, nameStack, None)
+    def __init__(self, nameStack, doxygen):
+        CppClass.__init__(self, nameStack, None, doxygen)
         self["name"] = "union " + self["name"]
         self["members"] = self["properties"]["public"]
 
@@ -957,13 +837,13 @@ class CppMethod(_CppMethod):
             r.append("destructor")
         return "\n\t\t  ".join(r)
 
-    def __init__(self, nameStack, curClass, methinfo, curTemplate):
+    def __init__(self, nameStack, curClass, methinfo, curTemplate, doxygen):
         debug_print("Method:   %s" % nameStack)
         debug_print("Template: %s" % curTemplate)
-        global doxygenCommentCache
-        if len(doxygenCommentCache):
-            self["doxygen"] = doxygenCommentCache
-            doxygenCommentCache = ""
+
+        if doxygen:
+            self["doxygen"] = doxygen
+
         if "operator" in nameStack:
             self["rtnType"] = " ".join(nameStack[: nameStack.index("operator")])
             self["name"] = "".join(
@@ -1050,34 +930,10 @@ class CppMethod(_CppMethod):
 
         params = []
         # See if there is a doxygen comment for the variable
-        doxyVarDesc = {}
-
         if "doxygen" in self:
-            doxyLines = self["doxygen"].split("\n")
-            lastParamDesc = ""
-            for doxyLine in doxyLines:
-                if " @param " in doxyLine or " \\param " in doxyLine:
-                    try:
-                        # Strip out the param
-                        doxyLine = doxyLine[doxyLine.find("param ") + 6 :]
-                        (var, desc) = doxyLine.split(" ", 1)
-                        doxyVarDesc[var] = desc.strip()
-                        lastParamDesc = var
-                    except:
-                        pass
-                elif " @return " in doxyLine or " \return " in doxyLine:
-                    lastParamDesc = ""
-                    # not handled for now
-                elif lastParamDesc:
-                    try:
-                        doxyLine = doxyLine.strip()
-                        if " " not in doxyLine:
-                            lastParamDesc = ""
-                            continue
-                        doxyLine = doxyLine[doxyLine.find(" ") + 1 :]
-                        doxyVarDesc[lastParamDesc] += " " + doxyLine
-                    except:
-                        pass
+            doxyVarDesc = extract_doxygen_method_params(self["doxygen"])
+        else:
+            doxyVarDesc = {}
 
         # non-vararg by default
         self["vararg"] = False
@@ -1104,7 +960,7 @@ class CppMethod(_CppMethod):
 
             if param_separator:
                 param = CppVariable(
-                    paramsStack[0:param_separator], doxyVarDesc=doxyVarDesc
+                    paramsStack[0:param_separator], None, doxyVarDesc=doxyVarDesc
                 )
                 if len(list(param.keys())):
                     params.append(param)
@@ -1113,7 +969,7 @@ class CppMethod(_CppMethod):
                 self["vararg"] = True
                 paramsStack = paramsStack[1:]
             else:
-                param = CppVariable(paramsStack, doxyVarDesc=doxyVarDesc)
+                param = CppVariable(paramsStack, None, doxyVarDesc=doxyVarDesc)
                 if len(list(param.keys())):
                     params.append(param)
                 break
@@ -1172,8 +1028,8 @@ class CppVariable(_CppVariable):
         * ``type`` - Type for the variable (ex. "const string &")
         * ``name`` - Name of the variable (ex. "numItems")
         * ``namespace`` - Namespace
-        * ``desc`` - Description of the variable if part of a method (optional)
-        * ``doxygen`` - Doxygen comments associated with the method if they exist
+        * ``desc`` - If a method/function parameter, doxygen description for this parameter (optional)
+        * ``doxygen`` - If a normal property/variable, doxygen description for this
         * ``default`` - Default value of the variable, this key will only
           exist if there is a default value
         * ``extern`` - True if its an extern, False if not
@@ -1181,7 +1037,7 @@ class CppVariable(_CppVariable):
 
     Vars = []
 
-    def __init__(self, nameStack, **kwargs):
+    def __init__(self, nameStack, doxygen, **kwargs):
         debug_print("trace %s" % nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
@@ -1213,10 +1069,9 @@ class CppVariable(_CppVariable):
         else:
             self["array"] = 0
         nameStack = self._name_stack_helper(nameStack)
-        global doxygenCommentCache
-        if len(doxygenCommentCache):
-            self["doxygen"] = doxygenCommentCache
-            doxygenCommentCache = ""
+
+        if doxygen:
+            self["doxygen"] = doxygen
 
         debug_print("Variable: %s" % nameStack)
 
@@ -1362,11 +1217,9 @@ class CppEnum(_CppEnum):
         if a value for a given enum value was defined
     """
 
-    def __init__(self, nameStack):
-        global doxygenCommentCache
-        if len(doxygenCommentCache):
-            self["doxygen"] = doxygenCommentCache
-            doxygenCommentCache = ""
+    def __init__(self, nameStack, doxygen):
+        if doxygen:
+            self["doxygen"] = doxygen
         if len(nameStack) == 3 and nameStack[0] == "enum":
             debug_print("Created enum as just name/value")
             self["name"] = nameStack[1]
@@ -2310,7 +2163,11 @@ class _CppHeader(Resolver):
                 info["class"] and info["class"] in self.classes
             ):  # case where methods are defined outside of class
                 newMethod = CppMethod(
-                    self.nameStack, info["name"], info, self.curTemplate
+                    self.nameStack,
+                    info["name"],
+                    info,
+                    self.curTemplate,
+                    self.lex.get_doxygen(),
                 )
                 klass = self.classes[info["class"]]
                 klass["methods"]["public"].append(newMethod)
@@ -2322,7 +2179,11 @@ class _CppHeader(Resolver):
 
             elif self.curClass:  # normal case
                 newMethod = CppMethod(
-                    self.nameStack, self.curClass, info, self.curTemplate
+                    self.nameStack,
+                    self.curClass,
+                    info,
+                    self.curTemplate,
+                    self.lex.get_doxygen(),
                 )
                 klass = self.classes[self.curClass]
                 klass["methods"][self.curAccessSpecifier].append(newMethod)
@@ -2333,7 +2194,9 @@ class _CppHeader(Resolver):
                     newMethod["path"] = klass["name"]
             else:  # non class functions
                 debug_print("FREE FUNCTION")
-                newMethod = CppMethod(self.nameStack, None, info, self.curTemplate)
+                newMethod = CppMethod(
+                    self.nameStack, None, info, self.curTemplate, self.lex.get_doxygen()
+                )
                 self.functions.append(newMethod)
             global parseHistory
             parseHistory.append(
@@ -2455,7 +2318,7 @@ class _CppHeader(Resolver):
                         )
                     return
 
-            newVar = CppVariable(self.nameStack)
+            newVar = CppVariable(self.nameStack, self.lex.get_doxygen())
             newVar["namespace"] = self.current_namespace()
             if self.curStruct:
                 self.curStruct["fields"].append(newVar)
@@ -2471,7 +2334,7 @@ class _CppHeader(Resolver):
                 newVar.update(addToVar)
         else:
             debug_print("Found Global variable")
-            newVar = CppVariable(self.nameStack)
+            newVar = CppVariable(self.nameStack, self.lex.get_doxygen())
             if addToVar:
                 newVar.update(addToVar)
             self.variables.append(newVar)
@@ -2507,14 +2370,16 @@ class _CppHeader(Resolver):
             "curAccessSpecifier changed/defaulted to %s" % self.curAccessSpecifier
         )
         if self.nameStack[0] == "union":
-            newClass = CppUnion(self.nameStack)
+            newClass = CppUnion(self.nameStack, self.lex.get_doxygen())
             if newClass["name"] == "union ":
                 self.anon_union_counter = [self.braceDepth, 2]
             else:
                 self.anon_union_counter = [self.braceDepth, 1]
             trace_print("NEW UNION", newClass["name"])
         else:
-            newClass = CppClass(self.nameStack, self.curTemplate)
+            newClass = CppClass(
+                self.nameStack, self.curTemplate, self.lex.get_doxygen()
+            )
             trace_print("NEW CLASS", newClass["name"])
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append(newClass)  # good idea to save ordering
@@ -2584,8 +2449,6 @@ class CppHeader(_CppHeader):
         kwargs - Supports the following keywords
         """
         ## reset global state ##
-        global doxygenCommentCache
-        doxygenCommentCache = ""
         CppVariable.Vars = []
         CppStruct.Structs = []
 
@@ -2773,12 +2636,14 @@ class CppHeader(_CppHeader):
                     )
 
         self.braceDepth = 0
-        lex.lex()
+
+        lex = Lexer()
         lex.input(headerFileStr)
+        self.lex = lex
+
         global curLine
-        global curChar
         curLine = 0
-        curChar = 0
+
         try:
             while True:
                 tok = lex.token()
@@ -2796,7 +2661,6 @@ class CppHeader(_CppHeader):
                 if tok.type != "TEMPLATE_NAME":
                     self.stack.append(tok.value)
                 curLine = tok.lineno
-                curChar = tok.lexpos
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s" % tok)
                     self._precomp_macro_buf.append(tok.value)
@@ -3034,6 +2898,7 @@ class CppHeader(_CppHeader):
         # Delete some temporary variables
         for key in [
             "_precomp_macro_buf",
+            "lex",
             "nameStack",
             "nameSpaces",
             "curAccessSpecifier",
@@ -3059,7 +2924,6 @@ class CppHeader(_CppHeader):
 
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
-        global doxygenCommentCache
 
         self.nameStack = filter_out_attribute_keyword(self.nameStack)
         self.stack = filter_out_attribute_keyword(self.stack)
@@ -3128,11 +2992,11 @@ class CppHeader(_CppHeader):
                     # using foo = ns::bar
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
-                    atype = CppVariable(stack)
+                    atype = CppVariable(stack, self.lex.get_doxygen())
                 else:
                     # using foo::bar
                     ns, stack = _split_namespace(self.nameStack[1:])
-                    atype = CppVariable(stack)
+                    atype = CppVariable(stack, self.lex.get_doxygen())
                     alias = atype["type"]
 
                 atype["namespace"] = ns
@@ -3212,17 +3076,14 @@ class CppHeader(_CppHeader):
             elif self.curStruct and self.stack[-1] == ";":
                 self._evaluate_property_stack()  # this catches fields of global structs
             self.nameStack = []
-            doxygenCommentCache = ""
         elif self.braceDepth < 1:
             debug_print("trace")
             # Ignore global stuff for now
             debug_print("Global stuff: %s" % self.nameStack)
             self.nameStack = []
-            doxygenCommentCache = ""
         elif self.braceDepth > len(self.nameSpaces) + 1:
             debug_print("trace")
             self.nameStack = []
-            doxygenCommentCache = ""
 
         try:
             self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
@@ -3231,13 +3092,13 @@ class CppHeader(_CppHeader):
         self.nameStack = (
             []
         )  # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
-        doxygenCommentCache = ""
+        self.lex.doxygenCommentCache = ""
         self.curTemplate = None
 
     def _evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""
         debug_print("evaluating enum")
-        newEnum = CppEnum(self.nameStack)
+        newEnum = CppEnum(self.nameStack, self.lex.get_doxygen())
         if len(list(newEnum.keys())):
             if len(self.curClass):
                 newEnum["namespace"] = self.cur_namespace(False)
