@@ -2432,6 +2432,43 @@ class _CppHeader(Resolver):
             self._forward_decls.append(name)
 
 
+# fmt: off
+_namestack_append_tokens = set([
+    "OPEN_PAREN",
+    "CLOSE_PAREN",
+    "OPEN_SQUARE_BRACKET",
+    "CLOSE_SQUARE_BRACKET",
+    "EQUALS",
+    "COMMA",
+    "BACKSLASH",
+    "DIVIDE",
+    "PIPE",
+    "PERCENT",
+    "CARET",
+    "EXCLAMATION",
+    "NUMBER",
+    "FLOAT_NUMBER",
+    "MINUS",
+    "PLUS",
+    "STRING_LITERAL",
+    "ELLIPSIS",
+])
+
+_namestack_pass_tokens = set([
+    "TAB",
+    "SQUOTE",
+    "DOT" # preserve behaviour and eat individual fullstops
+])
+
+_namestack_str_tokens = set([
+    "NAME",
+    "AMPERSTAND",
+    "ASTERISK",
+    "CHAR_LITERAL"
+])
+# fmt: on
+
+
 class CppHeader(_CppHeader):
     """Parsed C++ class header"""
 
@@ -2768,52 +2805,11 @@ class CppHeader(_CppHeader):
                         self.nameStack = []
                         trace_print("FORCE CLEAR METHBODY")
 
-                if tok.type == "OPEN_PAREN":
+                if tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
-                elif tok.type == "CLOSE_PAREN":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "OPEN_SQUARE_BRACKET":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "CLOSE_SQUARE_BRACKET":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "TAB":
+                elif tok.type in _namestack_pass_tokens:
                     pass
-                elif tok.type == "EQUALS":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "COMMA":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "BACKSLASH":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "DIVIDE":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "PIPE":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "PERCENT":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "CARET":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "EXCLAMATION":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "SQUOTE":
-                    pass
-                elif tok.type == "NUMBER" or tok.type == "FLOAT_NUMBER":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "MINUS":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "PLUS":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "STRING_LITERAL":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "ELLIPSIS":
-                    self.nameStack.append(tok.value)
-                elif tok.type == "DOT":
-                    pass  # preserve behaviour and eat individual fullstops
-                elif (
-                    tok.type == "NAME"
-                    or tok.type == "AMPERSTAND"
-                    or tok.type == "ASTERISK"
-                    or tok.type == "CHAR_LITERAL"
-                ):
+                elif tok.type in _namestack_str_tokens:
                     if tok.value in ignoreSymbols:
                         debug_print("Ignore symbol %s" % tok.value)
                     elif tok.value == "class":
