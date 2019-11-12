@@ -2462,7 +2462,7 @@ _namestack_pass_tokens = set([
 
 _namestack_str_tokens = set([
     "NAME",
-    "AMPERSTAND",
+    "AMPERSAND",
     "ASTERISK",
     "CHAR_LITERAL"
 ])

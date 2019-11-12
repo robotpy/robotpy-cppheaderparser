@@ -29,7 +29,7 @@ class Lexer(object):
         "PRECOMP_MACRO",
         "PRECOMP_MACRO_CONT",
         "ASTERISK",
-        "AMPERSTAND",
+        "AMPERSAND",
         "EQUALS",
         "MINUS",
         "PLUS",
@@ -80,7 +80,7 @@ class Lexer(object):
     t_MINUS = r"\-"
     t_PLUS = r"\+"
     t_DIVIDE = r"/(?!/)"
-    t_AMPERSTAND = r"&"
+    t_AMPERSAND = r"&"
     t_EQUALS = r"="
     t_CHAR_LITERAL = "'.'"
     t_SQUOTE = "'"
