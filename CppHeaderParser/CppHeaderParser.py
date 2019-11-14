@@ -231,16 +231,11 @@ def is_property_namestack(nameStack):
     return r
 
 
-def detect_lineno(s):
-    """Detect the line number for a given token string"""
-    try:
-        rtn = s.lineno()
-        if rtn != -1:
-            return rtn
-    except:
-        pass
-    global curLine
-    return curLine
+def set_location_info(thing, location):
+    filename, line_number = location
+    if filename:
+        thing["filename"] = filename
+    thing["line_number"] = line_number
 
 
 def filter_out_attribute_keyword(stack):
@@ -328,22 +323,11 @@ def _split_by_comma(namestack):
 class TagStr(str):
     """Wrapper for a string that allows us to store the line number associated with it"""
 
-    lineno_reg = {}
-
-    def __new__(cls, *args, **kw):
-        new_obj = str.__new__(cls, *args)
-        if "lineno" in kw:
-            TagStr.lineno_reg[id(new_obj)] = kw["lineno"]
-        return new_obj
-
-    def __del__(self):
-        try:
-            del TagStr.lineno_reg[id(self)]
-        except:
-            pass
-
-    def lineno(self):
-        return TagStr.lineno_reg.get(id(self), -1)
+    def __new__(cls, *args, **kwargs):
+        location = kwargs.pop("location")
+        s = str.__new__(cls, *args, **kwargs)
+        s.location = location
+        return s
 
 
 class CppParseError(Exception):
@@ -428,7 +412,7 @@ class CppClass(dict):
                 r[meth["name"]] = meth
         return r
 
-    def __init__(self, nameStack, curTemplate, doxygen):
+    def __init__(self, nameStack, curTemplate, doxygen, location):
         #: hm
         self["nested_classes"] = []
         self["parent"] = None
@@ -480,7 +464,7 @@ class CppClass(dict):
             pass
 
         self["name"] = nameStack[1]
-        self["line_number"] = detect_lineno(nameStack[0])
+        set_location_info(self, location)
 
         # Handle template classes
         if len(nameStack) > 3 and nameStack[2].startswith("<"):
@@ -714,8 +698,8 @@ class CppUnion(CppClass):
         * ``members`` - List of members of the union
     """
 
-    def __init__(self, nameStack, doxygen):
-        CppClass.__init__(self, nameStack, None, doxygen)
+    def __init__(self, nameStack, doxygen, location):
+        CppClass.__init__(self, nameStack, None, doxygen, location)
         self["name"] = "union " + self["name"]
         self["members"] = self["properties"]["public"]
 
@@ -845,7 +829,7 @@ class CppMethod(_CppMethod):
             r.append("destructor")
         return "\n\t\t  ".join(r)
 
-    def __init__(self, nameStack, curClass, methinfo, curTemplate, doxygen):
+    def __init__(self, nameStack, curClass, methinfo, curTemplate, doxygen, location):
         debug_print("Method:   %s" % nameStack)
         debug_print("Template: %s" % curTemplate)
 
@@ -911,7 +895,7 @@ class CppMethod(_CppMethod):
                     break
 
         self.update(methinfo)
-        self["line_number"] = detect_lineno(nameStack[0])
+        set_location_info(self, location)
 
         # Filter out initializer lists used in constructors
         try:
@@ -967,8 +951,12 @@ class CppMethod(_CppMethod):
                 i += 1
 
             if param_separator:
+                tpstack = paramsStack[0:param_separator]
                 param = CppVariable(
-                    paramsStack[0:param_separator], None, doxyVarDesc=doxyVarDesc
+                    tpstack,
+                    None,
+                    getattr(tpstack[0], "location", location),
+                    doxyVarDesc=doxyVarDesc,
                 )
                 if len(list(param.keys())):
                     params.append(param)
@@ -977,7 +965,12 @@ class CppMethod(_CppMethod):
                 self["vararg"] = True
                 paramsStack = paramsStack[1:]
             else:
-                param = CppVariable(paramsStack, None, doxyVarDesc=doxyVarDesc)
+                param = CppVariable(
+                    paramsStack,
+                    None,
+                    getattr(paramsStack[0], "location", location),
+                    doxyVarDesc=doxyVarDesc,
+                )
                 if len(list(param.keys())):
                     params.append(param)
                 break
@@ -1045,7 +1038,7 @@ class CppVariable(_CppVariable):
 
     Vars = []
 
-    def __init__(self, nameStack, doxygen, **kwargs):
+    def __init__(self, nameStack, doxygen, location, **kwargs):
         debug_print("trace %s" % nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
@@ -1083,7 +1076,7 @@ class CppVariable(_CppVariable):
 
         debug_print("Variable: %s" % nameStack)
 
-        self["line_number"] = detect_lineno(nameStack[0])
+        set_location_info(self, location)
         self["function_pointer"] = 0
 
         if len(nameStack) < 2:  # +++
@@ -1225,7 +1218,7 @@ class CppEnum(_CppEnum):
         if a value for a given enum value was defined
     """
 
-    def __init__(self, nameStack, doxygen):
+    def __init__(self, nameStack, doxygen, location):
         if doxygen:
             self["doxygen"] = doxygen
         if len(nameStack) == 3 and nameStack[0] == "enum":
@@ -1237,7 +1230,7 @@ class CppEnum(_CppEnum):
             debug_print("Bad enum")
             return
         valueList = []
-        self["line_number"] = detect_lineno(nameStack[0])
+        set_location_info(self, location)
         # Figure out what values it has
         valueStack = nameStack[nameStack.index("{") + 1 : nameStack.index("}")]
         while len(valueStack):
@@ -1303,15 +1296,14 @@ class CppStruct(dict):
 
     Structs = []
 
-    def __init__(self, nameStack):
+    def __init__(self, nameStack, location):
         if len(nameStack) >= 2:
             self["type"] = nameStack[1]
         else:
             self["type"] = None
         self["fields"] = []
+        set_location_info(self, location)
         self.Structs.append(self)
-        global curLine
-        self["line_number"] = curLine
 
 
 C99_NONSTANDARD = {
@@ -1998,7 +1990,7 @@ class _CppHeader(Resolver):
         """Create a Struct out of the name stack (but not its parts)"""
         # print( 'eval struct stack', self.nameStack )
         # if self.braceDepth != len(self.nameSpaces): return
-        struct = CppStruct(self.nameStack)
+        struct = CppStruct(self.nameStack, self._get_location(self.nameStack))
         struct["namespace"] = self.cur_namespace()
         self.structs[struct["type"]] = struct
         self.structs_order.append(struct)
@@ -2176,6 +2168,7 @@ class _CppHeader(Resolver):
                     info,
                     self.curTemplate,
                     self.lex.get_doxygen(),
+                    self._get_location(self.nameStack),
                 )
                 klass = self.classes[info["class"]]
                 klass["methods"]["public"].append(newMethod)
@@ -2192,6 +2185,7 @@ class _CppHeader(Resolver):
                     info,
                     self.curTemplate,
                     self.lex.get_doxygen(),
+                    self._get_location(self.nameStack),
                 )
                 klass = self.classes[self.curClass]
                 klass["methods"][self.curAccessSpecifier].append(newMethod)
@@ -2203,7 +2197,12 @@ class _CppHeader(Resolver):
             else:  # non class functions
                 debug_print("FREE FUNCTION")
                 newMethod = CppMethod(
-                    self.nameStack, None, info, self.curTemplate, self.lex.get_doxygen()
+                    self.nameStack,
+                    None,
+                    info,
+                    self.curTemplate,
+                    self.lex.get_doxygen(),
+                    self._get_location(self.nameStack),
                 )
                 self.functions.append(newMethod)
             global parseHistory
@@ -2326,7 +2325,11 @@ class _CppHeader(Resolver):
                         )
                     return
 
-            newVar = CppVariable(self.nameStack, self.lex.get_doxygen())
+            newVar = CppVariable(
+                self.nameStack,
+                self.lex.get_doxygen(),
+                self._get_location(self.nameStack),
+            )
             newVar["namespace"] = self.current_namespace()
             if self.curStruct:
                 self.curStruct["fields"].append(newVar)
@@ -2342,7 +2345,11 @@ class _CppHeader(Resolver):
                 newVar.update(addToVar)
         else:
             debug_print("Found Global variable")
-            newVar = CppVariable(self.nameStack, self.lex.get_doxygen())
+            newVar = CppVariable(
+                self.nameStack,
+                self.lex.get_doxygen(),
+                self._get_location(self.nameStack),
+            )
             if addToVar:
                 newVar.update(addToVar)
             self.variables.append(newVar)
@@ -2378,7 +2385,11 @@ class _CppHeader(Resolver):
             "curAccessSpecifier changed/defaulted to %s" % self.curAccessSpecifier
         )
         if self.nameStack[0] == "union":
-            newClass = CppUnion(self.nameStack, self.lex.get_doxygen())
+            newClass = CppUnion(
+                self.nameStack,
+                self.lex.get_doxygen(),
+                self._get_location(self.nameStack),
+            )
             if newClass["name"] == "union ":
                 self.anon_union_counter = [self.braceDepth, 2]
             else:
@@ -2386,7 +2397,10 @@ class _CppHeader(Resolver):
             trace_print("NEW UNION", newClass["name"])
         else:
             newClass = CppClass(
-                self.nameStack, self.curTemplate, self.lex.get_doxygen()
+                self.nameStack,
+                self.curTemplate,
+                self.lex.get_doxygen(),
+                self._get_location(self.nameStack),
             )
             trace_print("NEW CLASS", newClass["name"])
         newClass["declaration_method"] = self.nameStack[0]
@@ -2682,13 +2696,11 @@ class CppHeader(_CppHeader):
 
         self.braceDepth = 0
 
-        lex = Lexer()
+        lex = Lexer(self.headerFileName)
         lex.input(headerFileStr)
         self.lex = lex
 
-        global curLine
-        curLine = 0
-
+        tok = None
         try:
             while True:
                 tok = lex.token()
@@ -2699,13 +2711,13 @@ class CppHeader(_CppHeader):
                     and self.anon_union_counter[1]
                 ):
                     self.anon_union_counter[1] -= 1
-                tok.value = TagStr(tok.value, lineno=tok.lineno)
+                tok.value = TagStr(tok.value, location=lex.current_location())
                 # debug_print("TOK: %s"%tok)
                 if tok.type == "NAME" and tok.value in self.IGNORE_NAMES:
                     continue
                 if tok.type != "TEMPLATE_NAME":
                     self.stack.append(tok.value)
-                curLine = tok.lineno
+
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s" % tok)
                     self._precomp_macro_buf.append(tok.value)
@@ -2891,17 +2903,20 @@ class CppHeader(_CppHeader):
         except Exception as e:
             if debug:
                 raise
-            raise_exc(
-                CppParseError(
+            if tok:
+                filename, lineno = tok.value.location
+                msg = (
                     'Not able to parse %s on line %d evaluating "%s"\nError around: %s'
-                    % (
-                        self.headerFileName,
-                        tok.lineno,
-                        tok.value,
-                        " ".join(self.nameStack),
-                    )
-                ),
-                e,
+                    % (filename, lineno, tok.value, " ".join(self.nameStack))
+                )
+            else:
+                msg = "Error parsing %s\nError around: %s" % (
+                    self.headerFileName,
+                    " ".join(self.nameStack),
+                )
+
+            raise_exc(
+                CppParseError(msg), e,
             )
 
         self.finalize()
@@ -2933,6 +2948,14 @@ class CppHeader(_CppHeader):
             "templateRegistry",
         ]:
             del self.__dict__[key]
+
+    def _get_location(self, stack):
+        if stack:
+            location = getattr(stack[0], "location", None)
+            if location is not None:
+                return location
+
+        return self.lex.current_location()
 
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -3004,11 +3027,15 @@ class CppHeader(_CppHeader):
                     # using foo = ns::bar
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
-                    atype = CppVariable(stack, self.lex.get_doxygen())
+                    atype = CppVariable(
+                        stack, self.lex.get_doxygen(), self._get_location(stack)
+                    )
                 else:
                     # using foo::bar
                     ns, stack = _split_namespace(self.nameStack[1:])
-                    atype = CppVariable(stack, self.lex.get_doxygen())
+                    atype = CppVariable(
+                        stack, self.lex.get_doxygen(), self._get_location(stack)
+                    )
                     alias = atype["type"]
 
                 atype["namespace"] = ns
@@ -3110,7 +3137,9 @@ class CppHeader(_CppHeader):
     def _evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""
         debug_print("evaluating enum")
-        newEnum = CppEnum(self.nameStack, self.lex.get_doxygen())
+        newEnum = CppEnum(
+            self.nameStack, self.lex.get_doxygen(), self._get_location(self.nameStack)
+        )
         if len(list(newEnum.keys())):
             if len(self.curClass):
                 newEnum["namespace"] = self.cur_namespace(False)
