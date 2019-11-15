@@ -2907,5 +2907,53 @@ class A {
         )
 
 
+class MultiFile_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+#line 3 "child.h"
+#include <stdint.h>
+#line 3 "base.h"
+void functionInBase(void);
+
+class Base
+{
+public:
+    virtual void baseFunction();
+};
+#line 7 "child.h"
+void functionInChild(void);
+
+class Child : public Base
+{
+public:
+    void childOnlyFunction();
+    void baseFunction() override;
+};
+
+""",
+            "string",
+        )
+
+    def assertLocation(self, thing, fname, lineno):
+        self.assertEqual(fname, thing["filename"])
+        self.assertEqual(lineno, thing["line_number"])
+
+    def test_fn(self):
+        baseFn = self.cppHeader.functions[0]
+        self.assertEqual("functionInBase", baseFn["name"])
+        self.assertLocation(baseFn, "base.h", 3)
+
+        base = self.cppHeader.classes["Base"]
+        self.assertLocation(base, "base.h", 5)
+
+        childFn = self.cppHeader.functions[1]
+        self.assertEqual("functionInChild", childFn["name"])
+        self.assertLocation(childFn, "child.h", 7)
+
+        child = self.cppHeader.classes["Child"]
+        self.assertLocation(child, "child.h", 9)
+
+
 if __name__ == "__main__":
     unittest.main()

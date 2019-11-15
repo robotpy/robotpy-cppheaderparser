@@ -1,6 +1,8 @@
 import ply.lex as lex
 import re
 
+_line_re = re.compile(r'^#line (\d+) "(.*)"')
+
 
 class Lexer(object):
 
@@ -62,7 +64,16 @@ class Lexer(object):
     t_PERCENT = r"%"
     t_CARET = r"\^"
     t_EXCLAMATION = r"!"
-    t_PRECOMP_MACRO = r"\#.*"
+
+    def t_PRECOMP_MACRO(self, t):
+        r"\#.*"
+        m = _line_re.match(t.value)
+        if m:
+            self.filename = m.group(2)
+            self.line_offset = 1 + self.lex.lineno - int(m.group(1))
+        else:
+            return t
+
     t_PRECOMP_MACRO_CONT = r".*\\\n"
 
     def t_COMMENT_SINGLELINE(self, t):
@@ -109,13 +120,20 @@ class Lexer(object):
     def t_error(self, v):
         print("Lex error: ", v)
 
-    def __init__(self):
+    def __init__(self, filename):
         self.lex = lex.lex(module=self)
         self.input = self.lex.input
         self.token = self.lex.token
 
+        # For tracking current file/line position
+        self.filename = filename
+        self.line_offset = 0
+
         # Doxygen comments
         self.doxygenCommentCache = ""
+
+    def current_location(self):
+        return self.filename, self.lex.lineno - self.line_offset
 
     def get_doxygen(self):
         doxygen = self.doxygenCommentCache
