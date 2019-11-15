@@ -72,6 +72,14 @@ debug = 0
 # Controls trace_print
 debug_trace = 0
 
+if sys.version_info >= (3, 3):
+    # `raise e from src_e` syntax only supported on python 3.3+
+    exec("def raise_exc(e, src_e): raise e from src_e", globals())
+else:
+
+    def raise_exc(e, src_e):
+        raise e
+
 
 def error_print(arg):
     if print_errors:
@@ -1797,7 +1805,7 @@ class Resolver(object):
                     else:
                         trace_print("-" * 80)
                         trace_print(var)
-                        raise NotImplemented
+                        raise NotImplementedError
 
             ## need full name space for classes in raw type ##
             if var["raw_type"].startswith("::"):
@@ -2880,12 +2888,20 @@ class CppHeader(_CppHeader):
                     self.stack = []
                     self.nameStack = []
 
-        except:
+        except Exception as e:
             if debug:
                 raise
-            raise CppParseError(
-                'Not able to parse %s on line %d evaluating "%s"\nError around: %s'
-                % (self.headerFileName, tok.lineno, tok.value, " ".join(self.nameStack))
+            raise_exc(
+                CppParseError(
+                    'Not able to parse %s on line %d evaluating "%s"\nError around: %s'
+                    % (
+                        self.headerFileName,
+                        tok.lineno,
+                        tok.value,
+                        " ".join(self.nameStack),
+                    )
+                ),
+                e,
             )
 
         self.finalize()
