@@ -2542,6 +2542,10 @@ class CppHeader(_CppHeader):
 
         #: List of #include directives found
         self.includes = []
+
+        #: Filenames encountered in #line directives while parsing
+        self.headerFileNames = []
+
         self._precomp_macro_buf = (
             []
         )  # for internal purposes, will end up filling out pragmras and defines at the end
@@ -2699,6 +2703,7 @@ class CppHeader(_CppHeader):
         lex = Lexer(self.headerFileName)
         lex.input(headerFileStr)
         self.lex = lex
+        self.headerFileNames = lex.filenames
 
         tok = None
         try:

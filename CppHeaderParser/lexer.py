@@ -69,8 +69,14 @@ class Lexer(object):
         r"\#.*"
         m = _line_re.match(t.value)
         if m:
-            self.filename = m.group(2)
+            filename = m.group(2)
+            if filename not in self._filenames_set:
+                self.filenames.append(filename)
+                self._filenames_set.add(filename)
+            self.filename = filename
+
             self.line_offset = 1 + self.lex.lineno - int(m.group(1))
+
         else:
             return t
 
@@ -128,6 +134,13 @@ class Lexer(object):
         # For tracking current file/line position
         self.filename = filename
         self.line_offset = 0
+
+        self.filenames = []
+        self._filenames_set = set()
+
+        if self.filename:
+            self.filenames.append(filename)
+            self._filenames_set.add(filename)
 
         # Doxygen comments
         self.doxygenCommentCache = ""
