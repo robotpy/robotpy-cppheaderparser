@@ -573,18 +573,37 @@ class Bug3488360_TestCase(unittest.TestCase):
     def test_Bananna_inherits(self):
         self.assertEqual(
             self.cppHeader.classes["Bananna"]["inherits"],
-            [{"access": "public", "class": "Citrus::BloodOrange", "virtual": False}],
+            [
+                {
+                    "access": "public",
+                    "class": "Citrus::BloodOrange",
+                    "decl_name": "Citrus::BloodOrange",
+                    "decltype": False,
+                    "virtual": False,
+                    "...": False,
+                }
+            ],
         )
 
     def test_ExcellentCake_inherits(self):
         self.assertEqual(
             self.cppHeader.classes["ExcellentCake"]["inherits"],
             [
-                {"access": "private", "class": "Citrus::BloodOrange", "virtual": False},
+                {
+                    "access": "private",
+                    "class": "Citrus::BloodOrange",
+                    "decl_name": "Citrus::BloodOrange",
+                    "decltype": False,
+                    "virtual": False,
+                    "...": False,
+                },
                 {
                     "access": "private",
                     "class": "Convoluted::Nested::Mixin",
+                    "decl_name": "Convoluted::Nested::Mixin",
+                    "decltype": False,
                     "virtual": False,
+                    "...": False,
                 },
             ],
         )
@@ -2953,6 +2972,195 @@ public:
 
         child = self.cppHeader.classes["Child"]
         self.assertLocation(child, "child.h", 9)
+
+
+class TemplateMadness_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+template <typename Type>
+class XYZ : public MyBaseClass<Type, int>
+{
+    public:
+    XYZ();
+};
+
+template <typename ValueT, typename... IterTs>
+class concat_iterator
+    : public iterator_facade_base<concat_iterator<ValueT, IterTs...>,
+                                  std::forward_iterator_tag, ValueT> {
+};
+
+template <std::size_t N, std::size_t... I>
+struct build_index_impl : build_index_impl<N - 1, N - 1, I...> {};
+
+template <std::size_t... I>
+struct build_index_impl<0, I...> : index_sequence<I...> {};
+
+//template <typename F, typename P, typename... T>
+//struct is_callable<F, P, typelist<T...>,
+//        void_t<decltype(((*std::declval<P>()).*std::declval<F>())(std::declval<T>()...))>>
+//    : std::true_type {};
+
+template <typename T...>
+struct S : public T... {};
+
+""",
+            "string",
+        )
+
+    def testXYZ(self):
+        c = self.cppHeader.classes["XYZ"]
+        self.assertEqual("XYZ", c["name"])
+        self.assertEqual(
+            [
+                {
+                    "access": "public",
+                    "class": "MyBaseClass<Type,int>",
+                    "decltype": False,
+                    "decl_name": "MyBaseClass",
+                    "decl_params": [
+                        {"param": "Type", "...": False, "decltype": False},
+                        {"param": "int", "...": False, "decltype": False},
+                    ],
+                    "virtual": False,
+                    "...": False,
+                }
+            ],
+            c["inherits"],
+        )
+
+    def testConcatIterator(self):
+        c = self.cppHeader.classes["concat_iterator"]
+        self.assertEqual("concat_iterator", c["name"])
+        self.assertEqual(
+            [
+                {
+                    "access": "public",
+                    "class": "iterator_facade_base<concat_iterator<ValueT,IterTs...>,std::forward_iterator_tag,ValueT>",
+                    "decltype": False,
+                    "decl_name": "iterator_facade_base",
+                    "decl_params": [
+                        {
+                            "decltype": False,
+                            "param": "concat_iterator",
+                            "params": [
+                                {"param": "ValueT", "...": False, "decltype": False},
+                                {"param": "IterTs", "...": True, "decltype": False},
+                            ],
+                            "...": False,
+                        },
+                        {
+                            "decltype": False,
+                            "param": "std::forward_iterator_tag",
+                            "...": False,
+                        },
+                        {"decltype": False, "param": "ValueT", "...": False},
+                    ],
+                    "virtual": False,
+                    "...": False,
+                }
+            ],
+            c["inherits"],
+        )
+
+    def testBuildIndexImpl1(self):
+        c = self.cppHeader.classes["build_index_impl"]
+        self.assertEqual("build_index_impl", c["name"])
+        self.assertEqual(
+            [
+                {
+                    "access": "private",
+                    "class": "build_index_impl<N-1,N-1,I...>",
+                    "decltype": False,
+                    "decl_name": "build_index_impl",
+                    "decl_params": [
+                        {"param": "N-1", "...": False, "decltype": False},
+                        {"param": "N-1", "...": False, "decltype": False},
+                        {"param": "I", "...": True, "decltype": False},
+                    ],
+                    "virtual": False,
+                    "...": False,
+                }
+            ],
+            c["inherits"],
+        )
+
+    def testBuildIndexImpl2(self):
+        c = self.cppHeader.classes["build_index_impl<0,I...>"]
+        self.assertEqual("build_index_impl", c["bare_name"])
+        self.assertEqual("build_index_impl<0,I...>", c["name"])
+        self.assertEqual(
+            [
+                {"decltype": False, "param": "0", "...": False},
+                {"decltype": False, "param": "I", "...": True},
+            ],
+            c["class_params"],
+        )
+        self.assertEqual(
+            [
+                {
+                    "access": "private",
+                    "class": "index_sequence<I...>",
+                    "decltype": False,
+                    "decl_name": "index_sequence",
+                    "decl_params": [{"decltype": False, "param": "I", "...": True}],
+                    "virtual": False,
+                    "...": False,
+                }
+            ],
+            c["inherits"],
+        )
+
+    # def testIsCallable(self):
+    #     c = self.cppHeader.classes["is_callable"]
+    #     self.assertEqual("is_callable", c["name"])
+    #     self.assertEqual(
+    #         [
+    #             {"param": "F", "...": False, "decltype": False},
+    #             {"param": "P", "...": False, "decltype": False},
+    #             {
+    #                 "param": "typelist",
+    #                 "...": False,
+    #                 "decltype": False,
+    #                 "params": [{"param": "T", "...": True, "decltype": False},],
+    #             },
+    #             {
+    #                 "param": "void_t",
+    #                 "...": False,
+    #                 "decltype": False,
+    #                 "params": [
+    #                     {
+    #                         "param": "(((*std::declval<P>()).*std::declval<F>())(std::declval<T>()...))",
+    #                         "...": False,
+    #                         "decltype": True,
+    #                     },
+    #                 ],
+    #             },
+    #         ],
+    #         c["class_params"],
+    #     )
+    #     self.assertEqual(
+    #         [{"access": "private", "class": "std::true_type", "virtual": False,}],
+    #         c["inherits"],
+    #     )
+
+    def testS(self):
+        c = self.cppHeader.classes["S"]
+        self.assertEqual("S", c["name"])
+        self.assertEqual(
+            [
+                {
+                    "access": "public",
+                    "class": "T...",
+                    "decl_name": "T",
+                    "virtual": False,
+                    "...": True,
+                    "decltype": False,
+                }
+            ],
+            c["inherits"],
+        )
 
 
 if __name__ == "__main__":

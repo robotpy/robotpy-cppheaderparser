@@ -24,8 +24,8 @@ CppHeaderParser
 ---------------
 
 .. automodule:: CppHeaderParser.CppHeaderParser
-   :members: CppClass, CppEnum, CppHeader, CppMethod, CppParseError, 
-             CppStruct, CppUnion, CppVariable, TagStr,
+   :members: CppBaseDecl, CppClass, CppEnum, CppHeader, CppMethod, CppParseError,
+             CppStruct, CppTemplateParam, CppUnion, CppVariable, TagStr,
              ignoreSymbols
    :undoc-members:
    :show-inheritance:

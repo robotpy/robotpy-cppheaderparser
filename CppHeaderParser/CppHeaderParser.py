@@ -334,6 +334,262 @@ class CppParseError(Exception):
     pass
 
 
+class CppTemplateParam(dict):
+    """
+        Dictionary that contains the following:
+
+        - ``decltype`` - If True, this is a decltype
+        - ``param`` - Parameter value or typename
+        - ``params`` - Only present if a template specialization. Is a list of
+            :class:`.CppTemplateParam`
+        - ``...`` - If True, indicates a parameter pack
+    """
+
+    def __init__(self):
+        self["param"] = ""
+        self["decltype"] = False
+        self["..."] = False
+
+    def __str__(self):
+        s = []
+        if self["decltype"]:
+            s.append("decltype")
+
+        s.append(self["param"])
+
+        params = self.get("params")
+        if params is not None:
+            s.append("<%s>" % ",".join(str(p) for p in params))
+
+        if self["..."]:
+            if s:
+                s[-1] = s[-1] + "..."
+            else:
+                s.append("...")
+
+        return "".join(s)
+
+
+class CppBaseDecl(dict):
+    """
+        Dictionary that contains the following
+
+        - ``access`` - Anything in supportedAccessSpecifier
+        - ``class`` - Name of the type, along with template specializations
+        - ``decl_name`` - Name of the type only
+        - ``decl_params`` - Only present if a template specialization (Foo<int>).
+          Is a list of :class:`.CppTemplateParam`.
+        - ``decltype`` - True/False indicates a decltype, the contents are in
+          ``decl_name``
+        - ``virtual`` - True/False indicates virtual inheritance
+        - ``...`` - True/False indicates a parameter pack
+
+    """
+
+    def __init__(self):
+        self["access"] = "private"
+        self["class"] = ""
+        self["decl_name"] = ""
+        self["decltype"] = False
+        self["virtual"] = False
+        self["..."] = False
+
+    def _fix_classname(self):
+        # set class to the full decl for legacy reasons
+        params = self.get("decl_params")
+
+        if self["decltype"]:
+            s = "decltype"
+        else:
+            s = ""
+
+        s += self["decl_name"]
+        if params:
+            s += "<%s>" % (",".join(str(p) for p in params))
+
+        if self["..."]:
+            s += "..."
+
+        self["class"] = s
+
+
+def _consume_parens(stack):
+    i = 0
+    sl = len(stack)
+    nested = 1
+    while i < sl:
+        t = stack[i]
+        i += 1
+        if t == ")":
+            nested -= 1
+            if nested == 0:
+                return i
+        elif t == "(":
+            nested += 1
+
+    raise CppParseError("Unmatched (")
+
+
+def _parse_template_decl(stack):
+    debug_print("_parse_template_decl: %s" % stack)
+    params = []
+    param = CppTemplateParam()
+    i = 0
+    sl = len(stack)
+    init = True
+    require_ending = False
+    while i < sl:
+        t = stack[i]
+        i += 1
+        if init:
+            init = False
+            if t == "decltype":
+                param["decltype"] = True
+                continue
+
+        if t == ",":
+            params.append(param)
+            init = True
+            require_ending = False
+            param = CppTemplateParam()
+
+            continue
+        elif t == ">":
+            params.append(param)
+            return params, i - 1
+
+        if require_ending:
+            raise CppParseError("expected comma, found %s" % t)
+
+        if t == "...":
+            param["..."] = True
+            require_ending = True
+        elif t == "(":
+            s = stack[i:]
+            n = _consume_parens(s)
+            i += n
+            param["param"] = param["param"] + "".join(s[:n])
+        else:
+            if t and t[0] == "<":
+                param["params"], n = _parse_template_decl([t[1:]] + stack[i:])
+                i += n
+            else:
+                param["param"] = param["param"] + t
+
+    raise CppParseError("Unmatched <")
+
+
+def _parse_cppclass_name(c, stack):
+    # ignore first thing
+    i = 1
+    sl = len(stack)
+    name = ""
+    require_ending = False
+    while i < sl:
+        t = stack[i]
+        i += 1
+
+        if t == ":":
+            if i >= sl:
+                raise CppParseError("class decl ended with ':'")
+            t = stack[i]
+            if t != ":":
+                # reached the base declaration
+                break
+
+            i += 1
+            name += "::"
+            continue
+        elif t == "final":
+            c["final"] = True
+            continue
+
+        if require_ending:
+            raise CppParseError("Unexpected '%s' in class" % ("".join(stack[i - 1 :])))
+
+        if t and t[0] == "<":
+            c["class_params"], n = _parse_template_decl([t[1:]] + stack[i:])
+            i += n
+            require_ending = True
+        else:
+            name += t
+
+    c["namespace"] = ""
+
+    # backwards compat
+    if name.startswith("anon-struct-"):
+        name = "<" + name + ">"
+    c["name"] = name
+    c["bare_name"] = name
+
+    # backwards compat
+    classParams = c.get("class_params")
+    if classParams is not None:
+        c["name"] = c["name"] + "<%s>" % ",".join(str(p) for p in classParams)
+
+    return i
+
+
+def _parse_cpp_base(stack):
+    debug_print("Parsing base: %s" % stack)
+    inherits = []
+    i = 0
+    sl = len(stack)
+    init = True
+    base = CppBaseDecl()
+    require_ending = False
+    while i < sl:
+        t = stack[i]
+        i += 1
+
+        if init:
+            if t in supportedAccessSpecifier:
+                base["access"] = t
+                continue
+            elif t == "virtual":
+                base["virtual"] = True
+                continue
+
+            init = False
+
+            if t == "decltype":
+                base["decltype"] = True
+                continue
+
+        if t == ",":
+            inherits.append(base)
+            base = CppBaseDecl()
+            init = True
+            require_ending = False
+            continue
+
+        if require_ending:
+            raise CppParseError("expected comma, found '%s'" % t)
+
+        if t == "(":
+            s = stack[i:]
+            n = _consume_parens(s)
+            i += n
+            base["decl_name"] = base["decl_name"] + "".join(s[:n])
+        elif t == "...":
+            base["..."] = True
+            require_ending = True
+        else:
+            if t[0] == "<":
+                base["decl_params"], n = _parse_template_decl([t[1:]] + stack[i:])
+                i += n
+                require_ending = True
+            else:
+                base["decl_name"] = base["decl_name"] + t
+
+    # backwards compat
+    inherits.append(base)
+    for base in inherits:
+        base._fix_classname()
+
+    return inherits
+
+
 class CppClass(dict):
     """
         Dictionary that contains at least the following keys:
@@ -341,11 +597,7 @@ class CppClass(dict):
         * ``name`` - Name of the class
         * ``doxygen`` - Doxygen comments associated with the class if they exist
         * ``inherits`` - List of Classes that this one inherits. Values are
-          dictionaries with the following key/values:
-
-        - ``access`` - Anything in supportedAccessSpecifier
-        - ``class`` - Name of the class
-
+          :class:`.CppBaseDecl`
         * ``methods`` - Dictionary where keys are from supportedAccessSpecifier
           and values are a lists of :class:`.CppMethod`
         * ``namespace`` - Namespace of class
@@ -413,10 +665,10 @@ class CppClass(dict):
         return r
 
     def __init__(self, nameStack, curTemplate, doxygen, location):
-        #: hm
         self["nested_classes"] = []
         self["parent"] = None
         self["abstract"] = False
+        self["final"] = False
         self._public_enums = {}
         self._public_structs = {}
         self._public_typedefs = {}
@@ -431,144 +683,17 @@ class CppClass(dict):
         if doxygen:
             self["doxygen"] = doxygen
 
-        if "::" in "".join(nameStack):
-            # Re-Join class paths (ex  ['class', 'Bar', ':', ':', 'Foo'] -> ['class', 'Bar::Foo']
-            try:
-                new_nameStack = []
-                for name in nameStack:
-                    if len(new_nameStack) == 0:
-                        new_nameStack.append(name)
-                    elif name == ":" and new_nameStack[-1].endswith(":"):
-                        new_nameStack[-1] += name
-                    elif new_nameStack[-1].endswith("::"):
-                        new_nameStack[-2] += new_nameStack[-1] + name
-                        del new_nameStack[-1]
-                    else:
-                        new_nameStack.append(name)
-                trace_print(
-                    "Convert from namestack\n %s\nto\n%s" % (nameStack, new_nameStack)
-                )
-                nameStack = new_nameStack
-            except:
-                pass
+        # consume name of class, with any namespaces or templates
+        n = _parse_cppclass_name(self, nameStack)
 
-        # Handle final specifier
-        self["final"] = False
-        try:
-            final_index = nameStack.index("final")
-            # Dont trip up the rest of the logic
-            del nameStack[final_index]
-            self["final"] = True
-            trace_print("final")
-        except:
-            pass
+        # consume bases
+        baseStack = nameStack[n:]
+        if baseStack:
+            self["inherits"] = _parse_cpp_base(baseStack)
+        else:
+            self["inherits"] = []
 
-        self["name"] = nameStack[1]
         set_location_info(self, location)
-
-        # Handle template classes
-        if len(nameStack) > 3 and nameStack[2].startswith("<"):
-            open_template_count = 0
-            param_separator = 0
-            found_first = False
-            i = 0
-            for elm in nameStack:
-                if "<" in elm:
-                    open_template_count += 1
-                    found_first = True
-                elif ">" in elm:
-                    open_template_count -= 1
-                if found_first and open_template_count == 0:
-                    self["name"] = "".join(nameStack[1 : i + 1])
-                    break
-                i += 1
-        elif ":" in nameStack:
-            self["name"] = nameStack[nameStack.index(":") - 1]
-
-        inheritList = []
-
-        if nameStack.count(":") == 1:
-            nameStack = nameStack[nameStack.index(":") + 1 :]
-            while len(nameStack):
-                tmpStack = []
-                tmpInheritClass = {"access": "private", "virtual": False}
-                if "," in nameStack:
-                    tmpStack = nameStack[: nameStack.index(",")]
-                    nameStack = nameStack[nameStack.index(",") + 1 :]
-                else:
-                    tmpStack = nameStack
-                    nameStack = []
-
-                # Convert template classes to one name in the last index
-                for i in range(0, len(tmpStack)):
-                    if "<" in tmpStack[i]:
-                        tmpStack2 = tmpStack[: i - 1]
-                        tmpStack2.append("".join(tmpStack[i - 1 :]))
-                        tmpStack = tmpStack2
-                        break
-                if len(tmpStack) == 0:
-                    break
-                elif len(tmpStack) == 1:
-                    tmpInheritClass["class"] = tmpStack[0]
-                elif len(tmpStack) == 2:
-                    tmpInheritClass["access"] = tmpStack[0]
-                    tmpInheritClass["class"] = tmpStack[1]
-                elif len(tmpStack) == 3 and "virtual" in tmpStack:
-                    tmpInheritClass["access"] = (
-                        tmpStack[1] if tmpStack[1] != "virtual" else tmpStack[0]
-                    )
-                    tmpInheritClass["class"] = tmpStack[2]
-                    tmpInheritClass["virtual"] = True
-                else:
-                    warning_print(
-                        "Warning: can not parse inheriting class %s"
-                        % (" ".join(tmpStack))
-                    )
-                    if ">" in tmpStack:
-                        pass  # allow skip templates for now
-                    else:
-                        raise NotImplementedError
-
-                if "class" in tmpInheritClass:
-                    inheritList.append(tmpInheritClass)
-
-        elif nameStack.count(":") == 2:
-            self["parent"] = self["name"]
-            self["name"] = nameStack[-1]
-
-        elif nameStack.count(":") > 2 and nameStack[0] in ("class", "struct"):
-            tmpStack = nameStack[nameStack.index(":") + 1 :]
-
-            superTmpStack = [[]]
-            for tok in tmpStack:
-                if tok == ",":
-                    superTmpStack.append([])
-                else:
-                    superTmpStack[-1].append(tok)
-
-            for tmpStack in superTmpStack:
-                tmpInheritClass = {"access": "private"}
-
-                if len(tmpStack) and tmpStack[0] in supportedAccessSpecifier:
-                    tmpInheritClass["access"] = tmpStack[0]
-                    tmpStack = tmpStack[1:]
-
-                inheritNSStack = []
-                while len(tmpStack) > 3:
-                    if tmpStack[0] == ":":
-                        break
-                    if tmpStack[1] != ":":
-                        break
-                    if tmpStack[2] != ":":
-                        break
-                    inheritNSStack.append(tmpStack[0])
-                    tmpStack = tmpStack[3:]
-                if len(tmpStack) == 1 and tmpStack[0] != ":":
-                    inheritNSStack.append(tmpStack[0])
-                tmpInheritClass["class"] = "::".join(inheritNSStack)
-                inheritList.append(tmpInheritClass)
-
-        self["inherits"] = inheritList
 
         if curTemplate:
             self["template"] = curTemplate
@@ -2375,7 +2500,7 @@ class _CppHeader(Resolver):
             if len(self.nameStack) == 1:
                 self.anon_struct_counter += 1
                 # We cant handle more than 1 anonymous struct, so name them uniquely
-                self.nameStack.append("<anon-struct-%d>" % self.anon_struct_counter)
+                self.nameStack.append("anon-struct-%d" % self.anon_struct_counter)
 
         if self.nameStack[0] == "class":
             self.curAccessSpecifier = "private"
@@ -2406,12 +2531,14 @@ class _CppHeader(Resolver):
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append(newClass)  # good idea to save ordering
         self.stack = []  # fixes if class declared with ';' in closing brace
+        classKey = newClass["name"]
+
         if parent:
             newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
             newClass["parent"] = parent
             self.classes[parent]["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
-            self.curClass = key = parent + "::" + newClass["name"]
+            self.curClass = key = parent + "::" + classKey
             self._classes_brace_level[key] = self.braceDepth
 
         elif newClass["parent"]:  # nested class defined outside of parent.  A::B {...}
@@ -2419,14 +2546,13 @@ class _CppHeader(Resolver):
             newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
             self.classes[parent]["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
-            self.curClass = key = parent + "::" + newClass["name"]
+            self.curClass = key = parent + "::" + classKey
             self._classes_brace_level[key] = self.braceDepth
 
         else:
             newClass["namespace"] = self.cur_namespace()
-            key = newClass["name"]
-            self.curClass = newClass["name"]
-            self._classes_brace_level[newClass["name"]] = self.braceDepth
+            self.curClass = key = classKey
+            self._classes_brace_level[classKey] = self.braceDepth
 
         if not key.endswith("::") and not key.endswith(" ") and len(key) != 0:
             if key in self.classes:
