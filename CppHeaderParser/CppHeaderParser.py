@@ -2808,6 +2808,9 @@ class CppHeader(_CppHeader):
                     elif tok.value == "alignas":
                         self._parse_attribute_specifier_seq(tok)
                         continue
+                    elif tok.value == "__attribute__":
+                        self._parse_gcc_attribute()
+                        continue
                 elif tok.type == "DBL_LBRACKET":
                     self._parse_attribute_specifier_seq(tok)
                     continue
@@ -3289,6 +3292,11 @@ class CppHeader(_CppHeader):
             .replace(" = ", "=")
         )
         self.curTemplate = "template" + tmpl
+
+    def _parse_gcc_attribute(self):
+        tok1 = self._next_token_must_be("(")
+        tok2 = self._next_token_must_be("(")
+        self._consume_balanced_tokens(tok1, tok2)
 
     _attribute_specifier_seq_start_types = ("DBL_LBRACKET", "NAME")
 
