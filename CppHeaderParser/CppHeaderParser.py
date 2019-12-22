@@ -979,10 +979,8 @@ class CppMethod(_CppMethod):
             self["rtnType"] = "void"
 
         self["rtnType"] = self["rtnType"].replace(" : : ", "::")
-        self["rtnType"] = self["rtnType"].replace(" <", "<")
-        self["rtnType"] = (
-            self["rtnType"].replace(" >", ">").replace(">>", "> >").replace(">>", "> >")
-        )
+        self["rtnType"] = self["rtnType"].replace(" < ", "<")
+        self["rtnType"] = self["rtnType"].replace(" > ", "> ").replace(">>", "> >")
         self["rtnType"] = self["rtnType"].replace(" ,", ",")
 
         # deal with "noexcept" specifier/operator
@@ -1240,11 +1238,11 @@ class CppVariable(_CppVariable):
 
         self["type"] = self["type"].replace(" :", ":")
         self["type"] = self["type"].replace(": ", ":")
-        self["type"] = self["type"].replace(" <", "<")
-        self["type"] = (
-            self["type"].replace(" >", ">").replace(">>", "> >").replace(">>", "> >")
-        )
+        self["type"] = self["type"].replace(" < ", "<")
+        self["type"] = self["type"].replace(" > ", "> ").replace(">>", "> >")
+        self["type"] = self["type"].replace(") >", ")>")
         self["type"] = self["type"].replace(" ,", ",")
+
         # Optional doxygen description
         try:
             self["desc"] = kwargs["doxyVarDesc"][self["name"]]
@@ -2611,6 +2609,8 @@ _namestack_str_tokens = set([
     "NAME",
     "&",
     "*",
+    "<",
+    ">",
     "CHAR_LITERAL"
 ])
 # fmt: on
