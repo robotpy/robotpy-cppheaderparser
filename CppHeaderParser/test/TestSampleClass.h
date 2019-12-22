@@ -574,15 +574,6 @@ class AfterTypedefClass
   public:
 }
 
-// Bug BitBucket #6
-class LineNumAfterDivide
-{
-  static int func1(float alpha_num)
-  { return funcX(alpha_num /
-                 beta_num); }
-  void func2();
-};
-
 // Bug BitBucket #5
 class Herb
 {

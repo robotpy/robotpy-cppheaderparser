@@ -2030,15 +2030,23 @@ class ClassRegularTypedefs_TestCase(unittest.TestCase):
 # Bug BitBucket #6
 class LineNumAfterDivide_TestCase(unittest.TestCase):
     def setUp(self):
-        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        self.cppHeader = CppHeaderParser.CppHeader("""
+
+// Bug BitBucket #6
+class LineNumAfterDivide
+{
+  static int func1(float alpha_num)
+  { return funcX(alpha_num /
+                 beta_num); }
+  void func2();
+};
+
+""", "string")
 
     def test_line_num(self):
-        self.assertEqual(
-            self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1][
-                "line_number"
-            ],
-            583,
-        )
+        m = self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1]
+        self.assertEqual("func2", m["name"])
+        self.assertEqual(9, m["line_number"])
 
 
 # Bug BitBucket #5
