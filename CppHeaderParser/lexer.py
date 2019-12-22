@@ -20,6 +20,8 @@ class Lexer(object):
         "STRING_LITERAL",
         "NEW_LINE",
         "ELLIPSIS",
+        "DBL_LBRACKET",
+        "DBL_RBRACKET",
     ]
 
     literals = [
@@ -85,6 +87,8 @@ class Lexer(object):
     t_DIVIDE = r"/(?!/)"
     t_CHAR_LITERAL = "'.'"
     t_ELLIPSIS = r"\.\.\."
+    t_DBL_LBRACKET = r"\[\["
+    t_DBL_RBRACKET = r"\]\]"
 
     # found at http://wordaligned.org/articles/string-literals-and-regular-expressions
     # TODO: This does not work with the string "bla \" bla"
