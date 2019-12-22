@@ -216,4 +216,7 @@ class Lexer(object):
 
 
 if __name__ == "__main__":
-    lex.runmain(lexer=Lexer(None))
+    try:
+        lex.runmain(lexer=Lexer(None))
+    except EOFError:
+        pass
