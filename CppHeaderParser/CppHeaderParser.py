@@ -46,6 +46,7 @@
 #
 
 
+from collections import deque
 import os
 import sys
 import re
@@ -2697,7 +2698,6 @@ class CppHeader(_CppHeader):
         self.nameStackHistory = []
         self.anon_struct_counter = 0
         self.anon_union_counter = [-1, 0]
-        self.templateRegistry = []
 
         #: Using directives in this header: key is full name for lookup, value
         #: is :class:`.CppVariable`
@@ -2715,50 +2715,6 @@ class CppHeader(_CppHeader):
             supportedAccessSpecifier[i] = re.sub(
                 "[ ]+", " ", supportedAccessSpecifier[i]
             ).strip()
-
-        # Strip out template declarations
-        templateSectionsToSliceOut = []
-        try:
-            for m in re.finditer("template[\t ]*<[^>]*>", headerFileStr):
-                start = m.start()
-                # Search for the final '>' which may or may not be caught in the case of nexted <>'s
-                for i in range(start, len(headerFileStr)):
-                    if headerFileStr[i] == "<":
-                        firstBracket = i
-                        break
-                ltgtStackCount = 1
-                # Now look for fianl '>'
-                for i in range(firstBracket + 1, len(headerFileStr)):
-                    if headerFileStr[i] == "<":
-                        ltgtStackCount += 1
-                    elif headerFileStr[i] == ">":
-                        ltgtStackCount -= 1
-                    if ltgtStackCount == 0:
-                        end = i
-                        break
-                templateSectionsToSliceOut.append((start, end))
-
-            # Now strip out all instances of the template
-            templateSectionsToSliceOut.reverse()
-            for tslice in templateSectionsToSliceOut:
-                # Replace the template symbol with a single symbol
-                template_symbol = "CppHeaderParser_template_%d" % len(
-                    self.templateRegistry
-                )
-                self.templateRegistry.append(headerFileStr[tslice[0] : tslice[1] + 1])
-                newlines = (
-                    headerFileStr[tslice[0] : tslice[1]].count("\n") * "\n"
-                )  # Keep line numbers the same
-                headerFileStr = (
-                    headerFileStr[: tslice[0]]
-                    + newlines
-                    + " "
-                    + template_symbol
-                    + " "
-                    + headerFileStr[tslice[1] + 1 :]
-                )
-        except:
-            pass
 
         # Change multi line #defines and expressions to single lines maintaining line nubmers
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
@@ -2843,10 +2799,14 @@ class CppHeader(_CppHeader):
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, location=lex.current_location())
                 # debug_print("TOK: %s"%tok)
-                if tok.type == "NAME" and tok.value in self.IGNORE_NAMES:
-                    continue
-                if tok.type != "TEMPLATE_NAME":
-                    self.stack.append(tok.value)
+                if tok.type == "NAME":
+                    if tok.value in self.IGNORE_NAMES:
+                        continue
+                    elif tok.value == "template":
+                        self._parse_template()
+                        continue
+
+                self.stack.append(tok.value)
 
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s" % tok)
@@ -2854,14 +2814,6 @@ class CppHeader(_CppHeader):
                     self.stack = []
                     self.nameStack = []
                     continue
-                if tok.type == "TEMPLATE_NAME":
-                    try:
-                        templateId = int(
-                            tok.value.replace("CppHeaderParser_template_", "")
-                        )
-                        self.curTemplate = self.templateRegistry[templateId]
-                    except:
-                        pass
                 if tok.type == "{":
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
@@ -3075,7 +3027,6 @@ class CppHeader(_CppHeader):
             "_structs_brace_level",
             "typedefs_order",
             "curTemplate",
-            "templateRegistry",
         ]:
             del self.__dict__[key]
 
@@ -3086,6 +3037,60 @@ class CppHeader(_CppHeader):
                 return location
 
         return self.lex.current_location()
+
+    def _parse_error(self, tokens, expected):
+        if not tokens:
+            # common case after a failed token_if
+            errtok = self.lex.token()
+        else:
+            errtok = tokens[-1]
+        if expected:
+            expected = ", expected " + expected
+
+        msg = "unexpected %s%s" % (errtok.value, expected)
+
+        # TODO: better error message
+        return CppParseError(msg)
+
+    def _next_token_must_be(self, *tokenTypes):
+        tok = self.lex.token()
+        if tok.type not in tokenTypes:
+            raise self._parse_error((tok,), " or ".join(tokenTypes))
+        return tok
+
+    _end_balanced_tokens = set([">", "}", "]", ")", "DBL_RBRACKET"])
+    _balanced_token_map = {
+        "<": ">",
+        "{": "}",
+        "(": ")",
+        "[": "]",
+        "DBL_LBRACKET": "DBL_RBRACKET",
+    }
+
+    def _consume_balanced_tokens(self, *init_tokens):
+
+        _balanced_token_map = self._balanced_token_map
+
+        consumed = list(init_tokens)
+        match_stack = deque((_balanced_token_map[tok.type] for tok in consumed))
+        get_token = self.lex.token
+
+        while True:
+            tok = get_token()
+            consumed.append(tok)
+
+            if tok.type in self._end_balanced_tokens:
+                expected = match_stack.pop()
+                if tok.type != expected:
+                    raise self._parse_error(consumed, match_stack[-1])
+                if len(match_stack) == 0:
+                    return consumed
+
+                continue
+
+            next_end = _balanced_token_map.get(tok.type)
+            if next_end:
+                match_stack.append(next_end)
 
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -3263,6 +3268,21 @@ class CppHeader(_CppHeader):
         )  # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         self.lex.doxygenCommentCache = ""
         self.curTemplate = None
+
+    def _parse_template(self):
+        tok = self._next_token_must_be("<")
+        consumed = self._consume_balanced_tokens(tok)
+        tmpl = " ".join(tok.value for tok in consumed)
+        tmpl = (
+            tmpl.replace(" : : ", "::")
+            .replace(" <", "<")
+            .replace("< ", "<")
+            .replace(" >", ">")
+            .replace("> ", ">")
+            .replace(" , ", ", ")
+            .replace(" = ", "=")
+        )
+        self.curTemplate = "template" + tmpl
 
     def _evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""

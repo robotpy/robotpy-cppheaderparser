@@ -10,7 +10,6 @@ class Lexer(object):
     tokens = [
         "NUMBER",
         "FLOAT_NUMBER",
-        "TEMPLATE_NAME",
         "NAME",
         "COMMENT_SINGLELINE",
         "COMMENT_MULTILINE",
@@ -54,7 +53,6 @@ class Lexer(object):
     t_ignore = " \t\r?@\f"
     t_NUMBER = r"[0-9][0-9XxA-Fa-f]*"
     t_FLOAT_NUMBER = r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?"
-    t_TEMPLATE_NAME = r"CppHeaderParser_template_[0-9]+"
     t_NAME = r"[A-Za-z_~][A-Za-z0-9_]*"
 
     def t_PRECOMP_MACRO(self, t):

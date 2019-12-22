@@ -238,7 +238,7 @@ class SampleClass_doxygen_TestCase(unittest.TestCase):
         self.assertEqual(m["name"], "prop1")
         self.assertEqual(m["type"], "string")
         self.assertEqual(m["doxygen"], "/// prop1 description")
-    
+
     def test_prop5(self):
         m = self.cppHeader.classes["SampleClass"]["properties"]["private"][1]
         self.assertEqual(m["name"], "prop5")
@@ -250,7 +250,7 @@ class SampleClass_doxygen_TestCase(unittest.TestCase):
         self.assertEqual(m["name"], "prop6")
         self.assertEqual(m["type"], "bool")
         self.assertEqual(m["doxygen"], "/*!< prop6 description */")
-    
+
     def test_prop7(self):
         m = self.cppHeader.classes["SampleClass"]["properties"]["private"][3]
         self.assertEqual(m["name"], "prop7")
@@ -729,7 +729,7 @@ class Chicken_TestCase(unittest.TestCase):
     def test_template(self):
         self.assertEqual(
             self.cppHeader.classes["Chicken"]["methods"]["private"][0]["template"],
-            "template <typename T>",
+            "template<typename T>",
         )
 
 
@@ -1732,7 +1732,7 @@ class Onion_TestCase(unittest.TestCase):
     def test_class_template(self):
         self.assertEqual(
             self.cppHeader.classes["Onion<Sweet,Plant>"]["template"],
-            "template <typename Plant>",
+            "template<typename Plant>",
         )
 
 
@@ -2015,7 +2015,8 @@ class ClassRegularTypedefs_TestCase(unittest.TestCase):
 # Bug BitBucket #6
 class LineNumAfterDivide_TestCase(unittest.TestCase):
     def setUp(self):
-        self.cppHeader = CppHeaderParser.CppHeader("""
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
 
 // Bug BitBucket #6
 class LineNumAfterDivide
@@ -2026,7 +2027,9 @@ class LineNumAfterDivide
   void func2();
 };
 
-""", "string")
+""",
+            "string",
+        )
 
     def test_line_num(self):
         m = self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1]
@@ -2259,11 +2262,7 @@ class Raddish_TestCase(unittest.TestCase):
         )
 
     def test_class_template(self):
-        template_str = (
-            "template<typename VALUE,\n"
-            "         typename VALUE_SET_ITERATOR,\n"
-            "         typename ACCESOR=Raddish::SimpleAccessor<VALUE,VALUE_SET_ITERATOR> >"
-        )
+        template_str = "template<typename VALUE, typename VALUE_SET_ITERATOR, typename ACCESOR=Raddish::SimpleAccessor<VALUE, VALUE_SET_ITERATOR>>"
         self.assertEqual(
             self.cppHeader.classes["Raddish_SetIterator"]["template"], template_str
         )
