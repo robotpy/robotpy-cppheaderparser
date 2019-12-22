@@ -90,9 +90,9 @@ namespace Alpha
 			///
 			typedef enum
 			{
-				RI_ZERO,
-				RI_ONE,
-				RI_TWO
+				RI_ZERO, /// item zero
+				RI_ONE,  /** item one */
+				RI_TWO   //!< item two
 			} Rino;
 		};
     };

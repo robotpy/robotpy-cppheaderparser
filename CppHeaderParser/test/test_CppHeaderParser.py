@@ -506,9 +506,9 @@ class OmegaClass_Rino_TestCase(unittest.TestCase):
         self.assertEqual(
             self.cppHeader.classes["OmegaClass"]["enums"]["protected"][0]["values"],
             [
-                {"name": "RI_ZERO", "value": 0},
-                {"name": "RI_ONE", "value": 1},
-                {"name": "RI_TWO", "value": 2},
+                {"name": "RI_ZERO", "value": 0, "doxygen": "/// item zero"},
+                {"name": "RI_ONE", "value": 1, "doxygen": "/** item one */"},
+                {"name": "RI_TWO", "value": 2, "doxygen": "//!< item two"},
             ],
         )
 
