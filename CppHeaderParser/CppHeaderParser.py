@@ -593,8 +593,7 @@ class CppClass(dict):
           and values are lists of :class:`.CppVariable`
         * ``enums`` - Dictionary where keys are from supportedAccessSpecifier and
           values are lists of :class:`.CppEnum`
-        * ``structs`` - Dictionary where keys are from supportedAccessSpecifier and
-          values are lists of nested :class:`.CppStruct`
+        * ``nested_classes`` - Classes and structs defined within this class
         * ``final`` - True if final
         * ``abstract`` - True if abstract
         
@@ -658,7 +657,6 @@ class CppClass(dict):
         self["abstract"] = False
         self["final"] = False
         self._public_enums = {}
-        self._public_structs = {}
         self._public_typedefs = {}
         self._public_forward_declares = []
         self["namespace"] = ""
@@ -690,7 +688,6 @@ class CppClass(dict):
         methodAccessSpecificList = {}
         propertyAccessSpecificList = {}
         enumAccessSpecificList = {}
-        structAccessSpecificList = {}
         typedefAccessSpecificList = {}
         forwardAccessSpecificList = {}
 
@@ -698,14 +695,12 @@ class CppClass(dict):
             methodAccessSpecificList[accessSpecifier] = []
             propertyAccessSpecificList[accessSpecifier] = []
             enumAccessSpecificList[accessSpecifier] = []
-            structAccessSpecificList[accessSpecifier] = []
             typedefAccessSpecificList[accessSpecifier] = []
             forwardAccessSpecificList[accessSpecifier] = []
 
         self["methods"] = methodAccessSpecificList
         self["properties"] = propertyAccessSpecificList
         self["enums"] = enumAccessSpecificList
-        self["structs"] = structAccessSpecificList
         self["typedefs"] = typedefAccessSpecificList
         self["forward_declares"] = forwardAccessSpecificList
 
@@ -1338,26 +1333,6 @@ class CppEnum(_CppEnum):
         set_location_info(self, location)
 
 
-class CppStruct(dict):
-    """
-        Dictionary that contains at least the following keys:
-
-        * ``type`` - Name of this struct
-        * ``fields`` - List of :class:`.CppVariable`
-        * ``line_number`` - Line number this struct was found on
-    """
-
-    Structs = []
-
-    def __init__(self, nameStack, location):
-        if len(nameStack) >= 2:
-            self["type"] = nameStack[1]
-        else:
-            self["type"] = None
-        self["fields"] = []
-        set_location_info(self, location)
-        self.Structs.append(self)
-
 
 C99_NONSTANDARD = {
     "int8": "signed char",
@@ -1392,21 +1367,16 @@ class Resolver(object):
     SubTypedefs = {}  # TODO deprecate?
     NAMESPACES = []
     CLASSES = {}
-    STRUCTS = {}
 
     def initextra(self):
         self.typedefs = {}
         self.typedefs_order = []
         self.classes_order = []
-        self.structs = Resolver.STRUCTS
-        self.structs_order = []
         self.namespaces = Resolver.NAMESPACES  # save all namespaces
-        self.curStruct = None
         self.stack = (
             []
         )  # full name stack, good idea to keep both stacks? (simple stack and full stack)
         self._classes_brace_level = {}  # class name : level
-        self._structs_brace_level = {}  # struct type : level
         self._method_body = None
         self._forward_decls = []
         self._template_typenames = []  # template<typename XXX>
@@ -1565,13 +1535,6 @@ class Resolver(object):
             result["unresolved"] = False
 
     def finalize_vars(self):
-        for (
-            s
-        ) in (
-            CppStruct.Structs
-        ):  # vars within structs can be ignored if they do not resolve
-            for var in s["fields"]:
-                var["parent"] = s["type"]
         # for c in self.classes.values():
         #    for var in c.get_all_properties(): var['parent'] = c['name']
 
@@ -1600,8 +1563,6 @@ class Resolver(object):
                         klass = var["method"]["parent"]
                         if tag in var["method"]["parent"]._public_enums:
                             nestedEnum = var["method"]["parent"]._public_enums[tag]
-                        elif tag in var["method"]["parent"]._public_structs:
-                            nestedStruct = var["method"]["parent"]._public_structs[tag]
                         elif tag in var["method"]["parent"]._public_typedefs:
                             nestedTypedef = var["method"]["parent"]._public_typedefs[
                                 tag
@@ -1646,14 +1607,6 @@ class Resolver(object):
                             var["concrete_type"] = con
                             var["ctypes_type"] = self.guess_ctypes_type(
                                 var["concrete_type"]
-                            )
-
-                        elif tag in self.structs:
-                            trace_print("STRUCT", var)
-                            var["struct"] = tag
-                            var["ctypes_type"] = "ctypes.c_void_p"
-                            var["raw_type"] = (
-                                self.structs[tag]["namespace"] + "::" + tag
                             )
 
                         elif tag in self._forward_decls:
@@ -2039,23 +1992,6 @@ class _CppHeader(Resolver):
                             cls["abstract"] = True
                             break
 
-    def _evaluate_struct_stack(self):
-        """Create a Struct out of the name stack (but not its parts)"""
-        # print( 'eval struct stack', self.nameStack )
-        # if self.braceDepth != len(self.nameSpaces): return
-        struct = CppStruct(self.nameStack, self._get_location(self.nameStack))
-        struct["namespace"] = self.cur_namespace()
-        self.structs[struct["type"]] = struct
-        self.structs_order.append(struct)
-        if self.curClass:
-            struct["parent"] = self.curClass
-            klass = self.classes[self.curClass]
-            klass["structs"][self.curAccessSpecifier].append(struct)
-            if self.curAccessSpecifier == "public":
-                klass._public_structs[struct["type"]] = struct
-        self.curStruct = struct
-        self._structs_brace_level[struct["type"]] = self.braceDepth
-
     _method_type_defaults = {
         n: False
         for n in "defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default".split()
@@ -2205,11 +2141,6 @@ class _CppHeader(Resolver):
     def _evaluate_method_stack(self):
         """Create a method out of the name stack"""
 
-        if self.curStruct:
-            trace_print("WARN - struct contains methods - skipping")
-            trace_print(self.stack)
-            assert 0
-
         info = self.parse_method_type(self.stack)
         if info:
             if (
@@ -2337,7 +2268,7 @@ class _CppHeader(Resolver):
                 Resolver.SubTypedefs[name] = self.curClass
             else:
                 assert 0
-        elif self.curStruct or self.curClass:
+        elif self.curClass:
             if len(self.nameStack) == 1:
                 # See if we can de anonymize the type
                 filteredParseHistory = [
@@ -2384,10 +2315,7 @@ class _CppHeader(Resolver):
                 self._get_location(self.nameStack),
             )
             newVar["namespace"] = self.current_namespace()
-            if self.curStruct:
-                self.curStruct["fields"].append(newVar)
-                newVar["property_of_struct"] = self.curStruct
-            elif self.curClass:
+            if self.curClass:
                 klass = self.classes[self.curClass]
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar["property_of_class"] = klass["name"]
@@ -2565,7 +2493,6 @@ class CppHeader(_CppHeader):
         """
         ## reset global state ##
         CppVariable.Vars = []
-        CppStruct.Structs = []
 
         if argType == "file":
             self.headerFileName = os.path.expandvars(headerFileName)
@@ -2829,17 +2756,7 @@ class CppHeader(_CppHeader):
                             self.curClass = self.classes[self.curClass]["parent"]
                         else:
                             self.curClass = ""
-                            # self.curStruct = None
                         self.stack = []
-
-                    # if self.curStruct: self.curStruct = None
-                    if self.braceDepth == 0 or (
-                        self.curStruct
-                        and self._structs_brace_level[self.curStruct["type"]]
-                        == self.braceDepth
-                    ):
-                        trace_print("END OF STRUCT DEF")
-                        self.curStruct = None
 
                     if self._method_body and (self.braceDepth + 1) <= self._method_body:
                         self._method_body = None
@@ -2960,11 +2877,9 @@ class CppHeader(_CppHeader):
             "_forward_decls",
             "stack",
             "mainClass",
-            "curStruct",
             "_template_typenames",
             "_method_body",
             "braceDepth",
-            "_structs_brace_level",
             "typedefs_order",
             "curTemplate",
         ]:
@@ -3130,7 +3045,6 @@ class CppHeader(_CppHeader):
             trace_print("INSIDE METHOD DEF")
         elif (
             is_method_namestack(self.stack)
-            and not self.curStruct
             and "(" in self.nameStack
         ):
             debug_print("trace")
@@ -3189,8 +3103,6 @@ class CppHeader(_CppHeader):
 
         elif not self.curClass:
             debug_print("trace")
-            if self.curStruct and self.stack[-1] == ";":
-                self._evaluate_property_stack()  # this catches fields of global structs
             self.nameStack = []
         elif self.braceDepth < 1:
             debug_print("trace")
