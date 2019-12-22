@@ -509,6 +509,8 @@ class OmegaClass_Rino_TestCase(unittest.TestCase):
                 {"name": "RI_ZERO", "value": 0, "doxygen": "/// item zero"},
                 {"name": "RI_ONE", "value": 1, "doxygen": "/** item one */"},
                 {"name": "RI_TWO", "value": 2, "doxygen": "//!< item two"},
+                {"name": "RI_THREE", "value": 3},
+                {"name": "RI_FOUR", "value": 4, "doxygen": "/// item four"},
             ],
         )
 

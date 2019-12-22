@@ -92,7 +92,10 @@ namespace Alpha
 			{
 				RI_ZERO, /// item zero
 				RI_ONE,  /** item one */
-				RI_TWO   //!< item two
+				RI_TWO,   //!< item two
+				RI_THREE,
+				/// item four
+				RI_FOUR,
 			} Rino;
 		};
     };
