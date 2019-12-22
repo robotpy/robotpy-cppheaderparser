@@ -3155,5 +3155,34 @@ struct S : public T... {};
         )
 
 
+class Attributes_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+struct [[deprecated]] S {};
+[[deprecated]] typedef S* PS;
+
+[[deprecated]] int x;
+union U { [[deprecated]] int n; };
+[[deprecated]] void f();
+
+enum [[deprecated]] E { A [[deprecated]], B [[deprecated]] = 42 };
+
+struct alignas(8) AS {};
+
+""",
+            "string",
+        )
+
+    def test_existance(self):
+
+        self.assertIn("S", self.cppHeader.classes)
+        self.assertIn("PS", self.cppHeader.typedefs)
+        self.assertEqual("x", self.cppHeader.variables[0]["name"])
+        self.assertEqual("f", self.cppHeader.functions[0]["name"])
+        self.assertIn("AS", self.cppHeader.classes)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2805,6 +2805,12 @@ class CppHeader(_CppHeader):
                     elif tok.value == "template":
                         self._parse_template()
                         continue
+                    elif tok.value == "alignas":
+                        self._parse_attribute_specifier_seq(tok)
+                        continue
+                elif tok.type == "DBL_LBRACKET":
+                    self._parse_attribute_specifier_seq(tok)
+                    continue
 
                 self.stack.append(tok.value)
 
@@ -3283,6 +3289,31 @@ class CppHeader(_CppHeader):
             .replace(" = ", "=")
         )
         self.curTemplate = "template" + tmpl
+
+    _attribute_specifier_seq_start_types = ("DBL_LBRACKET", "NAME")
+
+    def _parse_attribute_specifier_seq(self, tok):
+        # TODO: retain the attributes and do something with them
+        # attrs = []
+
+        while True:
+            if tok.type == "DBL_LBRACKET":
+                tokens = self._consume_balanced_tokens(tok)
+                # attrs.append(Attribute(tokens))
+            elif tok.type == "NAME" and tok.value == "alignas":
+                next_tok = self._next_token_must_be("(")
+                tokens = self._consume_balanced_tokens(next_tok)
+                # attrs.append(AlignasAttribute(tokens))
+            else:
+                self.lex.return_token(tok)
+                break
+
+            # multiple attributes can be specified
+            tok = self.lex.token_if(*self._attribute_specifier_seq_start_types)
+            if tok is None:
+                break
+
+        # return attrs
 
     def _evaluate_enum_stack(self):
         """Create an Enum out of the name stack"""
