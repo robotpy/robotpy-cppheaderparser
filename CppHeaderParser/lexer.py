@@ -22,6 +22,7 @@ class Lexer(object):
         "ELLIPSIS",
         "DBL_LBRACKET",
         "DBL_RBRACKET",
+        "SHIFT_LEFT",
     ]
 
     literals = [
@@ -84,6 +85,8 @@ class Lexer(object):
     t_ELLIPSIS = r"\.\.\."
     t_DBL_LBRACKET = r"\[\["
     t_DBL_RBRACKET = r"\]\]"
+    t_SHIFT_LEFT = r"<<"
+    # SHIFT_RIGHT introduces ambiguity
 
     # found at http://wordaligned.org/articles/string-literals-and-regular-expressions
     # TODO: This does not work with the string "bla \" bla"

@@ -3186,5 +3186,34 @@ struct alignas(8) AS {};
         self.assertIn("AS", self.cppHeader.classes)
 
 
+class EnumWithTemplates_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+enum {
+    IsRandomAccess = std::is_base_of<std::random_access_iterator_tag,
+                                     IteratorCategoryT>::value,
+    IsBidirectional = std::is_base_of<std::bidirectional_iterator_tag,
+                                      IteratorCategoryT>::value,
+  };
+""",
+            "string",
+        )
+
+    def test_values(self):
+        e = self.cppHeader.enums[0]
+        v0 = e["values"][0]
+        self.assertEqual(
+            v0["value"],
+            "std :: is_base_of < std :: random_access_iterator_tag , IteratorCategoryT > :: value",
+        )
+
+        v1 = e["values"][1]
+        self.assertEqual(
+            v1["value"],
+            "std :: is_base_of < std :: bidirectional_iterator_tag , IteratorCategoryT > :: value",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

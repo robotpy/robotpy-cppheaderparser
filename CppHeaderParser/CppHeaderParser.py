@@ -2528,6 +2528,7 @@ _namestack_append_tokens = {
     "+",
     "STRING_LITERAL",
     "ELLIPSIS",
+    "SHIFT_LEFT",
 }
 
 _namestack_pass_tokens = {
@@ -3021,7 +3022,16 @@ class CppHeader(_CppHeader):
             if tok.type in self._end_balanced_tokens:
                 expected = match_stack.pop()
                 if tok.type != expected:
-                    raise self._parse_error(consumed, match_stack[-1])
+                    # hack: ambiguous right-shift issues here, really
+                    # should be looking at the context
+                    if tok.type == ">":
+                        tok = self.lex.token_if(">")
+                        if tok:
+                            consumed.append(tok)
+                            match_stack.append(expected)
+                            continue
+
+                    raise self._parse_error(consumed, expected)
                 if len(match_stack) == 0:
                     return consumed
 
@@ -3390,11 +3400,13 @@ class CppHeader(_CppHeader):
                 while True:
                     tok = self.lex.token()
                     if tok.type == "}":
-                        value["value"] = " ".join(v)
+                        value["value"] = (" ".join(v)).replace(": :", "::")
                         return
                     elif tok.type == ",":
-                        value["value"] = " ".join(v)
+                        value["value"] = (" ".join(v)).replace(": :", "::")
                         break
+                    elif tok.type in self._balanced_token_map:
+                        v.extend(t.value for t in self._consume_balanced_tokens(tok))
                     else:
                         v.append(tok.value)
 
