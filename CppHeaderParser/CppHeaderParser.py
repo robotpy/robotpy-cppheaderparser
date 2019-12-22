@@ -125,24 +125,22 @@ def is_namespace(nameStack):
     return False
 
 
-_fundamentals = set(
-    [
-        "size_t",
-        "struct",
-        "union",
-        "unsigned",
-        "signed",
-        "bool",
-        "char",
-        "short",
-        "int",
-        "float",
-        "double",
-        "long",
-        "void",
-        "*",
-    ]
-)
+_fundamentals = {
+    "size_t",
+    "struct",
+    "union",
+    "unsigned",
+    "signed",
+    "bool",
+    "char",
+    "short",
+    "int",
+    "float",
+    "double",
+    "long",
+    "void",
+    "*",
+}
 
 
 def is_fundamental(s):
@@ -2511,7 +2509,7 @@ class _CppHeader(Resolver):
 
 
 # fmt: off
-_namestack_append_tokens = set([
+_namestack_append_tokens = {
     "(",
     ")",
     "[",
@@ -2530,21 +2528,21 @@ _namestack_append_tokens = set([
     "+",
     "STRING_LITERAL",
     "ELLIPSIS",
-])
+}
 
-_namestack_pass_tokens = set([
+_namestack_pass_tokens = {
     "'",
     "." # preserve behaviour and eat individual fullstops
-])
+}
 
-_namestack_str_tokens = set([
+_namestack_str_tokens = {
     "NAME",
     "&",
     "*",
     "<",
     ">",
     "CHAR_LITERAL"
-])
+}
 # fmt: on
 
 
@@ -2999,7 +2997,7 @@ class CppHeader(_CppHeader):
             raise self._parse_error((tok,), " or ".join(tokenTypes))
         return tok
 
-    _end_balanced_tokens = set([">", "}", "]", ")", "DBL_RBRACKET"])
+    _end_balanced_tokens = {">", "}", "]", ")", "DBL_RBRACKET"}
     _balanced_token_map = {
         "<": ">",
         "{": "}",

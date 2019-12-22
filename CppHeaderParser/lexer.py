@@ -177,7 +177,7 @@ class Lexer(object):
         del self.comments[:]
         return comments
 
-    _discard_types = set(["NEWLINE", "COMMENT_SINGLELINE", "COMMENT_MULTILINE"])
+    _discard_types = {"NEWLINE", "COMMENT_SINGLELINE", "COMMENT_MULTILINE"}
 
     def token(self, eof_ok=False):
         tok = None
