@@ -104,7 +104,7 @@ class Lexer(object):
     def t_NEWLINE(self, t):
         r"\n+"
         t.lexer.lineno += len(t.value)
-        self.comments.clear()
+        del self.comments[:]
         return t
 
     def t_error(self, v):
@@ -171,10 +171,10 @@ class Lexer(object):
                 if ttype == "NAME":
                     break
 
-                self.comments.clear()
+                del self.comments[:]
 
         comments = "\n".join(comments)
-        self.comments.clear()
+        del self.comments[:]
         return comments
 
     _discard_types = set(["NEWLINE", "COMMENT_SINGLELINE", "COMMENT_MULTILINE"])
