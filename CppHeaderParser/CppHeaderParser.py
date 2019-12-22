@@ -2582,36 +2582,35 @@ class _CppHeader(Resolver):
 
 # fmt: off
 _namestack_append_tokens = set([
-    "OPEN_PAREN",
-    "CLOSE_PAREN",
-    "OPEN_SQUARE_BRACKET",
-    "CLOSE_SQUARE_BRACKET",
-    "EQUALS",
-    "COMMA",
-    "BACKSLASH",
+    "(",
+    ")",
+    "[",
+    "]",
+    "=",
+    ",",
+    "\\",
     "DIVIDE",
-    "PIPE",
-    "PERCENT",
-    "CARET",
-    "EXCLAMATION",
+    "|",
+    "%",
+    "^",
+    "!",
     "NUMBER",
     "FLOAT_NUMBER",
-    "MINUS",
-    "PLUS",
+    "-",
+    "+",
     "STRING_LITERAL",
     "ELLIPSIS",
 ])
 
 _namestack_pass_tokens = set([
-    "TAB",
-    "SQUOTE",
-    "DOT" # preserve behaviour and eat individual fullstops
+    "'",
+    "." # preserve behaviour and eat individual fullstops
 ])
 
 _namestack_str_tokens = set([
     "NAME",
-    "AMPERSAND",
-    "ASTERISK",
+    "&",
+    "*",
     "CHAR_LITERAL"
 ])
 # fmt: on
@@ -2863,7 +2862,7 @@ class CppHeader(_CppHeader):
                         self.curTemplate = self.templateRegistry[templateId]
                     except:
                         pass
-                if tok.type == "OPEN_BRACE":
+                if tok.type == "{":
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
                     ):  # namespace {} with no name used in boost, this sets default?
@@ -2907,7 +2906,7 @@ class CppHeader(_CppHeader):
                         self.stack = []
                     self.braceDepth += 1
 
-                elif tok.type == "CLOSE_BRACE":
+                elif tok.type == "}":
                     if self.braceDepth == 0:
                         continue
                     if self.braceDepth == len(self.nameSpaces):
@@ -2988,7 +2987,7 @@ class CppHeader(_CppHeader):
                         self.nameStack.append(tok.value)
                         if self.anon_union_counter[0] == self.braceDepth:
                             self.anon_union_counter = [-1, 0]
-                elif tok.type == "COLON":
+                elif tok.type == ":":
                     # Dont want colon to be first in stack
                     if len(self.nameStack) == 0:
                         self.accessSpecifierScratch = []
@@ -3007,7 +3006,7 @@ class CppHeader(_CppHeader):
                         self.nameStack.append(tok.value)
                     self.accessSpecifierScratch = []
 
-                elif tok.type == "SEMI_COLON":
+                elif tok.type == ";":
                     if (
                         self.anon_union_counter[0] == self.braceDepth
                         and self.anon_union_counter[1]

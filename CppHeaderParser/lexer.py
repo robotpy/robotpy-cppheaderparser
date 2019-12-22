@@ -11,59 +11,48 @@ class Lexer(object):
         "FLOAT_NUMBER",
         "TEMPLATE_NAME",
         "NAME",
-        "OPEN_PAREN",
-        "CLOSE_PAREN",
-        "OPEN_BRACE",
-        "CLOSE_BRACE",
-        "OPEN_SQUARE_BRACKET",
-        "CLOSE_SQUARE_BRACKET",
-        "COLON",
-        "SEMI_COLON",
-        "COMMA",
-        "TAB",
-        "BACKSLASH",
-        "PIPE",
-        "PERCENT",
-        "EXCLAMATION",
-        "CARET",
         "COMMENT_SINGLELINE",
         "COMMENT_MULTILINE",
         "PRECOMP_MACRO",
         "PRECOMP_MACRO_CONT",
-        "ASTERISK",
-        "AMPERSAND",
-        "EQUALS",
-        "MINUS",
-        "PLUS",
         "DIVIDE",
         "CHAR_LITERAL",
         "STRING_LITERAL",
         "NEW_LINE",
-        "SQUOTE",
         "ELLIPSIS",
-        "DOT",
     ]
 
-    t_ignore = " \r?@\f"
+    literals = [
+        "<",
+        ">",
+        "(",
+        ")",
+        "{",
+        "}",
+        "[",
+        "]",
+        ";",
+        ":",
+        ",",
+        "\\",
+        "|",
+        "%",
+        "^",
+        "!",
+        "*",
+        "-",
+        "+",
+        "&",
+        "=",
+        "'",
+        ".",
+    ]
+
+    t_ignore = " \t\r?@\f"
     t_NUMBER = r"[0-9][0-9XxA-Fa-f]*"
     t_FLOAT_NUMBER = r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?"
     t_TEMPLATE_NAME = r"CppHeaderParser_template_[0-9]+"
     t_NAME = r"[<>A-Za-z_~][A-Za-z0-9_]*"
-    t_OPEN_PAREN = r"\("
-    t_CLOSE_PAREN = r"\)"
-    t_OPEN_BRACE = r"{"
-    t_CLOSE_BRACE = r"}"
-    t_OPEN_SQUARE_BRACKET = r"\["
-    t_CLOSE_SQUARE_BRACKET = r"\]"
-    t_SEMI_COLON = r";"
-    t_COLON = r":"
-    t_COMMA = r","
-    t_TAB = r"\t"
-    t_BACKSLASH = r"\\"
-    t_PIPE = r"\|"
-    t_PERCENT = r"%"
-    t_CARET = r"\^"
-    t_EXCLAMATION = r"!"
 
     def t_PRECOMP_MACRO(self, t):
         r"\#.*"
@@ -93,16 +82,9 @@ class Lexer(object):
                 self.doxygenCommentCache += t.value
         t.lexer.lineno += t.value.count("\n")
 
-    t_ASTERISK = r"\*"
-    t_MINUS = r"\-"
-    t_PLUS = r"\+"
     t_DIVIDE = r"/(?!/)"
-    t_AMPERSAND = r"&"
-    t_EQUALS = r"="
     t_CHAR_LITERAL = "'.'"
-    t_SQUOTE = "'"
     t_ELLIPSIS = r"\.\.\."
-    t_DOT = r"\."
 
     # found at http://wordaligned.org/articles/string-literals-and-regular-expressions
     # TODO: This does not work with the string "bla \" bla"
@@ -155,4 +137,4 @@ class Lexer(object):
 
 
 if __name__ == "__main__":
-    lex.runmain(lexer=Lexer())
+    lex.runmain(lexer=Lexer(None))
