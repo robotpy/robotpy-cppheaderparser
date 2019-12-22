@@ -46,6 +46,7 @@
 #
 
 
+from collections import deque
 import os
 import sys
 import re
@@ -124,35 +125,22 @@ def is_namespace(nameStack):
     return False
 
 
-def is_enum_namestack(nameStack):
-    """Determines if a namestack is an enum namestack"""
-    if len(nameStack) == 0:
-        return False
-    if nameStack[0] == "enum":
-        return True
-    if len(nameStack) > 1 and nameStack[0] == "typedef" and nameStack[1] == "enum":
-        return True
-    return False
-
-
-_fundamentals = set(
-    [
-        "size_t",
-        "struct",
-        "union",
-        "unsigned",
-        "signed",
-        "bool",
-        "char",
-        "short",
-        "int",
-        "float",
-        "double",
-        "long",
-        "void",
-        "*",
-    ]
-)
+_fundamentals = {
+    "size_t",
+    "struct",
+    "union",
+    "unsigned",
+    "signed",
+    "bool",
+    "char",
+    "short",
+    "int",
+    "float",
+    "double",
+    "long",
+    "void",
+    "*",
+}
 
 
 def is_fundamental(s):
@@ -979,10 +967,8 @@ class CppMethod(_CppMethod):
             self["rtnType"] = "void"
 
         self["rtnType"] = self["rtnType"].replace(" : : ", "::")
-        self["rtnType"] = self["rtnType"].replace(" <", "<")
-        self["rtnType"] = (
-            self["rtnType"].replace(" >", ">").replace(">>", "> >").replace(">>", "> >")
-        )
+        self["rtnType"] = self["rtnType"].replace(" < ", "<")
+        self["rtnType"] = self["rtnType"].replace(" > ", "> ").replace(">>", "> >")
         self["rtnType"] = self["rtnType"].replace(" ,", ",")
 
         # deal with "noexcept" specifier/operator
@@ -1240,11 +1226,11 @@ class CppVariable(_CppVariable):
 
         self["type"] = self["type"].replace(" :", ":")
         self["type"] = self["type"].replace(": ", ":")
-        self["type"] = self["type"].replace(" <", "<")
-        self["type"] = (
-            self["type"].replace(" >", ">").replace(">>", "> >").replace(">>", "> >")
-        )
+        self["type"] = self["type"].replace(" < ", "<")
+        self["type"] = self["type"].replace(" > ", "> ").replace(">>", "> >")
+        self["type"] = self["type"].replace(") >", ")>")
         self["type"] = self["type"].replace(" ,", ",")
+
         # Optional doxygen description
         try:
             self["desc"] = kwargs["doxyVarDesc"][self["name"]]
@@ -1325,13 +1311,11 @@ class _CppEnum(dict):
             except:
                 pass
             i += 1
-        return t
+        self["type"] = t
 
 
 class CppEnum(_CppEnum):
-    """Takes a name stack and turns it into an Enum
-    
-    Contains the following keys:
+    """Contains the following keys:
 
     * ``name`` - Name of the enum (ex. "ItemState")
     * ``namespace`` - Namespace containing the enum
@@ -1343,71 +1327,15 @@ class CppEnum(_CppEnum):
         if a value for a given enum value was defined
     """
 
-    def __init__(self, nameStack, doxygen, location):
+    def __init__(self, name, doxygen, location):
         if doxygen:
             self["doxygen"] = doxygen
-        if len(nameStack) == 3 and nameStack[0] == "enum":
-            debug_print("Created enum as just name/value")
-            self["name"] = nameStack[1]
-            self["instances"] = [[nameStack[2]]]
-        if len(nameStack) < 4 or "{" not in nameStack or "}" not in nameStack:
-            # Not enough stuff for an enum
-            debug_print("Bad enum")
-            return
-        valueList = []
-        set_location_info(self, location)
-        # Figure out what values it has
-        valueStack = nameStack[nameStack.index("{") + 1 : nameStack.index("}")]
-        while len(valueStack):
-            tmpStack = []
-            if "," in valueStack:
-                tmpStack = valueStack[: valueStack.index(",")]
-                valueStack = valueStack[valueStack.index(",") + 1 :]
-            else:
-                tmpStack = valueStack
-                valueStack = []
-            d = {}
-            if len(tmpStack) == 1:
-                d["name"] = tmpStack[0]
-            elif len(tmpStack) >= 3 and tmpStack[1] == "=":
-                d["name"] = tmpStack[0]
-                d["value"] = " ".join(tmpStack[2:])
-            elif len(tmpStack) == 2 and tmpStack[1] == "=":
-                debug_print("WARN-enum: parser missed value for %s" % tmpStack[0])
-                d["name"] = tmpStack[0]
-
-            if d:
-                valueList.append(d)
-
-        if len(valueList):
-            self["type"] = self.resolve_enum_values(
-                valueList
-            )  # returns int for standard enum
-            self["values"] = valueList
-        else:
-            warning_print("WARN-enum: empty enum %s" % nameStack)
-            return
-        # Figure out if it has a name
-        preBraceStack = nameStack[: nameStack.index("{")]
-        postBraceStack = nameStack[nameStack.index("}") + 1 :]
-        self["typedef"] = False
-        if len(preBraceStack) == 4 and ":" in nameStack and "typedef" not in nameStack:
-            # C++11 specify enum type with "enum <enum_name> : <type> ..." syntax
-            self["name"] = preBraceStack[1]
-            self["type"] = preBraceStack[3]
-        elif len(preBraceStack) == 2 and "typedef" not in nameStack:
-            # enum "enum <enum_name> ..." syntax
-            self["name"] = preBraceStack[1]
-        elif len(postBraceStack) and "typedef" in nameStack:
-            self["name"] = " ".join(postBraceStack)
-            self["typedef"] = True
-        else:
-            warning_print("WARN-enum: nameless enum %s" % nameStack)
-        # See if there are instances of this
-        if "typedef" not in nameStack and len(postBraceStack):
-            self["instances"] = list(_split_by_comma(postBraceStack))
-
+        if name:
+            self["name"] = name
         self["namespace"] = ""
+        self["typedef"] = False
+        self["values"] = []
+        set_location_info(self, location)
 
 
 class CppStruct(dict):
@@ -2396,9 +2324,9 @@ class _CppHeader(Resolver):
     def _evaluate_property_stack(self, clearStack=True, addToVar=None):
         """Create a Property out of the name stack"""
         global parseHistory
-        assert self.stack and self.stack[-1] == ";"
         debug_print("trace")
         if self.nameStack[0] == "typedef":
+            assert self.stack and self.stack[-1] == ";"
             if self.curClass:
                 typedef = self._parse_typedef(self.stack)
                 name = typedef["name"]
@@ -2581,39 +2509,40 @@ class _CppHeader(Resolver):
 
 
 # fmt: off
-_namestack_append_tokens = set([
-    "OPEN_PAREN",
-    "CLOSE_PAREN",
-    "OPEN_SQUARE_BRACKET",
-    "CLOSE_SQUARE_BRACKET",
-    "EQUALS",
-    "COMMA",
-    "BACKSLASH",
+_namestack_append_tokens = {
+    "(",
+    ")",
+    "[",
+    "]",
+    "=",
+    ",",
+    "\\",
     "DIVIDE",
-    "PIPE",
-    "PERCENT",
-    "CARET",
-    "EXCLAMATION",
+    "|",
+    "%",
+    "^",
+    "!",
     "NUMBER",
     "FLOAT_NUMBER",
-    "MINUS",
-    "PLUS",
+    "-",
+    "+",
     "STRING_LITERAL",
     "ELLIPSIS",
-])
+}
 
-_namestack_pass_tokens = set([
-    "TAB",
-    "SQUOTE",
-    "DOT" # preserve behaviour and eat individual fullstops
-])
+_namestack_pass_tokens = {
+    "'",
+    "." # preserve behaviour and eat individual fullstops
+}
 
-_namestack_str_tokens = set([
+_namestack_str_tokens = {
     "NAME",
-    "AMPERSAND",
-    "ASTERISK",
+    "&",
+    "*",
+    "<",
+    ">",
     "CHAR_LITERAL"
-])
+}
 # fmt: on
 
 
@@ -2698,7 +2627,6 @@ class CppHeader(_CppHeader):
         self.nameStackHistory = []
         self.anon_struct_counter = 0
         self.anon_union_counter = [-1, 0]
-        self.templateRegistry = []
 
         #: Using directives in this header: key is full name for lookup, value
         #: is :class:`.CppVariable`
@@ -2716,50 +2644,6 @@ class CppHeader(_CppHeader):
             supportedAccessSpecifier[i] = re.sub(
                 "[ ]+", " ", supportedAccessSpecifier[i]
             ).strip()
-
-        # Strip out template declarations
-        templateSectionsToSliceOut = []
-        try:
-            for m in re.finditer("template[\t ]*<[^>]*>", headerFileStr):
-                start = m.start()
-                # Search for the final '>' which may or may not be caught in the case of nexted <>'s
-                for i in range(start, len(headerFileStr)):
-                    if headerFileStr[i] == "<":
-                        firstBracket = i
-                        break
-                ltgtStackCount = 1
-                # Now look for fianl '>'
-                for i in range(firstBracket + 1, len(headerFileStr)):
-                    if headerFileStr[i] == "<":
-                        ltgtStackCount += 1
-                    elif headerFileStr[i] == ">":
-                        ltgtStackCount -= 1
-                    if ltgtStackCount == 0:
-                        end = i
-                        break
-                templateSectionsToSliceOut.append((start, end))
-
-            # Now strip out all instances of the template
-            templateSectionsToSliceOut.reverse()
-            for tslice in templateSectionsToSliceOut:
-                # Replace the template symbol with a single symbol
-                template_symbol = "CppHeaderParser_template_%d" % len(
-                    self.templateRegistry
-                )
-                self.templateRegistry.append(headerFileStr[tslice[0] : tslice[1] + 1])
-                newlines = (
-                    headerFileStr[tslice[0] : tslice[1]].count("\n") * "\n"
-                )  # Keep line numbers the same
-                headerFileStr = (
-                    headerFileStr[: tslice[0]]
-                    + newlines
-                    + " "
-                    + template_symbol
-                    + " "
-                    + headerFileStr[tslice[1] + 1 :]
-                )
-        except:
-            pass
 
         # Change multi line #defines and expressions to single lines maintaining line nubmers
         # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
@@ -2834,7 +2718,7 @@ class CppHeader(_CppHeader):
         tok = None
         try:
             while True:
-                tok = lex.token()
+                tok = lex.token(eof_ok=True)
                 if not tok:
                     break
                 if (
@@ -2844,10 +2728,28 @@ class CppHeader(_CppHeader):
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, location=lex.current_location())
                 # debug_print("TOK: %s"%tok)
-                if tok.type == "NAME" and tok.value in self.IGNORE_NAMES:
+                if tok.type == "NAME":
+                    if tok.value in self.IGNORE_NAMES:
+                        continue
+                    elif tok.value == "template":
+                        self._parse_template()
+                        continue
+                    elif tok.value == "alignas":
+                        self._parse_attribute_specifier_seq(tok)
+                        continue
+                    elif tok.value == "enum":
+                        self._parse_enum()
+                        self.stack = []
+                        self.nameStack = []
+                        continue
+                    elif tok.value == "__attribute__":
+                        self._parse_gcc_attribute()
+                        continue
+                elif tok.type == "DBL_LBRACKET":
+                    self._parse_attribute_specifier_seq(tok)
                     continue
-                if tok.type != "TEMPLATE_NAME":
-                    self.stack.append(tok.value)
+
+                self.stack.append(tok.value)
 
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s" % tok)
@@ -2855,15 +2757,7 @@ class CppHeader(_CppHeader):
                     self.stack = []
                     self.nameStack = []
                     continue
-                if tok.type == "TEMPLATE_NAME":
-                    try:
-                        templateId = int(
-                            tok.value.replace("CppHeaderParser_template_", "")
-                        )
-                        self.curTemplate = self.templateRegistry[templateId]
-                    except:
-                        pass
-                if tok.type == "OPEN_BRACE":
+                if tok.type == "{":
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
                     ):  # namespace {} with no name used in boost, this sets default?
@@ -2899,22 +2793,18 @@ class CppHeader(_CppHeader):
                             self.nameStack = origNameStack[classLocationNS:]
                             self.stack = origStack[classLocationS:]
 
-                    if len(self.nameStack) and not is_enum_namestack(self.nameStack):
+                    if self.nameStack:
                         self._evaluate_stack()
-                    else:
-                        self.nameStack.append(tok.value)
                     if self.stack and self.stack[0] == "class":
                         self.stack = []
                     self.braceDepth += 1
 
-                elif tok.type == "CLOSE_BRACE":
+                elif tok.type == "}":
                     if self.braceDepth == 0:
                         continue
                     if self.braceDepth == len(self.nameSpaces):
                         tmp = self.nameSpaces.pop()
                         self.stack = []  # clear stack when namespace ends?
-                    if len(self.nameStack) and is_enum_namestack(self.nameStack):
-                        self.nameStack.append(tok.value)
                     elif self.braceDepth < 10:
                         self._evaluate_stack()
                     else:
@@ -2988,7 +2878,7 @@ class CppHeader(_CppHeader):
                         self.nameStack.append(tok.value)
                         if self.anon_union_counter[0] == self.braceDepth:
                             self.anon_union_counter = [-1, 0]
-                elif tok.type == "COLON":
+                elif tok.type == ":":
                     # Dont want colon to be first in stack
                     if len(self.nameStack) == 0:
                         self.accessSpecifierScratch = []
@@ -3007,7 +2897,7 @@ class CppHeader(_CppHeader):
                         self.nameStack.append(tok.value)
                     self.accessSpecifierScratch = []
 
-                elif tok.type == "SEMI_COLON":
+                elif tok.type == ";":
                     if (
                         self.anon_union_counter[0] == self.braceDepth
                         and self.anon_union_counter[1]
@@ -3076,7 +2966,6 @@ class CppHeader(_CppHeader):
             "_structs_brace_level",
             "typedefs_order",
             "curTemplate",
-            "templateRegistry",
         ]:
             del self.__dict__[key]
 
@@ -3087,6 +2976,60 @@ class CppHeader(_CppHeader):
                 return location
 
         return self.lex.current_location()
+
+    def _parse_error(self, tokens, expected):
+        if not tokens:
+            # common case after a failed token_if
+            errtok = self.lex.token()
+        else:
+            errtok = tokens[-1]
+        if expected:
+            expected = ", expected " + expected
+
+        msg = "unexpected %s%s" % (errtok.value, expected)
+
+        # TODO: better error message
+        return CppParseError(msg)
+
+    def _next_token_must_be(self, *tokenTypes):
+        tok = self.lex.token()
+        if tok.type not in tokenTypes:
+            raise self._parse_error((tok,), " or ".join(tokenTypes))
+        return tok
+
+    _end_balanced_tokens = {">", "}", "]", ")", "DBL_RBRACKET"}
+    _balanced_token_map = {
+        "<": ">",
+        "{": "}",
+        "(": ")",
+        "[": "]",
+        "DBL_LBRACKET": "DBL_RBRACKET",
+    }
+
+    def _consume_balanced_tokens(self, *init_tokens):
+
+        _balanced_token_map = self._balanced_token_map
+
+        consumed = list(init_tokens)
+        match_stack = deque((_balanced_token_map[tok.type] for tok in consumed))
+        get_token = self.lex.token
+
+        while True:
+            tok = get_token()
+            consumed.append(tok)
+
+            if tok.type in self._end_balanced_tokens:
+                expected = match_stack.pop()
+                if tok.type != expected:
+                    raise self._parse_error(consumed, match_stack[-1])
+                if len(match_stack) == 0:
+                    return consumed
+
+                continue
+
+            next_end = _balanced_token_map.get(tok.type)
+            if next_end:
+                match_stack.append(next_end)
 
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -3133,7 +3076,6 @@ class CppHeader(_CppHeader):
                 ("struct" not in self.nameStack and "union" not in self.nameStack)
                 or self.stack[-1] == ";"
             )
-            and not is_enum_namestack(self.nameStack)
         ):
             trace_print("STACK", self.stack)
             self._evaluate_typedef()
@@ -3173,10 +3115,6 @@ class CppHeader(_CppHeader):
                 atype["raw_type"] = ns + atype["type"]
                 alias = self.current_namespace() + alias
                 self.using[alias] = atype
-
-        elif is_enum_namestack(self.nameStack):
-            debug_print("trace")
-            self._evaluate_enum_stack()
 
         elif self._method_body and (self.braceDepth + 1) > self._method_body:
             trace_print("INSIDE METHOD DEF")
@@ -3241,9 +3179,7 @@ class CppHeader(_CppHeader):
 
         elif not self.curClass:
             debug_print("trace")
-            if is_enum_namestack(self.nameStack):
-                self._evaluate_enum_stack()
-            elif self.curStruct and self.stack[-1] == ";":
+            if self.curStruct and self.stack[-1] == ";":
                 self._evaluate_property_stack()  # this catches fields of global structs
             self.nameStack = []
         elif self.braceDepth < 1:
@@ -3265,35 +3201,202 @@ class CppHeader(_CppHeader):
         self.lex.doxygenCommentCache = ""
         self.curTemplate = None
 
-    def _evaluate_enum_stack(self):
-        """Create an Enum out of the name stack"""
-        debug_print("evaluating enum")
-        newEnum = CppEnum(
-            self.nameStack, self.lex.get_doxygen(), self._get_location(self.nameStack)
+    def _parse_template(self):
+        tok = self._next_token_must_be("<")
+        consumed = self._consume_balanced_tokens(tok)
+        tmpl = " ".join(tok.value for tok in consumed)
+        tmpl = (
+            tmpl.replace(" : : ", "::")
+            .replace(" <", "<")
+            .replace("< ", "<")
+            .replace(" >", ">")
+            .replace("> ", ">")
+            .replace(" , ", ", ")
+            .replace(" = ", "=")
         )
-        if len(list(newEnum.keys())):
-            if len(self.curClass):
-                newEnum["namespace"] = self.cur_namespace(False)
-                klass = self.classes[self.curClass]
-                klass["enums"][self.curAccessSpecifier].append(newEnum)
-                if self.curAccessSpecifier == "public" and "name" in newEnum:
-                    klass._public_enums[newEnum["name"]] = newEnum
-            else:
-                newEnum["namespace"] = self.cur_namespace(True)
-                self.enums.append(newEnum)
-                if "name" in newEnum and newEnum["name"]:
-                    self.global_enums[newEnum["name"]] = newEnum
+        self.curTemplate = "template" + tmpl
 
-            # This enum has instances, turn them into properties
-            if "instances" in newEnum:
-                instanceType = "enum"
-                if "name" in newEnum:
-                    instanceType = newEnum["name"]
-                addToVar = {"enum_type": newEnum}
-                for instance in newEnum["instances"]:
-                    self.nameStack = [instanceType] + instance
-                    self._evaluate_property_stack(clearStack=False, addToVar=addToVar)
-                del newEnum["instances"]
+    def _parse_gcc_attribute(self):
+        tok1 = self._next_token_must_be("(")
+        tok2 = self._next_token_must_be("(")
+        self._consume_balanced_tokens(tok1, tok2)
+
+    _attribute_specifier_seq_start_types = ("DBL_LBRACKET", "NAME")
+    _attribute_specifier_seq_start_values = ("[[", "alignas")
+
+    def _parse_attribute_specifier_seq(self, tok):
+        # TODO: retain the attributes and do something with them
+        # attrs = []
+
+        while True:
+            if tok.type == "DBL_LBRACKET":
+                tokens = self._consume_balanced_tokens(tok)
+                # attrs.append(Attribute(tokens))
+            elif tok.type == "NAME" and tok.value == "alignas":
+                next_tok = self._next_token_must_be("(")
+                tokens = self._consume_balanced_tokens(next_tok)
+                # attrs.append(AlignasAttribute(tokens))
+            else:
+                self.lex.return_token(tok)
+                break
+
+            # multiple attributes can be specified
+            tok = self.lex.token_if(*self._attribute_specifier_seq_start_types)
+            if tok is None:
+                break
+
+        # return attrs
+
+    def _parse_enum(self):
+        """
+            opaque_enum_declaration: enum_key [attribute_specifier_seq] IDENTIFIER [enum_base] ";"
+
+            enum_specifier: enum_head "{" [enumerator_list] "}"
+                          | enum_head "{" enumerator_list "," "}"
+
+            enum_head: enum_key [attribute_specifier_seq] [IDENTIFIER] [enum_base]
+                     | enum_key [attribute_specifier_seq] nested_name_specifier IDENTIFIER [enum_base]
+            
+            enum_key: "enum"
+                    | "enum" "class"
+                    | "enum" "struct"
+            
+            enum_base: ":" type_specifier_seq
+        """
+
+        # entry: enum token was just consumed
+        doxygen = self.lex.get_doxygen()
+        location = self.lex.current_location()
+
+        nametok = self.lex.token()
+        if nametok.value in ("class", "struct"):
+            nametok = self.lex.token()
+
+        if nametok.value == "__attribute__":
+            self._parse_gcc_attribute()
+            nametok = self.lex.token()
+
+        if nametok.value in self._attribute_specifier_seq_start_values:
+            self._parse_attribute_specifier_seq(nametok)
+            nametok = self.lex.token()
+
+        # TODO: nested_name_specifier
+        name = ""
+        if nametok.type == "NAME":
+            name = nametok.value
+            tok = self.lex.token()
+        else:
+            tok = nametok
+
+        base = []
+        if tok.type == ":":
+            while True:
+                tok = self.lex.token()
+                if tok.type in ("{", ";"):
+                    break
+                base.append(tok.value)
+
+        newEnum = CppEnum(name, doxygen, location)
+        if self.nameStack:
+            if self.nameStack[0] == "typedef":
+                newEnum["typedef"] = True
+        if base:
+            newEnum["type"] = "".join(base)
+
+        instancesData = []
+
+        if tok.type == "{":
+            self._parse_enumerator_list(newEnum["values"])
+            newEnum.resolve_enum_values(newEnum["values"])
+            tok = self.lex.token()
+
+        if tok.value == "__attribute__":
+            self._parse_gcc_attribute()
+            tok = self.lex.token()
+
+        if tok.type == "NAME":
+            if newEnum["typedef"]:
+                newEnum["name"] = tok.value
+                self._next_token_must_be(";")
+            else:
+                # this is an instance of the enum
+                instancesData.append(tok.value)
+                while True:
+                    tok = self.lex.token()
+                    if tok.type == ";":
+                        break
+                    instancesData.append(tok.value)
+        elif tok.type != ";":
+            raise self._parse_error((tok,), ";")
+
+        self._install_enum(newEnum, instancesData)
+
+    def _install_enum(self, newEnum, instancesData):
+        if len(self.curClass):
+            newEnum["namespace"] = self.cur_namespace(False)
+            klass = self.classes[self.curClass]
+            klass["enums"][self.curAccessSpecifier].append(newEnum)
+            if self.curAccessSpecifier == "public" and "name" in newEnum:
+                klass._public_enums[newEnum["name"]] = newEnum
+        else:
+            newEnum["namespace"] = self.cur_namespace(True)
+            self.enums.append(newEnum)
+            if "name" in newEnum and newEnum["name"]:
+                self.global_enums[newEnum["name"]] = newEnum
+
+        # This enum has instances, turn them into properties
+        if instancesData:
+            instances = list(_split_by_comma(instancesData))
+            instanceType = "enum"
+            if "name" in newEnum:
+                instanceType = newEnum["name"]
+            addToVar = {"enum_type": newEnum}
+            for instance in instances:
+                self.nameStack = [instanceType] + instance
+                self._evaluate_property_stack(clearStack=False, addToVar=addToVar)
+
+    def _parse_enumerator_list(self, values):
+        """
+            enumerator_list: enumerator_definition
+                           | enumerator_list "," enumerator_definition
+            
+            enumerator_definition: enumerator
+                                 | enumerator "=" constant_expression
+            
+            enumerator: IDENTIFIER
+        """
+        while True:
+            name_tok = self._next_token_must_be("}", "NAME")
+            if name_tok.value == "}":
+                return
+
+            value = {"name": name_tok.value}
+            doxygen = self.lex.get_doxygen()
+            if doxygen:
+                value["doxygen"] = doxygen
+            values.append(value)
+
+            tok = self._next_token_must_be("}", ",", "=", "DBL_LBRACKET")
+            if tok.type == "DBL_LBRACKET":
+                self._parse_attribute_specifier_seq(tok)
+                tok = self._next_token_must_be("}", ",", "=")
+
+            if tok.type == "}":
+                return
+            elif tok.type == ",":
+                continue
+            elif tok.type == "=":
+                v = []
+                while True:
+                    tok = self.lex.token()
+                    if tok.type == "}":
+                        value["value"] = " ".join(v)
+                        return
+                    elif tok.type == ",":
+                        value["value"] = " ".join(v)
+                        break
+                    else:
+                        v.append(tok.value)
 
     def _strip_parent_keys(self):
         """Strip all parent (and method) keys to prevent loops"""

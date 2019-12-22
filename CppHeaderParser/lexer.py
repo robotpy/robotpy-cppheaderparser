@@ -1,3 +1,4 @@
+from collections import deque
 import ply.lex as lex
 import re
 
@@ -9,61 +10,50 @@ class Lexer(object):
     tokens = [
         "NUMBER",
         "FLOAT_NUMBER",
-        "TEMPLATE_NAME",
         "NAME",
-        "OPEN_PAREN",
-        "CLOSE_PAREN",
-        "OPEN_BRACE",
-        "CLOSE_BRACE",
-        "OPEN_SQUARE_BRACKET",
-        "CLOSE_SQUARE_BRACKET",
-        "COLON",
-        "SEMI_COLON",
-        "COMMA",
-        "TAB",
-        "BACKSLASH",
-        "PIPE",
-        "PERCENT",
-        "EXCLAMATION",
-        "CARET",
         "COMMENT_SINGLELINE",
         "COMMENT_MULTILINE",
         "PRECOMP_MACRO",
         "PRECOMP_MACRO_CONT",
-        "ASTERISK",
-        "AMPERSAND",
-        "EQUALS",
-        "MINUS",
-        "PLUS",
         "DIVIDE",
         "CHAR_LITERAL",
         "STRING_LITERAL",
-        "NEW_LINE",
-        "SQUOTE",
+        "NEWLINE",
         "ELLIPSIS",
-        "DOT",
+        "DBL_LBRACKET",
+        "DBL_RBRACKET",
     ]
 
-    t_ignore = " \r?@\f"
+    literals = [
+        "<",
+        ">",
+        "(",
+        ")",
+        "{",
+        "}",
+        "[",
+        "]",
+        ";",
+        ":",
+        ",",
+        "\\",
+        "|",
+        "%",
+        "^",
+        "!",
+        "*",
+        "-",
+        "+",
+        "&",
+        "=",
+        "'",
+        ".",
+    ]
+
+    t_ignore = " \t\r?@\f"
     t_NUMBER = r"[0-9][0-9XxA-Fa-f]*"
     t_FLOAT_NUMBER = r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?"
-    t_TEMPLATE_NAME = r"CppHeaderParser_template_[0-9]+"
-    t_NAME = r"[<>A-Za-z_~][A-Za-z0-9_]*"
-    t_OPEN_PAREN = r"\("
-    t_CLOSE_PAREN = r"\)"
-    t_OPEN_BRACE = r"{"
-    t_CLOSE_BRACE = r"}"
-    t_OPEN_SQUARE_BRACKET = r"\["
-    t_CLOSE_SQUARE_BRACKET = r"\]"
-    t_SEMI_COLON = r";"
-    t_COLON = r":"
-    t_COMMA = r","
-    t_TAB = r"\t"
-    t_BACKSLASH = r"\\"
-    t_PIPE = r"\|"
-    t_PERCENT = r"%"
-    t_CARET = r"\^"
-    t_EXCLAMATION = r"!"
+    t_NAME = r"[A-Za-z_~][A-Za-z0-9_]*"
 
     def t_PRECOMP_MACRO(self, t):
         r"\#.*"
@@ -85,24 +75,15 @@ class Lexer(object):
     def t_COMMENT_SINGLELINE(self, t):
         r"\/\/.*\n?"
         if t.value.startswith("///") or t.value.startswith("//!"):
-            if self.doxygenCommentCache:
-                self.doxygenCommentCache += "\n"
-            if t.value.endswith("\n"):
-                self.doxygenCommentCache += t.value[:-1]
-            else:
-                self.doxygenCommentCache += t.value
+            self.comments.append(t.value.lstrip("\t ").rstrip("\n"))
         t.lexer.lineno += t.value.count("\n")
+        return t
 
-    t_ASTERISK = r"\*"
-    t_MINUS = r"\-"
-    t_PLUS = r"\+"
     t_DIVIDE = r"/(?!/)"
-    t_AMPERSAND = r"&"
-    t_EQUALS = r"="
     t_CHAR_LITERAL = "'.'"
-    t_SQUOTE = "'"
     t_ELLIPSIS = r"\.\.\."
-    t_DOT = r"\."
+    t_DBL_LBRACKET = r"\[\["
+    t_DBL_RBRACKET = r"\]\]"
 
     # found at http://wordaligned.org/articles/string-literals-and-regular-expressions
     # TODO: This does not work with the string "bla \" bla"
@@ -110,18 +91,21 @@ class Lexer(object):
 
     # Found at http://ostermiller.org/findcomment.html
     def t_COMMENT_MULTILINE(self, t):
-        r"/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/"
+        r"/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/\n?"
         if t.value.startswith("/**") or t.value.startswith("/*!"):
             # not sure why, but get double new lines
             v = t.value.replace("\n\n", "\n")
             # strip prefixing whitespace
             v = re.sub("\n[\\s]+\\*", "\n*", v)
-            self.doxygenCommentCache += v
-        t.lexer.lineno += len([a for a in t.value if a == "\n"])
+            self.comments = v.splitlines()
+        t.lexer.lineno += t.value.count("\n")
+        return t
 
     def t_NEWLINE(self, t):
         r"\n+"
         t.lexer.lineno += len(t.value)
+        del self.comments[:]
+        return t
 
     def t_error(self, v):
         print("Lex error: ", v)
@@ -129,7 +113,6 @@ class Lexer(object):
     def __init__(self, filename):
         self.lex = lex.lex(module=self)
         self.input = self.lex.input
-        self.token = self.lex.token
 
         # For tracking current file/line position
         self.filename = filename
@@ -143,16 +126,95 @@ class Lexer(object):
             self._filenames_set.add(filename)
 
         # Doxygen comments
-        self.doxygenCommentCache = ""
+        self.comments = []
+
+        self.lookahead = deque()
 
     def current_location(self):
         return self.filename, self.lex.lineno - self.line_offset
 
     def get_doxygen(self):
-        doxygen = self.doxygenCommentCache
-        self.doxygenCommentCache = ""
-        return doxygen
+        """
+            This should be called after the first element of something has
+            been consumed.
+
+            It will lookahead for comments that come after the item, if prior
+            comments don't exist.
+        """
+
+        # assuption: only time you call this function is after a name
+        # token is consumed along with all its pieces
+
+        if self.comments:
+            comments = self.comments
+        else:
+            comments = []
+            # only look for comments until a newline (including lookahead)
+            for tok in self.lookahead:
+                if tok.type == "NEWLINE":
+                    return ""
+
+            while True:
+                tok = self.lex.token()
+                comments.extend(self.comments)
+
+                if tok is None:
+                    break
+                ttype = tok.type
+                if ttype == "NEWLINE":
+                    self.lookahead.append(tok)
+                    break
+
+                if ttype not in self._discard_types:
+                    self.lookahead.append(tok)
+
+                if ttype == "NAME":
+                    break
+
+                del self.comments[:]
+
+        comments = "\n".join(comments)
+        del self.comments[:]
+        return comments
+
+    _discard_types = {"NEWLINE", "COMMENT_SINGLELINE", "COMMENT_MULTILINE"}
+
+    def token(self, eof_ok=False):
+        tok = None
+        while self.lookahead:
+            tok = self.lookahead.popleft()
+            if tok.type not in self._discard_types:
+                return tok
+
+        while True:
+            tok = self.lex.token()
+            if tok is None:
+                if not eof_ok:
+                    raise EOFError("unexpected end of file")
+                break
+
+            if tok.type not in self._discard_types:
+                break
+
+        return tok
+
+    def token_if(self, *types):
+        tok = self.token(eof_ok=True)
+        if tok is None:
+            return None
+        if tok.type not in types:
+            # put it back on the left in case it was retrieved
+            # from the lookahead buffer
+            self.lookahead.appendleft(tok)
+            return None
+        return tok
+
+    def return_token(self, tok):
+        self.lookahead.appendleft(tok)
 
 
 if __name__ == "__main__":
-    lex.runmain(lexer=Lexer())
+    try:
+        lex.runmain(lexer=Lexer(None))
+    except EOFError:
+        pass

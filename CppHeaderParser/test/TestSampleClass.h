@@ -47,6 +47,14 @@ private:
     string prop1;
     //! prop5 description
     int prop5;
+
+    bool prop6;     /*!< prop6 description */
+
+    double prop7;   //!< prop7 description
+                    //!< with two lines
+    
+    /// prop8 description
+    int prop8;
 };
 namespace Alpha
 {
@@ -82,9 +90,12 @@ namespace Alpha
 			///
 			typedef enum
 			{
-				RI_ZERO,
-				RI_ONE,
-				RI_TWO
+				RI_ZERO, /// item zero
+				RI_ONE,  /** item one */
+				RI_TWO,   //!< item two
+				RI_THREE,
+				/// item four
+				RI_FOUR,
 			} Rino;
 		};
     };
@@ -573,15 +584,6 @@ class AfterTypedefClass
 {
   public:
 }
-
-// Bug BitBucket #6
-class LineNumAfterDivide
-{
-  static int func1(float alpha_num)
-  { return funcX(alpha_num /
-                 beta_num); }
-  void func2();
-};
 
 // Bug BitBucket #5
 class Herb

@@ -229,54 +229,39 @@ class SampleClass_meth5_TestCase(unittest.TestCase):
         )
 
 
-class SampleClass_prop1_TestCase(unittest.TestCase):
+class SampleClass_doxygen_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
-    def test_name(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][0]["name"],
-            "prop1",
-        )
+    def test_prop1(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][0]
+        self.assertEqual(m["name"], "prop1")
+        self.assertEqual(m["type"], "string")
+        self.assertEqual(m["doxygen"], "/// prop1 description")
 
-    def test_type(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][0]["type"],
-            "string",
-        )
+    def test_prop5(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][1]
+        self.assertEqual(m["name"], "prop5")
+        self.assertEqual(m["type"], "int")
+        self.assertEqual(m["doxygen"], "//! prop5 description")
 
-    def test_doxygen(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][0][
-                "doxygen"
-            ],
-            "/// prop1 description",
-        )
+    def test_prop6(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][2]
+        self.assertEqual(m["name"], "prop6")
+        self.assertEqual(m["type"], "bool")
+        self.assertEqual(m["doxygen"], "/*!< prop6 description */")
 
+    def test_prop7(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][3]
+        self.assertEqual(m["name"], "prop7")
+        self.assertEqual(m["type"], "double")
+        self.assertEqual(m["doxygen"], "//!< prop7 description\n//!< with two lines")
 
-class SampleClass_prop5_TestCase(unittest.TestCase):
-    def setUp(self):
-        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
-
-    def test_name(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][1]["name"],
-            "prop5",
-        )
-
-    def test_type(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][1]["type"],
-            "int",
-        )
-
-    def test_doxygen(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][1][
-                "doxygen"
-            ],
-            "//! prop5 description",
-        )
+    def test_prop8(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][4]
+        self.assertEqual(m["name"], "prop8")
+        self.assertEqual(m["type"], "int")
+        self.assertEqual(m["doxygen"], "/// prop8 description")
 
 
 class SampleClass_Elephant_TestCase(unittest.TestCase):
@@ -521,9 +506,11 @@ class OmegaClass_Rino_TestCase(unittest.TestCase):
         self.assertEqual(
             self.cppHeader.classes["OmegaClass"]["enums"]["protected"][0]["values"],
             [
-                {"name": "RI_ZERO", "value": 0},
-                {"name": "RI_ONE", "value": 1},
-                {"name": "RI_TWO", "value": 2},
+                {"name": "RI_ZERO", "value": 0, "doxygen": "/// item zero"},
+                {"name": "RI_ONE", "value": 1, "doxygen": "/** item one */"},
+                {"name": "RI_TWO", "value": 2, "doxygen": "//!< item two"},
+                {"name": "RI_THREE", "value": 3},
+                {"name": "RI_FOUR", "value": 4, "doxygen": "/// item four"},
             ],
         )
 
@@ -744,7 +731,7 @@ class Chicken_TestCase(unittest.TestCase):
     def test_template(self):
         self.assertEqual(
             self.cppHeader.classes["Chicken"]["methods"]["private"][0]["template"],
-            "template <typename T>",
+            "template<typename T>",
         )
 
 
@@ -1747,7 +1734,7 @@ class Onion_TestCase(unittest.TestCase):
     def test_class_template(self):
         self.assertEqual(
             self.cppHeader.classes["Onion<Sweet,Plant>"]["template"],
-            "template <typename Plant>",
+            "template<typename Plant>",
         )
 
 
@@ -2030,15 +2017,26 @@ class ClassRegularTypedefs_TestCase(unittest.TestCase):
 # Bug BitBucket #6
 class LineNumAfterDivide_TestCase(unittest.TestCase):
     def setUp(self):
-        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+// Bug BitBucket #6
+class LineNumAfterDivide
+{
+  static int func1(float alpha_num)
+  { return funcX(alpha_num /
+                 beta_num); }
+  void func2();
+};
+
+""",
+            "string",
+        )
 
     def test_line_num(self):
-        self.assertEqual(
-            self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1][
-                "line_number"
-            ],
-            583,
-        )
+        m = self.cppHeader.classes["LineNumAfterDivide"]["methods"]["private"][1]
+        self.assertEqual("func2", m["name"])
+        self.assertEqual(9, m["line_number"])
 
 
 # Bug BitBucket #5
@@ -2266,11 +2264,7 @@ class Raddish_TestCase(unittest.TestCase):
         )
 
     def test_class_template(self):
-        template_str = (
-            "template<typename VALUE,\n"
-            "         typename VALUE_SET_ITERATOR,\n"
-            "         typename ACCESOR=Raddish::SimpleAccessor<VALUE,VALUE_SET_ITERATOR> >"
-        )
+        template_str = "template<typename VALUE, typename VALUE_SET_ITERATOR, typename ACCESOR=Raddish::SimpleAccessor<VALUE, VALUE_SET_ITERATOR>>"
         self.assertEqual(
             self.cppHeader.classes["Raddish_SetIterator"]["template"], template_str
         )
@@ -3161,6 +3155,35 @@ struct S : public T... {};
             ],
             c["inherits"],
         )
+
+
+class Attributes_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+struct [[deprecated]] S {};
+[[deprecated]] typedef S* PS;
+
+[[deprecated]] int x;
+union U { [[deprecated]] int n; };
+[[deprecated]] void f();
+
+enum [[deprecated]] E { A [[deprecated]], B [[deprecated]] = 42 };
+
+struct alignas(8) AS {};
+
+""",
+            "string",
+        )
+
+    def test_existance(self):
+
+        self.assertIn("S", self.cppHeader.classes)
+        self.assertIn("PS", self.cppHeader.typedefs)
+        self.assertEqual("x", self.cppHeader.variables[0]["name"])
+        self.assertEqual("f", self.cppHeader.functions[0]["name"])
+        self.assertIn("AS", self.cppHeader.classes)
 
 
 if __name__ == "__main__":
