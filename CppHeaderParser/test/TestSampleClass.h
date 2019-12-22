@@ -47,6 +47,14 @@ private:
     string prop1;
     //! prop5 description
     int prop5;
+
+    bool prop6;     /*!< prop6 description */
+
+    double prop7;   //!< prop7 description
+                    //!< with two lines
+    
+    /// prop8 description
+    int prop8;
 };
 namespace Alpha
 {

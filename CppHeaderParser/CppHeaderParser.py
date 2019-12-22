@@ -2833,7 +2833,7 @@ class CppHeader(_CppHeader):
         tok = None
         try:
             while True:
-                tok = lex.token()
+                tok = lex.token(eof_ok=True)
                 if not tok:
                     break
                 if (

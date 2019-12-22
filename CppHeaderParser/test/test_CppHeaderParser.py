@@ -229,54 +229,39 @@ class SampleClass_meth5_TestCase(unittest.TestCase):
         )
 
 
-class SampleClass_prop1_TestCase(unittest.TestCase):
+class SampleClass_doxygen_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
-    def test_name(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][0]["name"],
-            "prop1",
-        )
+    def test_prop1(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][0]
+        self.assertEqual(m["name"], "prop1")
+        self.assertEqual(m["type"], "string")
+        self.assertEqual(m["doxygen"], "/// prop1 description")
+    
+    def test_prop5(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][1]
+        self.assertEqual(m["name"], "prop5")
+        self.assertEqual(m["type"], "int")
+        self.assertEqual(m["doxygen"], "//! prop5 description")
 
-    def test_type(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][0]["type"],
-            "string",
-        )
+    def test_prop6(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][2]
+        self.assertEqual(m["name"], "prop6")
+        self.assertEqual(m["type"], "bool")
+        self.assertEqual(m["doxygen"], "/*!< prop6 description */")
+    
+    def test_prop7(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][3]
+        self.assertEqual(m["name"], "prop7")
+        self.assertEqual(m["type"], "double")
+        self.assertEqual(m["doxygen"], "//!< prop7 description\n//!< with two lines")
 
-    def test_doxygen(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][0][
-                "doxygen"
-            ],
-            "/// prop1 description",
-        )
-
-
-class SampleClass_prop5_TestCase(unittest.TestCase):
-    def setUp(self):
-        self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
-
-    def test_name(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][1]["name"],
-            "prop5",
-        )
-
-    def test_type(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][1]["type"],
-            "int",
-        )
-
-    def test_doxygen(self):
-        self.assertEqual(
-            self.cppHeader.classes["SampleClass"]["properties"]["private"][1][
-                "doxygen"
-            ],
-            "//! prop5 description",
-        )
+    def test_prop8(self):
+        m = self.cppHeader.classes["SampleClass"]["properties"]["private"][4]
+        self.assertEqual(m["name"], "prop8")
+        self.assertEqual(m["type"], "int")
+        self.assertEqual(m["doxygen"], "/// prop8 description")
 
 
 class SampleClass_Elephant_TestCase(unittest.TestCase):
