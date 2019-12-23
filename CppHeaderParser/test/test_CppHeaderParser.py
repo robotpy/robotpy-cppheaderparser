@@ -3215,5 +3215,29 @@ enum {
         )
 
 
+class FreeTemplates_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+template <typename Allocator>
+StringRef copy(Allocator &A) const {
+  // Don't request a length 0 copy from the allocator.
+  if (empty())
+    return StringRef();
+  char *S = A.template Allocate<char>(Length);
+  std::copy(begin(), end(), S);
+  return StringRef(S, Length);
+}
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        fn = self.cppHeader.functions[0]
+        self.assertEqual("copy", fn["name"])
+
+
 if __name__ == "__main__":
     unittest.main()

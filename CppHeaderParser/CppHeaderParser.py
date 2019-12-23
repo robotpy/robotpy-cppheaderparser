@@ -1333,7 +1333,6 @@ class CppEnum(_CppEnum):
         set_location_info(self, location)
 
 
-
 C99_NONSTANDARD = {
     "int8": "signed char",
     "int16": "short int",
@@ -1377,7 +1376,6 @@ class Resolver(object):
             []
         )  # full name stack, good idea to keep both stacks? (simple stack and full stack)
         self._classes_brace_level = {}  # class name : level
-        self._method_body = None
         self._forward_decls = []
         self._template_typenames = []  # template<typename XXX>
 
@@ -2023,13 +2021,12 @@ class _CppHeader(Resolver):
         header = header.replace("default ", "default")
         header = header.strip()
 
-        if "{" in stack:
+        if stack[-1] == "{":
             info["defined"] = True
-            self._method_body = self.braceDepth + 1
-            trace_print("NEW METHOD WITH BODY", self.braceDepth)
+            self._discard_function_contents(stack)
+            self.braceHandled = True
         elif stack[-1] == ";":
             info["defined"] = False
-            self._method_body = None  # not a great idea to be clearing here
         else:
             assert 0
 
@@ -2721,11 +2718,13 @@ class CppHeader(_CppHeader):
                             self.nameStack = origNameStack[classLocationNS:]
                             self.stack = origStack[classLocationS:]
 
+                    self.braceHandled = False
                     if self.nameStack:
                         self._evaluate_stack()
                     if self.stack and self.stack[0] == "class":
                         self.stack = []
-                    self.braceDepth += 1
+                    if not self.braceHandled:
+                        self.braceDepth += 1
 
                 elif tok.type == "}":
                     if self.braceDepth == 0:
@@ -2733,10 +2732,8 @@ class CppHeader(_CppHeader):
                     if self.braceDepth == len(self.nameSpaces):
                         tmp = self.nameSpaces.pop()
                         self.stack = []  # clear stack when namespace ends?
-                    elif self.braceDepth < 10:
-                        self._evaluate_stack()
                     else:
-                        self.nameStack = []
+                        self._evaluate_stack()
                     self.braceDepth -= 1
                     # self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)
                     if self.curClass:
@@ -2757,12 +2754,6 @@ class CppHeader(_CppHeader):
                         else:
                             self.curClass = ""
                         self.stack = []
-
-                    if self._method_body and (self.braceDepth + 1) <= self._method_body:
-                        self._method_body = None
-                        self.stack = []
-                        self.nameStack = []
-                        trace_print("FORCE CLEAR METHBODY")
 
                 if tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
@@ -2834,8 +2825,7 @@ class CppHeader(_CppHeader):
                         self.stack = saved_stack
                         self.anon_union_counter = [-1, 0]
 
-                    if self.braceDepth < 10:
-                        self._evaluate_stack(tok.type)
+                    self._evaluate_stack(tok.type)
                     self.stack = []
                     self.nameStack = []
 
@@ -2878,7 +2868,6 @@ class CppHeader(_CppHeader):
             "stack",
             "mainClass",
             "_template_typenames",
-            "_method_body",
             "braceDepth",
             "typedefs_order",
             "curTemplate",
@@ -2955,6 +2944,20 @@ class CppHeader(_CppHeader):
             next_end = _balanced_token_map.get(tok.type)
             if next_end:
                 match_stack.append(next_end)
+
+    def _discard_function_contents(self, stack):
+        # use this instead of consume_balanced_tokens because
+        # we don't care at all about the internals
+        level = 1
+        get_token = self.lex.token
+        while True:
+            tok = get_token()
+            if tok.type == "{":
+                level += 1
+            elif tok.type == "}":
+                level -= 1
+                if level == 0:
+                    break
 
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -3040,13 +3043,7 @@ class CppHeader(_CppHeader):
                 atype["raw_type"] = ns + atype["type"]
                 alias = self.current_namespace() + alias
                 self.using[alias] = atype
-
-        elif self._method_body and (self.braceDepth + 1) > self._method_body:
-            trace_print("INSIDE METHOD DEF")
-        elif (
-            is_method_namestack(self.stack)
-            and "(" in self.nameStack
-        ):
+        elif is_method_namestack(self.stack) and "(" in self.nameStack:
             debug_print("trace")
             if self.braceDepth > 0:
                 if (
