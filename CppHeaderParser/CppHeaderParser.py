@@ -226,35 +226,6 @@ def set_location_info(thing, location):
     thing["line_number"] = line_number
 
 
-def filter_out_attribute_keyword(stack):
-    """Strips __attribute__ and its parenthetical expression from the stack"""
-    if "__attribute__" not in stack:
-        return stack
-    try:
-        debug_print("Stripping __attribute__ from %s" % stack)
-        attr_index = stack.index("__attribute__")
-        attr_end = (
-            attr_index + 1
-        )  # Assuming not followed by parenthetical expression which wont happen
-        # Find final paren
-        if stack[attr_index + 1] == "(":
-            paren_count = 1
-            for i in range(attr_index + 2, len(stack)):
-                elm = stack[i]
-                if elm == "(":
-                    paren_count += 1
-                elif elm == ")":
-                    paren_count -= 1
-                    if paren_count == 0:
-                        attr_end = i + 1
-                        break
-        new_stack = stack[0:attr_index] + stack[attr_end:]
-        debug_print("stripped stack is %s" % new_stack)
-        return new_stack
-    except:
-        return stack
-
-
 _nhack = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
@@ -2962,8 +2933,6 @@ class CppHeader(_CppHeader):
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
 
-        self.nameStack = filter_out_attribute_keyword(self.nameStack)
-        self.stack = filter_out_attribute_keyword(self.stack)
         nameStackCopy = self.nameStack[:]
 
         debug_print(
