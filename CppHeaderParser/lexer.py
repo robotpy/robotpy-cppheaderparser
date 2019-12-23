@@ -134,6 +134,8 @@ class Lexer(object):
         self.lookahead = deque()
 
     def current_location(self):
+        if self.lookahead:
+            return self.lookahead[0].location
         return self.filename, self.lex.lineno - self.line_offset
 
     def get_doxygen(self):
@@ -163,6 +165,8 @@ class Lexer(object):
 
                 if tok is None:
                     break
+
+                tok.location = (self.filename, tok.lineno - self.line_offset)
                 ttype = tok.type
                 if ttype == "NEWLINE":
                     self.lookahead.append(tok)
@@ -197,6 +201,7 @@ class Lexer(object):
                 break
 
             if tok.type not in self._discard_types:
+                tok.location = (self.filename, tok.lineno - self.line_offset)
                 break
 
         return tok
