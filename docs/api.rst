@@ -17,8 +17,14 @@ by printing out the JSON representation:
 
    python -m CppHeaderParser.tojson /path/to/header.h
 
-
 .. warning:: CppHeaderParser is not safe to use from multiple threads
+
+.. note:: CppHeaderParser only does some very minimal interpretation of
+          preprocessor directives -- and we're looking at removing some
+          of that from this library. If you need anything complex, you
+          should preprocess the code yourself. You can use the excellent
+          pure python preprocessor `pcpp`_, or the preprocessing facilities
+          provided by your favorite compiler.
 
 CppHeaderParser
 ---------------
@@ -29,3 +35,5 @@ CppHeaderParser
              ignoreSymbols
    :undoc-members:
    :show-inheritance:
+
+.. _pcpp: https://github.com/ned14/pcpp

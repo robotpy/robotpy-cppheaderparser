@@ -14,13 +14,21 @@ and critical to some of the stuff we do in the RobotPy project.
 Unfortunately, the maintainer seems to be busy, so
 robotpy-cppheaderparser was born.
 
-We don’t currently intend to develop new features, but aim to maintain
-compatibility with the existing code and make improvements and bugfixes
-as we need them.
+We aim to maintain (some) compatibility with the existing code and make
+improvements and bugfixes as we need them -- though some decisions made
+early on in this code's development means some compatibility may be broken
+as things get fixed.
 
 If you find an bug, we encourage you to submit a pull request! New
 changes will only be accepted if there are tests to cover the change you
 made (and if they don’t break existing tests).
+
+.. note:: CppHeaderParser only does some very minimal interpretation of
+          preprocessor directives -- and we're looking at removing some
+          of that from this library. If you need anything complex, you
+          should preprocess the code yourself. You can use the excellent
+          pure python preprocessor `pcpp`_, or the preprocessing facilities
+          provided by your favorite compiler.
 
 Documentation
 -------------
@@ -52,6 +60,8 @@ Past contributors include:
 * HartsAntler
 
 .. _CppHeaderParser: https://bitbucket.org/senex/cppheaderparser
+
+.. _pcpp: https://github.com/ned14/pcpp
 
 .. |Build Status| image:: https://travis-ci.org/robotpy/robotpy-cppheaderparser.svg?branch=master
    :target: https://travis-ci.org/robotpy/robotpy-cppheaderparser
