@@ -2611,6 +2611,18 @@ class CppHeader(_CppHeader):
         self.lex = lex
         self.headerFileNames = lex.filenames
 
+        #
+        # A note on parsing methodology
+        #
+        # The idea here is to consume as many tokens as needed to determine
+        # what the thing is that we're parsing. While some items can be identified
+        # early, typically the code below consumes until a '{', '}', or ; and
+        # then looks at the accumulated tokens to figure out what it is.
+        #
+        # Unfortunately, the code isn't always particularly consistent (but
+        # it's slowly getting there!), so take this with a grain of salt.
+        #
+
         tok = None
         try:
             while True:
@@ -2622,7 +2634,7 @@ class CppHeader(_CppHeader):
                     and self.anon_union_counter[1]
                 ):
                     self.anon_union_counter[1] -= 1
-                tok.value = TagStr(tok.value, location=lex.current_location())
+                tok.value = TagStr(tok.value, location=tok.location)
                 # debug_print("TOK: %s"%tok)
                 if tok.type == "NAME":
                     if tok.value in self.IGNORE_NAMES:
