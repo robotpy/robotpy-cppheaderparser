@@ -1908,7 +1908,9 @@ class termite_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
     def test_termite_function(self):
-        self.assertEqual(self.cppHeader.functions[5]["name"], "termite")
+        f = self.cppHeader.functions[5]
+        self.assertEqual(f["name"], "termite")
+        self.assertEqual(len(f["parameters"]), 0)
 
 
 # Bug: 3569622

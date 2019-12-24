@@ -1062,6 +1062,10 @@ class CppMethod(_CppMethod):
                     params.append(param)
                 break
 
+        # foo(void) should be zero parameters
+        if len(params) == 1 and params[0]["type"] == "void":
+            params = []
+
         self["parameters"] = params
         self._params_helper2(params)  # mods params inplace
 
