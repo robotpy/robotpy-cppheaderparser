@@ -2523,7 +2523,6 @@ class CppHeader(_CppHeader):
         self.curAccessSpecifier = "private"  # private is default
         self.curTemplate = None
         self.accessSpecifierStack = []
-        self.accessSpecifierScratch = []
         debug_print(
             "curAccessSpecifier changed/defaulted to %s", self.curAccessSpecifier
         )
@@ -2747,7 +2746,7 @@ class CppHeader(_CppHeader):
                             self.curClass = ""
                         self.stack = []
 
-                if tok.type in _namestack_append_tokens:
+                elif tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
                 elif tok.type in _namestack_pass_tokens:
                     pass
@@ -2756,47 +2755,24 @@ class CppHeader(_CppHeader):
                         debug_print("Ignore symbol %s", tok.value)
                     elif tok.value == "class":
                         self.nameStack.append(tok.value)
-                    elif tok.value in supportedAccessSpecifier:
-                        if len(self.nameStack) and self.nameStack[0] in (
-                            "class",
-                            "struct",
-                            "union",
-                        ):
-                            self.nameStack.append(tok.value)
-                        elif self.braceDepth == len(
-                            self.nameSpaces
-                        ) + 1 or self.braceDepth == (
-                            len(self.nameSpaces) + len(self.curClass.split("::"))
-                        ):
-                            self.curAccessSpecifier = tok.value
-                            self.accessSpecifierScratch.append(tok.value)
-                            debug_print(
-                                "curAccessSpecifier updated to %s",
-                                self.curAccessSpecifier,
-                            )
-                        self.stack = []
                     else:
                         self.nameStack.append(tok.value)
                         if self.anon_union_counter[0] == self.braceDepth:
                             self.anon_union_counter = [-1, 0]
                 elif tok.type == ":":
-                    # Dont want colon to be first in stack
-                    if len(self.nameStack) == 0:
-                        self.accessSpecifierScratch = []
-                        continue
-
-                    # Handle situation where access specifiers can be multi words such as "public slots"
-                    jns = " ".join(self.accessSpecifierScratch + self.nameStack)
-                    if jns in supportedAccessSpecifier:
-                        self.curAccessSpecifier = jns
+                    if self.nameStack and self.nameStack[0] in supportedAccessSpecifier:
+                        specifier = " ".join(self.nameStack)
+                        if specifier in supportedAccessSpecifier:
+                            self.curAccessSpecifier = specifier
+                        else:
+                            self.curAccessSpecifier = self.nameStack[0]
                         debug_print(
-                            "curAccessSpecifier updated to %s" % self.curAccessSpecifier
+                            "curAccessSpecifier updated to %s", self.curAccessSpecifier
                         )
-                        self.stack = []
                         self.nameStack = []
+                        self.stack = []
                     else:
                         self.nameStack.append(tok.value)
-                    self.accessSpecifierScratch = []
 
                 elif tok.type == ";":
                     if (
@@ -2858,7 +2834,6 @@ class CppHeader(_CppHeader):
             "nameSpaces",
             "curAccessSpecifier",
             "accessSpecifierStack",
-            "accessSpecifierScratch",
             "nameStackHistory",
             "anon_struct_counter",
             "anon_union_counter",
