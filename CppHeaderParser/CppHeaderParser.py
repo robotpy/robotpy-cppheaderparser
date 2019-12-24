@@ -227,6 +227,17 @@ def is_property_namestack(nameStack):
     return r
 
 
+def is_enum_namestack(nameStack):
+    """Determines if a namestack is an enum namestack"""
+    if not nameStack:
+        return False
+    if nameStack[0] == "enum":
+        return True
+    if len(nameStack) > 1 and nameStack[0] == "typedef" and nameStack[1] == "enum":
+        return True
+    return False
+
+
 def set_location_info(thing, location):
     filename, line_number = location
     if filename:
@@ -1598,10 +1609,11 @@ class Resolver(object):
 
                         elif tag in self.global_enums:
                             enum = self.global_enums[tag]
-                            if enum["type"] is int:
+                            enum_type = enum.get("type")
+                            if enum_type is int:
                                 var["ctypes_type"] = "ctypes.c_int"
                                 var["raw_type"] = "int"
-                            elif enum["type"] is str:
+                            elif enum_type is str:
                                 var["ctypes_type"] = "ctypes.c_char_p"
                                 var["raw_type"] = "char*"
                             var["enum"] = enum["namespace"] + enum["name"]
@@ -2181,6 +2193,7 @@ class _CppHeader(Resolver):
             trace_print("free function?", self.nameStack)
 
         self.stack = []
+        self.stmtTokens = []
 
     def _parse_typedef(self, stack, namespace=""):
         if not stack or "typedef" not in stack:
@@ -2318,6 +2331,7 @@ class _CppHeader(Resolver):
 
         if clearStack:
             self.stack = []  # CLEAR STACK
+            self.stmtTokens = []
 
     def _evaluate_class_stack(self):
         """Create a Class out of the name stack (but not its parts)"""
@@ -2368,6 +2382,7 @@ class _CppHeader(Resolver):
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append(newClass)  # good idea to save ordering
         self.stack = []  # fixes if class declared with ';' in closing brace
+        self.stmtTokens = []
         classKey = newClass["name"]
 
         if parent:
@@ -2637,6 +2652,8 @@ class CppHeader(_CppHeader):
 
         self._doxygen_cache = None
         tok = None
+        self.stmtTokens = []
+
         try:
             while True:
                 tok = lex.token(eof_ok=True)
@@ -2659,11 +2676,6 @@ class CppHeader(_CppHeader):
                     elif tok.value == "alignas":
                         self._parse_attribute_specifier_seq(tok)
                         continue
-                    elif tok.value == "enum":
-                        self._parse_enum()
-                        self.stack = []
-                        self.nameStack = []
-                        continue
                     elif tok.value == "__attribute__":
                         self._parse_gcc_attribute()
                         continue
@@ -2671,15 +2683,20 @@ class CppHeader(_CppHeader):
                     self._parse_attribute_specifier_seq(tok)
                     continue
 
+                # TODO: get rid of stack, move to stmtTokens
                 self.stack.append(tok.value)
+                self.stmtTokens.append(tok)
+
                 nslen = len(self.nameStack)
 
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s", tok)
                     self._precomp_macro_buf.append(tok.value)
                     self.stack = []
+                    self.stmtTokens = []
                     self.nameStack = []
                     continue
+
                 if tok.type == "{":
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
@@ -2692,6 +2709,7 @@ class CppHeader(_CppHeader):
                         self.nameSpaces.append(self.nameStack[1])
                         ns = self.cur_namespace()
                         self.stack = []
+                        self.stmtTokens = []
                         if ns not in self.namespaces:
                             self.namespaces.append(ns)
                     # Detect special condition of macro magic before class declaration so we
@@ -2716,11 +2734,14 @@ class CppHeader(_CppHeader):
                             self.nameStack = origNameStack[classLocationNS:]
                             self.stack = origStack[classLocationS:]
 
+                    # If set to True, indicates that the callee consumed
+                    # all of the tokens between { and }
                     self.braceHandled = False
                     if self.nameStack:
                         self._evaluate_stack()
                     if self.stack and self.stack[0] == "class":
                         self.stack = []
+                        self.stmtTokens = []
                     if not self.braceHandled:
                         self.braceDepth += 1
 
@@ -2730,6 +2751,7 @@ class CppHeader(_CppHeader):
                     if self.braceDepth == len(self.nameSpaces):
                         tmp = self.nameSpaces.pop()
                         self.stack = []  # clear stack when namespace ends?
+                        self.stmtTokens = []
                     else:
                         self._evaluate_stack()
                     self.braceDepth -= 1
@@ -2752,6 +2774,7 @@ class CppHeader(_CppHeader):
                         else:
                             self.curClass = ""
                         self.stack = []
+                        self.stmtTokens = []
 
                 elif tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
@@ -2779,6 +2802,7 @@ class CppHeader(_CppHeader):
                         )
                         self.nameStack = []
                         self.stack = []
+                        self.stmtTokens = []
                     else:
                         self.nameStack.append(tok.value)
 
@@ -2804,6 +2828,7 @@ class CppHeader(_CppHeader):
                     self._evaluate_stack(tok.type)
                     self.stack = []
                     self.nameStack = []
+                    self.stmtTokens = []
 
                 newNsLen = len(self.nameStack)
                 if nslen != newNsLen and newNsLen == 1:
@@ -2997,7 +3022,11 @@ class CppHeader(_CppHeader):
             not self.curClass
             and "typedef" in self.nameStack
             and (
-                ("struct" not in self.nameStack and "union" not in self.nameStack)
+                (
+                    "struct" not in self.nameStack
+                    and "union" not in self.nameStack
+                    and "enum" not in self.nameStack
+                )
                 or self.stack[-1] == ";"
             )
         ):
@@ -3055,6 +3084,12 @@ class CppHeader(_CppHeader):
             else:
                 # Free function
                 self._evaluate_method_stack()
+        elif is_enum_namestack(self.nameStack):
+            debug_print("trace")
+            self._parse_enum()
+            self.nameStack = []
+            self.stack = []
+            self.stmtTokens = []
         elif (
             len(self.nameStack) == 1
             and len(self.nameStackHistory) > self.braceDepth
@@ -3178,10 +3213,20 @@ class CppHeader(_CppHeader):
             
             enum_base: ":" type_specifier_seq
         """
+        is_typedef = False
+        self.lex.return_tokens(self.stmtTokens)
 
-        # entry: enum token was just consumed
         doxygen = self._get_stmt_doxygen()
-        location = self.lex.current_location()
+
+        tok = self.lex.token()
+        if tok.value == "typedef":
+            is_typedef = True
+            tok = self.lex.token()
+
+        if tok.value != "enum":
+            raise self._parse_error((tok,), "enum")
+
+        location = tok.location
 
         nametok = self.lex.token()
         if nametok.value in ("class", "struct"):
@@ -3212,15 +3257,15 @@ class CppHeader(_CppHeader):
                 base.append(tok.value)
 
         newEnum = CppEnum(name, doxygen, location)
-        if self.nameStack:
-            if self.nameStack[0] == "typedef":
-                newEnum["typedef"] = True
+        if is_typedef:
+            newEnum["typedef"] = True
         if base:
             newEnum["type"] = "".join(base)
 
         instancesData = []
 
         if tok.type == "{":
+            self.braceHandled = True
             self._parse_enumerator_list(newEnum["values"])
             newEnum.resolve_enum_values(newEnum["values"])
             tok = self.lex.token()

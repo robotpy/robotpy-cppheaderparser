@@ -3296,5 +3296,60 @@ C2 {};
         self.assertEqual("/// template comment", c["doxygen"])
 
 
+class EnumParameter_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+enum E {
+  VALUE,
+};
+
+void fn_with_enum_param1(const enum E e);
+
+void fn_with_enum_param2(const enum E e) {
+  // code here
+}
+
+enum E fn_with_enum_retval1(void);
+
+enum E fn_with_enum_retval2(void) {
+  // code here
+}
+
+""",
+            "string",
+        )
+
+    def test_enum_param(self):
+        fn = self.cppHeader.functions[0]
+        self.assertEqual("fn_with_enum_param1", fn["name"])
+        self.assertEqual(1, len(fn["parameters"]))
+
+        p1 = fn["parameters"][0]
+        self.assertEqual("e", p1["name"])
+        self.assertEqual("const enum E", p1["type"])
+        self.assertEqual("int", p1["raw_type"])
+
+        fn = self.cppHeader.functions[1]
+        self.assertEqual("fn_with_enum_param2", fn["name"])
+        self.assertEqual(1, len(fn["parameters"]))
+
+        p1 = fn["parameters"][0]
+        self.assertEqual("e", p1["name"])
+        self.assertEqual("const enum E", p1["type"])
+        self.assertEqual("int", p1["raw_type"])
+
+    def test_enum_retval(self):
+        fn = self.cppHeader.functions[2]
+        self.assertEqual("fn_with_enum_retval1", fn["name"])
+        self.assertEqual(0, len(fn["parameters"]))
+        self.assertEqual("enum E", fn["rtnType"])
+
+        fn = self.cppHeader.functions[3]
+        self.assertEqual("fn_with_enum_retval2", fn["name"])
+        self.assertEqual(0, len(fn["parameters"]))
+        self.assertEqual("enum E", fn["rtnType"])
+
+
 if __name__ == "__main__":
     unittest.main()

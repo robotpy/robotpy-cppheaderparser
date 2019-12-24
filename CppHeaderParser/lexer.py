@@ -220,6 +220,9 @@ class Lexer(object):
     def return_token(self, tok):
         self.lookahead.appendleft(tok)
 
+    def return_tokens(self, toks):
+        self.lookahead.extendleft(reversed(toks))
+
 
 if __name__ == "__main__":
     try:
