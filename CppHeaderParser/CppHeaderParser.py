@@ -45,6 +45,8 @@
 #   http://www.opensource.org/licenses/bsd-license.php
 #
 
+from __future__ import print_function
+
 
 from collections import deque
 import os
@@ -69,7 +71,7 @@ print_errors = 1
 # Controls warning_print
 print_warnings = 1
 # Controls debug_print
-debug = 0
+debug = 1 if os.environ.get("CPPHEADERPARSER_DEBUG") == "1" else 0
 # Controls trace_print
 debug_trace = 0
 
@@ -82,25 +84,31 @@ else:
         raise e
 
 
-def error_print(arg):
+def error_print(fmt, *args):
     if print_errors:
-        print(("[%4d] %s" % (inspect.currentframe().f_back.f_lineno, arg)))
+        fmt = "[%4d] " + fmt
+        args = (inspect.currentframe().f_back.f_lineno,) + args
+        print(fmt % args)
 
 
-def warning_print(arg):
+def warning_print(fmt, *args):
     if print_warnings:
-        print(("[%4d] %s" % (inspect.currentframe().f_back.f_lineno, arg)))
+        fmt = "[%4d] " + fmt
+        args = (inspect.currentframe().f_back.f_lineno,) + args
+        print(fmt % args)
 
 
-def debug_print(arg):
+def debug_print(fmt, *args):
     if debug:
-        print(("[%4d] %s" % (inspect.currentframe().f_back.f_lineno, arg)))
+        fmt = "[%4d] " + fmt
+        args = (inspect.currentframe().f_back.f_lineno,) + args
+        print(fmt % args)
 
 
-def trace_print(*arg):
+def trace_print(*args):
     if debug_trace:
         sys.stdout.write("[%s] " % (inspect.currentframe().f_back.f_lineno))
-        for a in arg:
+        for a in args:
             sys.stdout.write("%s " % a)
         sys.stdout.write("\n")
 
@@ -392,7 +400,7 @@ def _consume_parens(stack):
 
 
 def _parse_template_decl(stack):
-    debug_print("_parse_template_decl: %s" % stack)
+    debug_print("_parse_template_decl: %s", stack)
     params = []
     param = CppTemplateParam()
     i = 0
@@ -492,7 +500,7 @@ def _parse_cppclass_name(c, stack):
 
 
 def _parse_cpp_base(stack):
-    debug_print("Parsing base: %s" % stack)
+    debug_print("Parsing base: %s", stack)
     inherits = []
     i = 0
     sl = len(stack)
@@ -634,8 +642,8 @@ class CppClass(dict):
         self._public_forward_declares = []
         self["namespace"] = ""
 
-        debug_print("Class:    %s" % nameStack)
-        debug_print("Template: %s" % curTemplate)
+        debug_print("Class:    %s", nameStack)
+        debug_print("Template: %s", curTemplate)
 
         if len(nameStack) < 2:
             nameStack.insert(1, "")  # anonymous struct
@@ -911,8 +919,8 @@ class CppMethod(_CppMethod):
         return "\n\t\t  ".join(r)
 
     def __init__(self, nameStack, curClass, methinfo, curTemplate, doxygen, location):
-        debug_print("Method:   %s" % nameStack)
-        debug_print("Template: %s" % curTemplate)
+        debug_print("Method:   %s", nameStack)
+        debug_print("Template: %s", curTemplate)
 
         if doxygen:
             self["doxygen"] = doxygen
@@ -994,10 +1002,10 @@ class CppMethod(_CppMethod):
 
         paramsStack = self._params_helper1(nameStack)
 
-        debug_print("curTemplate: %s" % curTemplate)
+        debug_print("curTemplate: %s", curTemplate)
         if curTemplate:
             self["template"] = curTemplate
-            debug_print("SET self['template'] to `%s`" % self["template"])
+            debug_print("SET self['template'] to `%s`", self["template"])
 
         params = []
         # See if there is a doxygen comment for the variable
@@ -1118,7 +1126,7 @@ class CppVariable(_CppVariable):
     Vars = []
 
     def __init__(self, nameStack, doxygen, location, **kwargs):
-        debug_print("trace %s" % nameStack)
+        debug_print("trace %s", nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
             del nameStack[0]
@@ -1130,7 +1138,7 @@ class CppVariable(_CppVariable):
             arrayStack = nameStack[nameStack.index("[") :]
             if nameStack.count("[") > 1:
                 debug_print("Multi dimensional array")
-                debug_print("arrayStack=%s" % arrayStack)
+                debug_print("arrayStack=%s", arrayStack)
                 nums = [x for x in arrayStack if x.isdigit()]
                 # Calculate size by multiplying all dimensions
                 p = 1
@@ -1153,7 +1161,7 @@ class CppVariable(_CppVariable):
         if doxygen:
             self["doxygen"] = doxygen
 
-        debug_print("Variable: %s" % nameStack)
+        debug_print("Variable: %s", nameStack)
 
         set_location_info(self, location)
         self["function_pointer"] = 0
@@ -1163,7 +1171,7 @@ class CppVariable(_CppVariable):
                 self["type"] = nameStack[0]
                 self["name"] = ""
             else:
-                error_print(_stack_)
+                error_print("%s", _stack_)
                 assert 0
 
         elif is_function_pointer_stack(nameStack):  # function pointer
@@ -1596,7 +1604,7 @@ class Resolver(object):
                             var["fundamental"] = True
 
                         elif var["parent"]:
-                            warning_print("WARN unresolved %s" % _tag)
+                            warning_print("WARN unresolved %s", _tag)
                             var["ctypes_type"] = "ctypes.c_void_p"
                             var["unresolved"] = True
 
@@ -1710,7 +1718,7 @@ class Resolver(object):
                         elif tag.startswith(
                             "_"
                         ):  # assume starting with underscore is not important for wrapping
-                            warning_print("WARN unresolved %s" % _tag)
+                            warning_print("WARN unresolved %s", _tag)
                             var["ctypes_type"] = "ctypes.c_void_p"
                             var["unresolved"] = True
 
@@ -1803,9 +1811,7 @@ class Resolver(object):
                     trace_print("Adding #include %s" % macro)
                     self.includes.append(re.split("[\t ]+", macro, 1)[1].strip())
                 else:
-                    debug_print(
-                        "Cant detect what to do with precomp macro '%s'" % macro
-                    )
+                    debug_print("Cant detect what to do with precomp macro '%s'", macro)
             except:
                 pass
         self._precomp_macro_buf = None
@@ -1887,7 +1893,7 @@ class _CppHeader(Resolver):
                                 klass = self.classes[b]
                                 meth["returns_class"] = a + "::" + b
                             elif "<" in b and ">" in b:
-                                warning_print("WARN-can not return template: %s" % b)
+                                warning_print("WARN-can not return template: %s", b)
                                 meth["returns_unknown"] = True
                             elif b in self.global_enums:
                                 enum = self.global_enums[b]
@@ -2250,8 +2256,9 @@ class _CppHeader(Resolver):
                 ):
                     self.nameStack.insert(0, filteredParseHistory[-1]["item"]["name"])
                     debug_print(
-                        "DEANONYMOIZING %s to type '%s'"
-                        % (self.nameStack[1], self.nameStack[0])
+                        "DEANONYMOIZING %s to type '%s'",
+                        self.nameStack[1],
+                        self.nameStack[0],
                     )
             if "," in self.nameStack:  # Maybe we have a variable list
                 # Figure out what part is the variable separator but remember templates of function pointer
@@ -2333,7 +2340,7 @@ class _CppHeader(Resolver):
         else:  # struct
             self.curAccessSpecifier = "public"
         debug_print(
-            "curAccessSpecifier changed/defaulted to %s" % self.curAccessSpecifier
+            "curAccessSpecifier changed/defaulted to %s", self.curAccessSpecifier
         )
         if self.nameStack[0] == "union":
             newClass = CppUnion(
@@ -2518,7 +2525,7 @@ class CppHeader(_CppHeader):
         self.accessSpecifierStack = []
         self.accessSpecifierScratch = []
         debug_print(
-            "curAccessSpecifier changed/defaulted to %s" % self.curAccessSpecifier
+            "curAccessSpecifier changed/defaulted to %s", self.curAccessSpecifier
         )
         self.initextra()
         # Old namestacks for a given level
@@ -2600,7 +2607,7 @@ class CppHeader(_CppHeader):
                 if locEnd:
                     # Strip it out but keep the linecount the same so line numbers are right
                     match_str = headerFileStr[locStart:locEnd]
-                    debug_print("Striping out '%s'" % match_str)
+                    debug_print("Striping out '%s'", match_str)
                     num_newlines = len([a for a in match_str if a == "\n"])
                     headerFileStr = headerFileStr.replace(
                         headerFileStr[locStart:locEnd], "\n" * num_newlines
@@ -2637,7 +2644,7 @@ class CppHeader(_CppHeader):
                 ):
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, location=tok.location)
-                # debug_print("TOK: %s"%tok)
+                # debug_print("TOK: %s", tok)
                 if tok.type == "NAME":
                     if tok.value in self.IGNORE_NAMES:
                         continue
@@ -2662,7 +2669,7 @@ class CppHeader(_CppHeader):
                 self.stack.append(tok.value)
 
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
-                    debug_print("PRECOMP: %s" % tok)
+                    debug_print("PRECOMP: %s", tok)
                     self._precomp_macro_buf.append(tok.value)
                     self.stack = []
                     self.nameStack = []
@@ -2723,7 +2730,7 @@ class CppHeader(_CppHeader):
                     # self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)
                     if self.curClass:
                         debug_print(
-                            "CURBD %s" % self._classes_brace_level[self.curClass]
+                            "CURBD %s", self._classes_brace_level[self.curClass]
                         )
 
                     if (self.braceDepth == 0) or (
@@ -2746,7 +2753,7 @@ class CppHeader(_CppHeader):
                     pass
                 elif tok.type in _namestack_str_tokens:
                     if tok.value in ignoreSymbols:
-                        debug_print("Ignore symbol %s" % tok.value)
+                        debug_print("Ignore symbol %s", tok.value)
                     elif tok.value == "class":
                         self.nameStack.append(tok.value)
                     elif tok.value in supportedAccessSpecifier:
@@ -2764,8 +2771,8 @@ class CppHeader(_CppHeader):
                             self.curAccessSpecifier = tok.value
                             self.accessSpecifierScratch.append(tok.value)
                             debug_print(
-                                "curAccessSpecifier updated to %s"
-                                % self.curAccessSpecifier
+                                "curAccessSpecifier updated to %s",
+                                self.curAccessSpecifier,
                             )
                         self.stack = []
                     else:
@@ -2831,7 +2838,8 @@ class CppHeader(_CppHeader):
                 )
             else:
                 msg = "Error parsing %s%s\nError around: %s" % (
-                    self.headerFileName, context,
+                    self.headerFileName,
+                    context,
                     " ".join(self.nameStack),
                 )
 
@@ -2956,8 +2964,10 @@ class CppHeader(_CppHeader):
         nameStackCopy = self.nameStack[:]
 
         debug_print(
-            "Evaluating stack %s\n       BraceDepth: %s (called from %d)"
-            % (self.nameStack, self.braceDepth, inspect.currentframe().f_back.f_lineno)
+            "Evaluating stack %s\n       BraceDepth: %s (called from %d)",
+            self.nameStack,
+            self.braceDepth,
+            inspect.currentframe().f_back.f_lineno,
         )
 
         # Handle special case of overloading operator ()
@@ -2968,9 +2978,9 @@ class CppHeader(_CppHeader):
             self.nameStack[operator_index] = "operator()"
 
         if len(self.curClass):
-            debug_print("%s (%s) " % (self.curClass, self.curAccessSpecifier))
+            debug_print("%s (%s) ", self.curClass, self.curAccessSpecifier)
         else:
-            debug_print("<anonymous> (%s) " % self.curAccessSpecifier)
+            debug_print("<anonymous> (%s) ", self.curAccessSpecifier)
 
         # Filter special case of array with casting in it
         try:
@@ -2981,7 +2991,7 @@ class CppHeader(_CppHeader):
                 self.nameStack = (
                     self.nameStack[: bracePos + 1] + self.nameStack[endParen + 1 :]
                 )
-                debug_print("Filtered namestack to=%s" % self.nameStack)
+                debug_print("Filtered namestack to=%s", self.nameStack)
         except:
             pass
 
