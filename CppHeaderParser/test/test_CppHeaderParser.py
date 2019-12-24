@@ -1908,7 +1908,9 @@ class termite_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
     def test_termite_function(self):
-        self.assertEqual(self.cppHeader.functions[5]["name"], "termite")
+        f = self.cppHeader.functions[5]
+        self.assertEqual(f["name"], "termite")
+        self.assertEqual(len(f["parameters"]), 0)
 
 
 # Bug: 3569622
@@ -3184,6 +3186,184 @@ struct alignas(8) AS {};
         self.assertEqual("x", self.cppHeader.variables[0]["name"])
         self.assertEqual("f", self.cppHeader.functions[0]["name"])
         self.assertIn("AS", self.cppHeader.classes)
+
+
+class EnumWithTemplates_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+enum {
+    IsRandomAccess = std::is_base_of<std::random_access_iterator_tag,
+                                     IteratorCategoryT>::value,
+    IsBidirectional = std::is_base_of<std::bidirectional_iterator_tag,
+                                      IteratorCategoryT>::value,
+  };
+""",
+            "string",
+        )
+
+    def test_values(self):
+        e = self.cppHeader.enums[0]
+        v0 = e["values"][0]
+        self.assertEqual(
+            v0["value"],
+            "std :: is_base_of < std :: random_access_iterator_tag , IteratorCategoryT > :: value",
+        )
+
+        v1 = e["values"][1]
+        self.assertEqual(
+            v1["value"],
+            "std :: is_base_of < std :: bidirectional_iterator_tag , IteratorCategoryT > :: value",
+        )
+
+
+class FreeTemplates_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+template <typename Allocator>
+StringRef copy(Allocator &A) const {
+  // Don't request a length 0 copy from the allocator.
+  if (empty())
+    return StringRef();
+  char *S = A.template Allocate<char>(Length);
+  std::copy(begin(), end(), S);
+  return StringRef(S, Length);
+}
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        fn = self.cppHeader.functions[0]
+        self.assertEqual("copy", fn["name"])
+
+
+class MessedUpDoxygen_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+/// fn comment
+void
+fn();
+
+/// var comment
+int
+v1 = 0;
+
+int
+v2 = 0; /// var2 comment
+
+/// cls comment
+class
+C {};
+
+/// template comment
+template <typename T>
+class
+C2 {};
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        fn = self.cppHeader.functions[0]
+        self.assertEqual("fn", fn["name"])
+        self.assertEqual("/// fn comment", fn["doxygen"])
+
+    def test_var1(self):
+        v = self.cppHeader.variables[0]
+        self.assertEqual("v1", v["name"])
+        self.assertEqual("/// var comment", v["doxygen"])
+
+    def test_var2(self):
+        v = self.cppHeader.variables[1]
+        self.assertEqual("v2", v["name"])
+        self.assertEqual("/// var2 comment", v["doxygen"])
+
+    def test_cls(self):
+        c = self.cppHeader.classes["C"]
+        self.assertEqual("C", c["name"])
+        self.assertEqual("/// cls comment", c["doxygen"])
+
+    def test_cls2(self):
+        c = self.cppHeader.classes["C2"]
+        self.assertEqual("C2", c["name"])
+        self.assertEqual("/// template comment", c["doxygen"])
+
+
+class EnumParameter_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+enum E {
+  VALUE,
+};
+
+void fn_with_enum_param1(const enum E e);
+
+void fn_with_enum_param2(const enum E e) {
+  // code here
+}
+
+enum E fn_with_enum_retval1(void);
+
+enum E fn_with_enum_retval2(void) {
+  // code here
+}
+
+""",
+            "string",
+        )
+
+    def test_enum_param(self):
+        fn = self.cppHeader.functions[0]
+        self.assertEqual("fn_with_enum_param1", fn["name"])
+        self.assertEqual(1, len(fn["parameters"]))
+
+        p1 = fn["parameters"][0]
+        self.assertEqual("e", p1["name"])
+        self.assertEqual("const enum E", p1["type"])
+        self.assertEqual("int", p1["raw_type"])
+
+        fn = self.cppHeader.functions[1]
+        self.assertEqual("fn_with_enum_param2", fn["name"])
+        self.assertEqual(1, len(fn["parameters"]))
+
+        p1 = fn["parameters"][0]
+        self.assertEqual("e", p1["name"])
+        self.assertEqual("const enum E", p1["type"])
+        self.assertEqual("int", p1["raw_type"])
+
+    def test_enum_retval(self):
+        fn = self.cppHeader.functions[2]
+        self.assertEqual("fn_with_enum_retval1", fn["name"])
+        self.assertEqual(0, len(fn["parameters"]))
+        self.assertEqual("enum E", fn["rtnType"])
+
+        fn = self.cppHeader.functions[3]
+        self.assertEqual("fn_with_enum_retval2", fn["name"])
+        self.assertEqual(0, len(fn["parameters"]))
+        self.assertEqual("enum E", fn["rtnType"])
+
+
+class StaticAssert_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+static_assert(sizeof(int) == 4, 
+              "integer size is wrong"
+              "for some reason");
+""",
+            "string",
+        )
+
+    def test_nothing(self):
+        self.assertEqual(self.cppHeader.functions, [])
 
 
 if __name__ == "__main__":

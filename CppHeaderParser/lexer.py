@@ -22,6 +22,7 @@ class Lexer(object):
         "ELLIPSIS",
         "DBL_LBRACKET",
         "DBL_RBRACKET",
+        "SHIFT_LEFT",
     ]
 
     literals = [
@@ -84,6 +85,8 @@ class Lexer(object):
     t_ELLIPSIS = r"\.\.\."
     t_DBL_LBRACKET = r"\[\["
     t_DBL_RBRACKET = r"\]\]"
+    t_SHIFT_LEFT = r"<<"
+    # SHIFT_RIGHT introduces ambiguity
 
     # found at http://wordaligned.org/articles/string-literals-and-regular-expressions
     # TODO: This does not work with the string "bla \" bla"
@@ -131,6 +134,8 @@ class Lexer(object):
         self.lookahead = deque()
 
     def current_location(self):
+        if self.lookahead:
+            return self.lookahead[0].location
         return self.filename, self.lex.lineno - self.line_offset
 
     def get_doxygen(self):
@@ -142,8 +147,8 @@ class Lexer(object):
             comments don't exist.
         """
 
-        # assuption: only time you call this function is after a name
-        # token is consumed along with all its pieces
+        # Assumption: This function is either called at the beginning of a
+        # statement or at the end of a statement
 
         if self.comments:
             comments = self.comments
@@ -160,6 +165,8 @@ class Lexer(object):
 
                 if tok is None:
                     break
+
+                tok.location = (self.filename, tok.lineno - self.line_offset)
                 ttype = tok.type
                 if ttype == "NEWLINE":
                     self.lookahead.append(tok)
@@ -194,6 +201,7 @@ class Lexer(object):
                 break
 
             if tok.type not in self._discard_types:
+                tok.location = (self.filename, tok.lineno - self.line_offset)
                 break
 
         return tok
@@ -211,6 +219,9 @@ class Lexer(object):
 
     def return_token(self, tok):
         self.lookahead.appendleft(tok)
+
+    def return_tokens(self, toks):
+        self.lookahead.extendleft(reversed(toks))
 
 
 if __name__ == "__main__":
