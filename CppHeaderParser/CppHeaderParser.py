@@ -290,7 +290,9 @@ class TagStr(str):
 
 
 class CppParseError(Exception):
-    pass
+    def __init__(self, msg, tok=None):
+        Exception.__init__(self, msg)
+        self.tok = tok
 
 
 class CppTemplateParam(dict):
@@ -2815,15 +2817,21 @@ class CppHeader(_CppHeader):
         except Exception as e:
             if debug:
                 raise
+            context = ""
+            if isinstance(e, CppParseError):
+                context = ": " + str(e)
+                if e.tok:
+                    tok = e.tok
+
             if tok:
-                filename, lineno = tok.value.location
+                filename, lineno = tok.location
                 msg = (
-                    'Not able to parse %s on line %d evaluating "%s"\nError around: %s'
-                    % (filename, lineno, tok.value, " ".join(self.nameStack))
+                    "Not able to parse %s on line %d evaluating '%s'%s\nError around: %s"
+                    % (filename, lineno, tok.value, context, " ".join(self.nameStack))
                 )
             else:
-                msg = "Error parsing %s\nError around: %s" % (
-                    self.headerFileName,
+                msg = "Error parsing %s%s\nError around: %s" % (
+                    self.headerFileName, context,
                     " ".join(self.nameStack),
                 )
 
@@ -2872,12 +2880,12 @@ class CppHeader(_CppHeader):
         else:
             errtok = tokens[-1]
         if expected:
-            expected = ", expected " + expected
+            expected = ", expected '" + expected + "'"
 
-        msg = "unexpected %s%s" % (errtok.value, expected)
+        msg = "unexpected '%s'%s" % (errtok.value, expected)
 
         # TODO: better error message
-        return CppParseError(msg)
+        return CppParseError(msg, errtok)
 
     def _next_token_must_be(self, *tokenTypes):
         tok = self.lex.token()
