@@ -2018,7 +2018,7 @@ class _CppHeader(Resolver):
 
         if stack[-1] == "{":
             info["defined"] = True
-            self._discard_function_contents(stack)
+            self._discard_contents("{", "}")
             self.braceHandled = True
         elif stack[-1] == ";":
             info["defined"] = False
@@ -2680,6 +2680,11 @@ class CppHeader(_CppHeader):
                     elif tok.value == "__attribute__":
                         self._parse_gcc_attribute()
                         continue
+                    elif not self.stack and tok.value == "static_assert":
+                        self._next_token_must_be("(")
+                        self._discard_contents("(", ")")
+                        continue
+
                 elif tok.type == "DBL_LBRACKET":
                     self._parse_attribute_specifier_seq(tok)
                     continue
@@ -2967,16 +2972,16 @@ class CppHeader(_CppHeader):
             if next_end:
                 match_stack.append(next_end)
 
-    def _discard_function_contents(self, stack):
+    def _discard_contents(self, start_type, end_type):
         # use this instead of consume_balanced_tokens because
         # we don't care at all about the internals
         level = 1
         get_token = self.lex.token
         while True:
             tok = get_token()
-            if tok.type == "{":
+            if tok.type == start_type:
                 level += 1
-            elif tok.type == "}":
+            elif tok.type == end_type:
                 level -= 1
                 if level == 0:
                     break

@@ -3351,5 +3351,20 @@ enum E fn_with_enum_retval2(void) {
         self.assertEqual("enum E", fn["rtnType"])
 
 
+class StaticAssert_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+static_assert(sizeof(int) == 4, 
+              "integer size is wrong"
+              "for some reason");
+""",
+            "string",
+        )
+
+    def test_nothing(self):
+        self.assertEqual(self.cppHeader.functions, [])
+
+
 if __name__ == "__main__":
     unittest.main()
