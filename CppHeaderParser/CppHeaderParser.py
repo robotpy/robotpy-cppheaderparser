@@ -501,6 +501,7 @@ def _parse_cppclass_name(c, stack):
         name = "<" + name + ">"
     c["name"] = name
     c["bare_name"] = name
+    debug_print("Found class '%s'", name)
 
     # backwards compat
     classParams = c.get("class_params")
@@ -1909,7 +1910,6 @@ class _CppHeader(Resolver):
                                 klass = self.classes[b]
                                 meth["returns_class"] = a + "::" + b
                             elif "<" in b and ">" in b:
-                                warning_print("WARN-can not return template: %s", b)
                                 meth["returns_unknown"] = True
                             elif b in self.global_enums:
                                 enum = self.global_enums[b]
@@ -2665,6 +2665,7 @@ class CppHeader(_CppHeader):
                 ):
                     self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, location=tok.location)
+
                 # debug_print("TOK: %s", tok)
                 if tok.type == "NAME":
                     if tok.value in self.IGNORE_NAMES:
@@ -2755,7 +2756,7 @@ class CppHeader(_CppHeader):
                     else:
                         self._evaluate_stack()
                     self.braceDepth -= 1
-                    # self.stack = []; print 'BRACE DEPTH', self.braceDepth, 'NS', len(self.nameSpaces)
+
                     if self.curClass:
                         debug_print(
                             "CURBD %s", self._classes_brace_level[self.curClass]
@@ -3030,13 +3031,13 @@ class CppHeader(_CppHeader):
                 or self.stack[-1] == ";"
             )
         ):
-            trace_print("STACK", self.stack)
+            debug_print("trace")
+            trace_print("typedef %s", self.stack)
             self._evaluate_typedef()
             return
 
         elif len(self.nameStack) == 0:
-            debug_print("trace")
-            debug_print("(Empty Stack)")
+            debug_print("trace (Empty Stack)")
             return
         elif self.nameStack[0] == "namespace":
             # Taken care of outside of here
@@ -3140,6 +3141,8 @@ class CppHeader(_CppHeader):
         elif self.braceDepth > len(self.nameSpaces) + 1:
             debug_print("trace")
             self.nameStack = []
+        else:
+            debug_print("Discarded statement %s" % (self.nameStack,))
 
         try:
             self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
@@ -3213,6 +3216,8 @@ class CppHeader(_CppHeader):
             
             enum_base: ":" type_specifier_seq
         """
+        debug_print("parsing enum")
+
         is_typedef = False
         self.lex.return_tokens(self.stmtTokens)
 
@@ -3244,8 +3249,10 @@ class CppHeader(_CppHeader):
         name = ""
         if nametok.type == "NAME":
             name = nametok.value
+            debug_print("enum name is '%s'", name)
             tok = self.lex.token()
         else:
+            debug_print("anonymous enum")
             tok = nametok
 
         base = []
@@ -3335,6 +3342,8 @@ class CppHeader(_CppHeader):
             if doxygen:
                 value["doxygen"] = doxygen
             values.append(value)
+
+            debug_print("enumerator value '%s'", value["name"])
 
             tok = self._next_token_must_be("}", ",", "=", "DBL_LBRACKET")
             if tok.type == "DBL_LBRACKET":
