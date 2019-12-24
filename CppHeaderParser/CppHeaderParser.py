@@ -2127,7 +2127,7 @@ class _CppHeader(Resolver):
                     info["name"],
                     info,
                     self.curTemplate,
-                    self.lex.get_doxygen(),
+                    self._get_stmt_doxygen(),
                     self._get_location(self.nameStack),
                 )
                 klass = self.classes[info["class"]]
@@ -2144,7 +2144,7 @@ class _CppHeader(Resolver):
                     self.curClass,
                     info,
                     self.curTemplate,
-                    self.lex.get_doxygen(),
+                    self._get_stmt_doxygen(),
                     self._get_location(self.nameStack),
                 )
                 klass = self.classes[self.curClass]
@@ -2161,7 +2161,7 @@ class _CppHeader(Resolver):
                     None,
                     info,
                     self.curTemplate,
-                    self.lex.get_doxygen(),
+                    self._get_stmt_doxygen(),
                     self._get_location(self.nameStack),
                 )
                 self.functions.append(newMethod)
@@ -2288,7 +2288,7 @@ class _CppHeader(Resolver):
 
             newVar = CppVariable(
                 self.nameStack,
-                self.lex.get_doxygen(),
+                self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
             newVar["namespace"] = self.current_namespace()
@@ -2305,7 +2305,7 @@ class _CppHeader(Resolver):
             debug_print("Found Global variable")
             newVar = CppVariable(
                 self.nameStack,
-                self.lex.get_doxygen(),
+                self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
             if addToVar:
@@ -2345,7 +2345,7 @@ class _CppHeader(Resolver):
         if self.nameStack[0] == "union":
             newClass = CppUnion(
                 self.nameStack,
-                self.lex.get_doxygen(),
+                self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
             if newClass["name"] == "union ":
@@ -2357,7 +2357,7 @@ class _CppHeader(Resolver):
             newClass = CppClass(
                 self.nameStack,
                 self.curTemplate,
-                self.lex.get_doxygen(),
+                self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
             trace_print("NEW CLASS", newClass["name"])
@@ -2631,6 +2631,7 @@ class CppHeader(_CppHeader):
         # it's slowly getting there!), so take this with a grain of salt.
         #
 
+        self._doxygen_cache = None
         tok = None
         try:
             while True:
@@ -2648,6 +2649,7 @@ class CppHeader(_CppHeader):
                     if tok.value in self.IGNORE_NAMES:
                         continue
                     elif tok.value == "template":
+                        self._doxygen_cache = self.lex.get_doxygen()
                         self._parse_template()
                         continue
                     elif tok.value == "alignas":
@@ -2666,6 +2668,7 @@ class CppHeader(_CppHeader):
                     continue
 
                 self.stack.append(tok.value)
+                nslen = len(self.nameStack)
 
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s", tok)
@@ -2748,6 +2751,7 @@ class CppHeader(_CppHeader):
 
                 elif tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
+                    nameStackAppended = True
                 elif tok.type in _namestack_pass_tokens:
                     pass
                 elif tok.type in _namestack_str_tokens:
@@ -2797,6 +2801,11 @@ class CppHeader(_CppHeader):
                     self.stack = []
                     self.nameStack = []
 
+                newNsLen = len(self.nameStack)
+                if nslen != newNsLen and newNsLen == 1:
+                    if not self.curTemplate:
+                        self._doxygen_cache = self.lex.get_doxygen()
+
         except Exception as e:
             if debug:
                 raise
@@ -2829,6 +2838,7 @@ class CppHeader(_CppHeader):
         # Delete some temporary variables
         for key in [
             "_precomp_macro_buf",
+            "_doxygen_cache",
             "lex",
             "nameStack",
             "nameSpaces",
@@ -2855,6 +2865,14 @@ class CppHeader(_CppHeader):
                 return location
 
         return self.lex.current_location()
+
+    def _get_stmt_doxygen(self):
+        # retrieves the doxygen comment associated with an accumulated
+        # statement (since doxygen comments have to be retrieved immediately)
+        doxygen, self._doxygen_cache = self._doxygen_cache, ""
+        if not doxygen:
+            doxygen = self.lex.get_doxygen()
+        return doxygen
 
     def _parse_error(self, tokens, expected):
         if not tokens:
@@ -3003,13 +3021,13 @@ class CppHeader(_CppHeader):
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
                     atype = CppVariable(
-                        stack, self.lex.get_doxygen(), self._get_location(stack)
+                        stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
                 else:
                     # using foo::bar
                     ns, stack = _split_namespace(self.nameStack[1:])
                     atype = CppVariable(
-                        stack, self.lex.get_doxygen(), self._get_location(stack)
+                        stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
                     alias = atype["type"]
 
@@ -3158,7 +3176,7 @@ class CppHeader(_CppHeader):
         """
 
         # entry: enum token was just consumed
-        doxygen = self.lex.get_doxygen()
+        doxygen = self._get_stmt_doxygen()
         location = self.lex.current_location()
 
         nametok = self.lex.token()

@@ -147,8 +147,8 @@ class Lexer(object):
             comments don't exist.
         """
 
-        # assuption: only time you call this function is after a name
-        # token is consumed along with all its pieces
+        # Assumption: This function is either called at the beginning of a
+        # statement or at the end of a statement
 
         if self.comments:
             comments = self.comments

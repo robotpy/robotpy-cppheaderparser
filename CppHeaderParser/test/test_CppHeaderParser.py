@@ -3239,5 +3239,60 @@ StringRef copy(Allocator &A) const {
         self.assertEqual("copy", fn["name"])
 
 
+class MessedUpDoxygen_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+/// fn comment
+void
+fn();
+
+/// var comment
+int
+v1 = 0;
+
+int
+v2 = 0; /// var2 comment
+
+/// cls comment
+class
+C {};
+
+/// template comment
+template <typename T>
+class
+C2 {};
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        fn = self.cppHeader.functions[0]
+        self.assertEqual("fn", fn["name"])
+        self.assertEqual("/// fn comment", fn["doxygen"])
+
+    def test_var1(self):
+        v = self.cppHeader.variables[0]
+        self.assertEqual("v1", v["name"])
+        self.assertEqual("/// var comment", v["doxygen"])
+
+    def test_var2(self):
+        v = self.cppHeader.variables[1]
+        self.assertEqual("v2", v["name"])
+        self.assertEqual("/// var2 comment", v["doxygen"])
+
+    def test_cls(self):
+        c = self.cppHeader.classes["C"]
+        self.assertEqual("C", c["name"])
+        self.assertEqual("/// cls comment", c["doxygen"])
+
+    def test_cls2(self):
+        c = self.cppHeader.classes["C2"]
+        self.assertEqual("C2", c["name"])
+        self.assertEqual("/// template comment", c["doxygen"])
+
+
 if __name__ == "__main__":
     unittest.main()
