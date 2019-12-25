@@ -193,7 +193,9 @@ def is_method_namestack(stack):
     elif "{" in stack and stack.index("{") < stack.index("("):
         r = False  # struct that looks like a method/class
     elif "(" in stack and ")" in stack:
-        if "{" in stack and "}" in stack:
+        if stack[-1] == ":":
+            r = True
+        elif "{" in stack and "}" in stack:
             r = True
         elif stack[-1] == ";":
             if is_function_pointer_stack(stack):
@@ -993,22 +995,6 @@ class CppMethod(_CppMethod):
 
         self.update(methinfo)
         set_location_info(self, location)
-
-        # Filter out initializer lists used in constructors
-        try:
-            paren_depth_counter = 0
-            for i in range(0, len(nameStack)):
-                elm = nameStack[i]
-                if elm == "(":
-                    paren_depth_counter += 1
-                if elm == ")":
-                    paren_depth_counter -= 1
-                    if paren_depth_counter == 0 and nameStack[i + 1] == ":":
-                        debug_print("Stripping out initializer list")
-                        nameStack = nameStack[: i + 1]
-                        break
-        except:
-            pass
 
         paramsStack = self._params_helper1(nameStack)
 
@@ -2018,6 +2004,10 @@ class _CppHeader(Resolver):
             self.braceHandled = True
         elif stack[-1] == ";":
             info["defined"] = False
+        elif stack[-1] == ":":
+            info["defined"] = True
+            self._discard_ctor_initializer()
+            self.braceHandled = True
         else:
             assert 0
 
@@ -2806,6 +2796,12 @@ class CppHeader(_CppHeader):
                         self.nameStack = []
                         self.stack = []
                         self.stmtTokens = []
+                    elif is_method_namestack(self.stack):
+                        debug_print("trace")
+                        self._evaluate_method_stack()
+                        self.nameStack = []
+                        self.stack = []
+                        self.stmtTokens = []
                     else:
                         self.nameStack.append(tok.value)
 
@@ -2923,7 +2919,7 @@ class CppHeader(_CppHeader):
     def _next_token_must_be(self, *tokenTypes):
         tok = self.lex.token()
         if tok.type not in tokenTypes:
-            raise self._parse_error((tok,), " or ".join(tokenTypes))
+            raise self._parse_error((tok,), "' or '".join(tokenTypes))
         return tok
 
     _end_balanced_tokens = {">", "}", "]", ")", "DBL_RBRACKET"}
@@ -2982,6 +2978,59 @@ class CppHeader(_CppHeader):
                 level -= 1
                 if level == 0:
                     break
+
+    def _discard_ctor_initializer(self):
+        """
+            ctor_initializer: ":" mem_initializer_list
+
+            mem_initializer_list: mem_initializer ["..."]
+                                | mem_initializer "," mem_initializer_list ["..."]
+
+            mem_initializer: mem_initializer_id "(" [expression_list] ")"
+                           | mem_initializer_id braced_init_list
+            
+            mem_initializer_id: class_or_decltype
+                              | IDENTIFIER
+        """
+        debug_print("discarding ctor intializer")
+        # all of this is discarded.. the challenge is to determine
+        # when the initializer ends and the function starts
+        while True:
+            tok = self.lex.token()
+            if tok.type == "DBL_COLON":
+                tok = self.lex.token()
+
+            if tok.type == "decltype":
+                tok = self._next_token_must_be("(")
+                self._consume_balanced_tokens(tok)
+                tok = self.lex.token()
+
+            # each initializer is either foo() or foo{}, so look for that
+            while True:
+                if tok.type not in ("{", "("):
+                    tok = self.lex.token()
+                    continue
+
+                if tok.type == "{":
+                    self._discard_contents("{", "}")
+                elif tok.type == "(":
+                    self._discard_contents("(", ")")
+
+                tok = self.lex.token()
+                break
+
+            # at the end
+            if tok.type == "ELLIPSIS":
+                tok = self.lex.token()
+
+            if tok.type == ",":
+                continue
+            elif tok.type == "{":
+                # reached the function
+                self._discard_contents("{", "}")
+                return
+            else:
+                raise self._parse_error((tok,), ",' or '{")
 
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
@@ -3133,7 +3182,7 @@ class CppHeader(_CppHeader):
             self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
         except:
             self.nameStackHistory.append((nameStackCopy, self.curClass))
-        
+
         # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         self.nameStack = []
         self.lex.doxygenCommentCache = ""
