@@ -255,11 +255,13 @@ def _split_namespace(namestack):
 
         :rtype: Tuple[str, list]
     """
+    # TODO: this should be using tokens instead of nhack
+
     last_colon = None
     for i, n in enumerate(namestack):
-        if n == ":":
+        if n == "::":
             last_colon = i
-        if i and n != ":" and not _nhack.match(n):
+        if i and n != "::" and not _nhack.match(n):
             break
 
     if last_colon:
@@ -472,12 +474,8 @@ def _parse_cppclass_name(c, stack):
         if t == ":":
             if i >= sl:
                 raise CppParseError("class decl ended with ':'")
-            t = stack[i]
-            if t != ":":
-                # reached the base declaration
-                break
-
-            i += 1
+            break
+        elif t == "::":
             name += "::"
             continue
         elif t == "final":
@@ -954,7 +952,7 @@ class CppMethod(_CppMethod):
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
 
-        self["rtnType"] = self["rtnType"].replace(" : : ", "::")
+        self["rtnType"] = self["rtnType"].replace(" :: ", "::")
         self["rtnType"] = self["rtnType"].replace(" < ", "<")
         self["rtnType"] = self["rtnType"].replace(" > ", "> ").replace(">>", "> >")
         self["rtnType"] = self["rtnType"].replace(" ,", ",")
@@ -1959,8 +1957,8 @@ class _CppHeader(Resolver):
                         )
                         meth["returns_unknown"] = True
 
-                if meth["returns"].startswith(": : "):
-                    meth["returns"] = meth["returns"].replace(": : ", "::")
+                if meth["returns"].startswith(":: "):
+                    meth["returns"] = meth["returns"].replace(":: ", "::")
 
         for cls in list(self.classes.values()):
             methnames = cls.get_all_method_names()
@@ -1996,7 +1994,7 @@ class _CppHeader(Resolver):
             stack = stack[1:]
         info = {
             "debug": " ".join(stack)
-            .replace(" : : ", "::")
+            .replace(" :: ", "::")
             .replace(" < ", "<")
             .replace(" > ", "> ")
             .replace(" >", ">")
@@ -2010,7 +2008,7 @@ class _CppHeader(Resolver):
 
         header = stack[: stack.index("(")]
         header = " ".join(header)
-        header = header.replace(" : : ", "::")
+        header = header.replace(" :: ", "::")
         header = header.replace(" < ", "<")
         header = header.replace(" > ", "> ")
         header = header.replace("default ", "default")
@@ -2452,6 +2450,7 @@ _namestack_append_tokens = {
     "+",
     "STRING_LITERAL",
     "ELLIPSIS",
+    "DBL_COLON",
     "SHIFT_LEFT",
 }
 
@@ -3164,7 +3163,7 @@ class CppHeader(_CppHeader):
         consumed = self._consume_balanced_tokens(tok)
         tmpl = " ".join(tok.value for tok in consumed)
         tmpl = (
-            tmpl.replace(" : : ", "::")
+            tmpl.replace(" :: ", "::")
             .replace(" <", "<")
             .replace("< ", "<")
             .replace(" >", ">")
@@ -3364,10 +3363,10 @@ class CppHeader(_CppHeader):
                 while True:
                     tok = self.lex.token()
                     if tok.type == "}":
-                        value["value"] = (" ".join(v)).replace(": :", "::")
+                        value["value"] = " ".join(v)
                         return
                     elif tok.type == ",":
-                        value["value"] = (" ".join(v)).replace(": :", "::")
+                        value["value"] = " ".join(v)
                         break
                     elif tok.type in self._balanced_token_map:
                         v.extend(t.value for t in self._consume_balanced_tokens(tok))

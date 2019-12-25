@@ -22,6 +22,7 @@ class Lexer(object):
         "ELLIPSIS",
         "DBL_LBRACKET",
         "DBL_RBRACKET",
+        "DBL_COLON",
         "SHIFT_LEFT",
     ]
 
@@ -85,6 +86,7 @@ class Lexer(object):
     t_ELLIPSIS = r"\.\.\."
     t_DBL_LBRACKET = r"\[\["
     t_DBL_RBRACKET = r"\]\]"
+    t_DBL_COLON = r"::"
     t_SHIFT_LEFT = r"<<"
     # SHIFT_RIGHT introduces ambiguity
 
