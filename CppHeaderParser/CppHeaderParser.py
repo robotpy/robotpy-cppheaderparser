@@ -1990,8 +1990,6 @@ class _CppHeader(Resolver):
 
     def parse_method_type(self, stack):
         trace_print("meth type info", stack)
-        if stack[0] in ":;" and stack[1] != ":":
-            stack = stack[1:]
         info = {
             "debug": " ".join(stack)
             .replace(" :: ", "::")
