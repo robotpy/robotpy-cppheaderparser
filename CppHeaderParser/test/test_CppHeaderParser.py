@@ -3419,5 +3419,6 @@ public:
         self.assertEqual(0, len(c["properties"]["protected"]))
         self.assertEqual(c["methods"]["public"][0]["name"], "future")
 
+
 if __name__ == "__main__":
     unittest.main()
