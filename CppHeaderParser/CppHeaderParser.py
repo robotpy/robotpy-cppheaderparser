@@ -3079,7 +3079,6 @@ class CppHeader(_CppHeader):
         elif is_enum_namestack(self.nameStack):
             debug_print("trace")
             self._parse_enum()
-            self.nameStack = []
             self.stack = []
             self.stmtTokens = []
         elif (
@@ -3123,15 +3122,12 @@ class CppHeader(_CppHeader):
 
         elif not self.curClass:
             debug_print("trace")
-            self.nameStack = []
         elif self.braceDepth < 1:
             debug_print("trace")
             # Ignore global stuff for now
             debug_print("Global stuff: %s" % self.nameStack)
-            self.nameStack = []
         elif self.braceDepth > len(self.nameSpaces) + 1:
             debug_print("trace")
-            self.nameStack = []
         else:
             debug_print("Discarded statement %s" % (self.nameStack,))
 
@@ -3139,9 +3135,9 @@ class CppHeader(_CppHeader):
             self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
         except:
             self.nameStackHistory.append((nameStackCopy, self.curClass))
-        self.nameStack = (
-            []
-        )  # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
+        
+        # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
+        self.nameStack = []
         self.lex.doxygenCommentCache = ""
         self.curTemplate = None
 
