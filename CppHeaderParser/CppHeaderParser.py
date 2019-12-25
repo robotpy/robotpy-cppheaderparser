@@ -2638,6 +2638,7 @@ class CppHeader(_CppHeader):
         #
 
         self._doxygen_cache = None
+        self.braceHandled = False
         tok = None
         self.stmtTokens = []
 
@@ -2867,6 +2868,7 @@ class CppHeader(_CppHeader):
         for key in [
             "_precomp_macro_buf",
             "_doxygen_cache",
+            "braceHandled",
             "lex",
             "nameStack",
             "nameSpaces",
