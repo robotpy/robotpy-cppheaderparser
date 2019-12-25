@@ -3075,20 +3075,7 @@ class CppHeader(_CppHeader):
                 self.using[alias] = atype
         elif is_method_namestack(self.stack) and "(" in self.nameStack:
             debug_print("trace")
-            if self.braceDepth > 0:
-                if (
-                    "{" in self.stack
-                    and self.stack[0] != "{"
-                    and self.stack[-1] == ";"
-                    and self.braceDepth == 1
-                ):
-                    # Special case of a method defined outside a class that has a body
-                    pass
-                else:
-                    self._evaluate_method_stack()
-            else:
-                # Free function
-                self._evaluate_method_stack()
+            self._evaluate_method_stack()
         elif is_enum_namestack(self.nameStack):
             debug_print("trace")
             self._parse_enum()
