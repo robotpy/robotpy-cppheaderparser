@@ -75,5 +75,4 @@ setup(
     classifiers=CLASSIFIERS,
     requires=["ply"],
     install_requires=["ply"],
-    package_data={"CppHeaderParser": ["README", "README.html", "examples/*.*"]},
 )
