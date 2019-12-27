@@ -1,12 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+import pprint
 import sys
 
 sys.path = ["../"] + sys.path
-import CppHeaderParser
+from CppHeaderParser import CppHeader, CppParseError
 
 try:
-    cppHeader = CppHeaderParser.CppHeader("SampleClass.h")
-except CppHeaderParser.CppParseError as e:
+    cppHeader = CppHeader("SampleClass.h")
+except CppParseError as e:
     print(e)
     sys.exit(1)
 
@@ -19,7 +20,8 @@ meth3 = [m for m in sampleClass["methods"]["public"] if m["name"] == "meth3"][
     0
 ]  # get meth3
 meth3ParamTypes = [t["type"] for t in meth3["parameters"]]  # get meth3s parameters
-print("Parameter Types for public method meth3 %s" % (meth3ParamTypes))
+print("Parameter Types for public method meth3")
+pprint.pprint(meth3ParamTypes)
 
 print("\nReturn type for meth1:")
 print(cppHeader.classes["SampleClass"]["methods"]["public"][1]["rtnType"])
@@ -28,7 +30,7 @@ print("\nDoxygen for meth2:")
 print(cppHeader.classes["SampleClass"]["methods"]["public"][2]["doxygen"])
 
 print("\nParameters for meth3:")
-print(cppHeader.classes["SampleClass"]["methods"]["public"][3]["parameters"])
+pprint.pprint(cppHeader.classes["SampleClass"]["methods"]["public"][3]["parameters"])
 
 print("\nDoxygen for meth4:")
 print(cppHeader.classes["SampleClass"]["methods"]["public"][4]["doxygen"])

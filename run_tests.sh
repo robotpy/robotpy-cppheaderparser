@@ -1,4 +1,4 @@
 #!/bin/sh -e
 
-cd CppHeaderParser/test/
+cd test/
 python test_CppHeaderParser.py
