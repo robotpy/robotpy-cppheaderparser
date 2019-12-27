@@ -3366,5 +3366,59 @@ static_assert(sizeof(int) == 4,
         self.assertEqual(self.cppHeader.functions, [])
 
 
+class InitializerWithInitializerList_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+struct ComplexInit : SomeBase {
+  ComplexInit(int i) :
+    m_stuff{i,2}
+  {
+    auto i = something();
+  }
+
+  void fn();
+  
+  std::vector<int> m_stuff;
+};
+
+template <typename T>
+class future final {
+public:
+  template <typename R>
+  future(future<R>&& oth) noexcept
+      : future(oth.then([](R&& val) -> T { return val; })) {}
+};
+
+
+""",
+            "string",
+        )
+
+    def test_cls_props(self):
+        c = self.cppHeader.classes["ComplexInit"]
+        self.assertEqual(2, len(c["methods"]["public"]))
+        self.assertEqual(0, len(c["methods"]["private"]))
+        self.assertEqual(0, len(c["methods"]["private"]))
+        self.assertEqual(1, len(c["properties"]["public"]))
+        self.assertEqual(0, len(c["properties"]["private"]))
+        self.assertEqual(0, len(c["properties"]["protected"]))
+
+        self.assertEqual(c["methods"]["public"][0]["name"], "ComplexInit")
+        self.assertEqual(c["methods"]["public"][1]["name"], "fn")
+
+        self.assertEqual(c["properties"]["public"][0]["name"], "m_stuff")
+
+    def test_future(self):
+        c = self.cppHeader.classes["future"]
+        self.assertEqual(1, len(c["methods"]["public"]))
+        self.assertEqual(0, len(c["methods"]["private"]))
+        self.assertEqual(0, len(c["methods"]["private"]))
+        self.assertEqual(0, len(c["properties"]["public"]))
+        self.assertEqual(0, len(c["properties"]["private"]))
+        self.assertEqual(0, len(c["properties"]["protected"]))
+        self.assertEqual(c["methods"]["public"][0]["name"], "future")
+
+
 if __name__ == "__main__":
     unittest.main()
