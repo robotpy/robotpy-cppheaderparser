@@ -589,6 +589,8 @@ class CppClass(dict):
         * ``nested_classes`` - Classes and structs defined within this class
         * ``final`` - True if final
         * ``abstract`` - True if abstract
+        * ``using`` - Using directives in this class scope: key is name for lookup,
+          value is :class:`.CppVariable`
         * ``parent`` - If not None, the class that this class is nested in
         
         An example of how this could look is as follows::
@@ -654,6 +656,7 @@ class CppClass(dict):
         self._public_typedefs = {}
         self._public_forward_declares = []
         self["namespace"] = ""
+        self["using"] = {}
 
         debug_print("Class:    %s", nameStack)
         debug_print("Template: %s", curTemplate)
@@ -1124,12 +1127,14 @@ class CppVariable(_CppVariable):
         * ``default`` - Default value of the variable, this key will only
           exist if there is a default value
         * ``extern`` - True if its an extern, False if not
+        * ``parent`` - If not None, either the class this is a property of, or the
+          method this variable is a parameter in
     """
 
     Vars = []
 
     def __init__(self, nameStack, doxygen, location, **kwargs):
-        debug_print("trace %s", nameStack)
+        debug_print("var trace %s", nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
             del nameStack[0]
@@ -1497,21 +1502,33 @@ class Resolver(object):
                 result["fundamental"] = False
                 result["class"] = klass
                 result["unresolved"] = False
-            elif self.using:
-                # search for type in all enclosing namespaces
-                for ns in _iter_ns_str_reversed(result.get("namespace", "")):
-                    nsalias = ns + alias
-                    used = self.using.get(nsalias)
-                    if used:
-                        for i in ("type", "namespace", "ctypes_type", "raw_type"):
-                            if i in used:
-                                result[i] = used[i]
-                        result["unresolved"] = False
-                        break
-                else:
-                    result["unresolved"] = True
             else:
-                result["unresolved"] = True
+                used = None
+
+                # Search for using directives in parents
+                parent = result["parent"]
+                while parent:
+                    p_using = parent.get("using")
+                    if p_using:
+                        used = p_using.get(alias)
+                        if used:
+                            break
+                    parent = parent["parent"]
+
+                if not used and self.using:
+                    # search for type in all enclosing namespaces
+                    # TODO: would be nice if namespaces were an object?
+                    for ns in _iter_ns_str_reversed(result.get("namespace", "")):
+                        nsalias = ns + alias
+                        used = self.using.get(nsalias)
+                        if used:
+                            break
+
+                if used:
+                    for i in ("type", "namespace", "ctypes_type", "raw_type"):
+                        if i in used:
+                            result[i] = used[i]
+                    result["unresolved"] = False
         else:
             result["fundamental"] = True
             result["unresolved"] = False
@@ -2544,8 +2561,8 @@ class CppHeader(_CppHeader):
         self.anon_struct_counter = 0
         self.anon_union_counter = [-1, 0]
 
-        #: Using directives in this header: key is full name for lookup, value
-        #: is :class:`.CppVariable`
+        #: Using directives in this header outside of class scope: key is
+        #: full name for lookup, value is :class:`.CppVariable`
         self.using = {}
 
         if len(self.headerFileName):
@@ -3116,23 +3133,40 @@ class CppHeader(_CppHeader):
             else:
                 if len(self.nameStack) > 3 and self.nameStack[2] == "=":
                     # using foo = ns::bar
+                    # -> type alias: same behavior in all scopes
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
                     atype = CppVariable(
                         stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
+
+                    # namespace refers to the embedded type
+                    atype["namespace"] = ns
                 else:
                     # using foo::bar
+                    # -> in global scope this is bringing in something
+                    #    from a different namespace
+                    # -> in class scope this is bringing in a member
+                    #    from a base class
                     ns, stack = _split_namespace(self.nameStack[1:])
                     atype = CppVariable(
                         stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
                     alias = atype["type"]
+                    if self.curClass:
+                        atype["baseclass"] = ns
+                    else:
+                        atype["namespace"] = ns
 
-                atype["namespace"] = ns
                 atype["raw_type"] = ns + atype["type"]
-                alias = self.current_namespace() + alias
-                self.using[alias] = atype
+
+                if self.curClass:
+                    klass = self.classes[self.curClass]
+                    klass["using"][alias] = atype
+                else:
+                    # lookup is done
+                    alias = self.current_namespace() + alias
+                    self.using[alias] = atype
         elif is_method_namestack(self.stack) and "(" in self.nameStack:
             debug_print("trace")
             self._evaluate_method_stack()
