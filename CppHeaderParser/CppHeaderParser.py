@@ -2711,7 +2711,10 @@ class CppHeader(_CppHeader):
                     if "class" in self.nameStack and self.nameStack[0] != "class":
                         classLocationNS = self.nameStack.index("class")
                         classLocationS = self.stack.index("class")
-                        if "(" not in self.nameStack[classLocationNS:]:
+                        if (
+                            "(" not in self.nameStack[classLocationNS:]
+                            and self.nameStack[classLocationNS - 1] != "enum"
+                        ):
                             debug_print(
                                 "keyword 'class' found in unexpected location in nameStack, must be following #define magic.  Process that before moving on"
                             )

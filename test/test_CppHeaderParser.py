@@ -3420,5 +3420,28 @@ public:
         self.assertEqual(c["methods"]["public"][0]["name"], "future")
 
 
+class EnumClass_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+enum class MyEnum {
+    V = 1
+};
+
+""",
+            "string",
+        )
+
+    def test_enum(self):
+        self.assertEqual(self.cppHeader.classes, {})
+        self.assertEqual(len(self.cppHeader.enums), 1)
+        e = self.cppHeader.enums[0]
+
+        self.assertEqual(e["name"], "MyEnum")
+        self.assertEqual(
+            e["values"], [{"name": "V", "value": 1}],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
