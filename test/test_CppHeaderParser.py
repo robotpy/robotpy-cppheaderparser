@@ -952,7 +952,7 @@ class Panda_TestCase(unittest.TestCase):
             "unresolved": False,
             "constant": 1,
             "name": "CONST_A",
-            "parent": None,
+            "parent": self.cppHeader.classes["PandaClass"],
             "pointer": 0,
             "namespace": "",
             "raw_type": "int",
@@ -981,7 +981,7 @@ class Panda_TestCase(unittest.TestCase):
             "unresolved": False,
             "constant": 1,
             "name": "CONST_B",
-            "parent": None,
+            "parent": self.cppHeader.classes["PandaClass"],
             "pointer": 0,
             "namespace": "",
             "raw_type": "int",
@@ -1052,7 +1052,7 @@ class Hog_TestCase(unittest.TestCase):
     def test_union(self):
         cmp_values = {
             "name": "union HogUnion",
-            "parent": "HogClass",
+            "parent": self.cppHeader.classes["HogClass"],
             "declaration_method": "union",
         }
         self.assertEqual(

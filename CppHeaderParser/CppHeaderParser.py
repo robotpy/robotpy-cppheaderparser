@@ -589,6 +589,7 @@ class CppClass(dict):
         * ``nested_classes`` - Classes and structs defined within this class
         * ``final`` - True if final
         * ``abstract`` - True if abstract
+        * ``parent`` - If not None, the class that this class is nested in
         
         An example of how this could look is as follows::
 
@@ -713,7 +714,7 @@ class CppClass(dict):
         if "doxygen" in list(self.keys()):
             rtn += self["doxygen"] + "\n"
         if "parent" in list(self.keys()) and self["parent"]:
-            rtn += "parent class: " + self["parent"] + "\n"
+            rtn += "parent class: " + self["parent"]["name"] + "\n"
 
         if "inherits" in list(self.keys()):
             rtn += "  Inherits: "
@@ -759,7 +760,7 @@ class CppClass(dict):
         if "doxygen" in list(self.keys()):
             rtn += self["doxygen"] + "\n"
         if "parent" in list(self.keys()) and self["parent"]:
-            rtn += "parent class: " + self["parent"] + "\n"
+            rtn += "parent class: " + self["parent"]["name"] + "\n"
 
         if "inherits" in list(self.keys()) and len(self["inherits"]):
             rtn += "Inherits: "
@@ -834,7 +835,7 @@ class CppUnion(CppClass):
         if "doxygen" in list(self.keys()):
             rtn += self["doxygen"] + "\n"
         if "parent" in list(self.keys()) and self["parent"]:
-            rtn += "parent class: " + self["parent"] + "\n"
+            rtn += "parent class: " + self["parent"]["name"] + "\n"
 
         rtn += "{\n"
         for member in self["members"]:
@@ -898,6 +899,7 @@ class _CppMethod(dict):
     def _params_helper2(self, params):
         for p in params:
             p["method"] = self  # save reference in variable to parent method
+            p["parent"] = self
             if "::" in p["type"]:
                 ns = p["type"].split("::")[0]
                 if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
@@ -914,6 +916,7 @@ class CppMethod(_CppMethod):
         * ``name`` - Name of the method
         * ``doxygen`` - Doxygen comments associated with the method if they exist
         * ``parameters`` - List of :class:`.CppVariable`
+        * ``parent`` - If not None, the class this method belongs to
     """
 
     def show(self):
@@ -1538,14 +1541,16 @@ class Resolver(object):
                     nestedEnum = None
                     nestedStruct = None
                     nestedTypedef = None
-                    if "method" in var and "parent" in list(var["method"].keys()):
-                        klass = var["method"]["parent"]
-                        if tag in var["method"]["parent"]._public_enums:
-                            nestedEnum = var["method"]["parent"]._public_enums[tag]
-                        elif tag in var["method"]["parent"]._public_typedefs:
-                            nestedTypedef = var["method"]["parent"]._public_typedefs[
-                                tag
-                            ]
+
+                    parent = var["parent"]
+                    while parent:
+                        nestedEnum = getattr(parent, "_public_enums", {}).get(tag)
+                        if nestedEnum:
+                            break
+                        nestedTypedef = getattr(parent, "_public_typedefs", {}).get(tag)
+                        if nestedTypedef:
+                            break
+                        parent = parent["parent"]
 
                     if "<" in tag:  # should also contain '>'
                         var["template"] = tag  # do not resolve templates
@@ -1604,7 +1609,7 @@ class Resolver(object):
                             var["enum"] = enum["namespace"] + enum["name"]
                             var["fundamental"] = True
 
-                        elif var["parent"]:
+                        elif var["parent"] and var["unresolved"]:
                             warning_print("WARN unresolved %s", _tag)
                             var["ctypes_type"] = "ctypes.c_void_p"
                             var["unresolved"] = True
@@ -1750,8 +1755,8 @@ class Resolver(object):
                             var["raw_type"] = (
                                 var["class"]["namespace"] + "::" + var["raw_type"]
                             )
-                        elif var["class"]["parent"] in self.classes:
-                            parent = self.classes[var["class"]["parent"]]
+                        else:
+                            parent = var["class"]["parent"]
                             var["raw_type"] = (
                                 parent["namespace"]
                                 + "::"
@@ -1759,8 +1764,6 @@ class Resolver(object):
                                 + "::"
                                 + var["raw_type"]
                             )
-                        else:
-                            var["unresolved"] = True
 
                     elif (
                         "::" in var["raw_type"]
@@ -2166,6 +2169,7 @@ class _CppHeader(Resolver):
                     self._get_stmt_doxygen(),
                     self._get_location(self.nameStack),
                 )
+                newMethod["parent"] = None
                 self.functions.append(newMethod)
             global parseHistory
             parseHistory.append(
@@ -2299,6 +2303,7 @@ class _CppHeader(Resolver):
                 klass = self.classes[self.curClass]
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar["property_of_class"] = klass["name"]
+                newVar["parent"] = klass
             parseHistory.append(
                 {"braceDepth": self.braceDepth, "item_type": "variable", "item": newVar}
             )
@@ -2373,16 +2378,17 @@ class _CppHeader(Resolver):
 
         if parent:
             newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
-            newClass["parent"] = parent
+            newClass["parent"] = self.classes[parent]
             self.classes[parent]["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
             self.curClass = key = parent + "::" + classKey
             self._classes_brace_level[key] = self.braceDepth
 
         elif newClass["parent"]:  # nested class defined outside of parent.  A::B {...}
-            parent = newClass["parent"]
-            newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
-            self.classes[parent]["nested_classes"].append(newClass)
+            pcls = newClass["parent"]
+            parent = pcls["name"]
+            newClass["namespace"] = pcls["namespace"] + "::" + parent
+            pcls["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
             self.curClass = key = parent + "::" + classKey
             self._classes_brace_level[key] = self.braceDepth
@@ -2767,7 +2773,9 @@ class CppHeader(_CppHeader):
                             self.curAccessSpecifier = self.accessSpecifierStack[-1]
                             self.accessSpecifierStack = self.accessSpecifierStack[:-1]
                         if self.curClass and self.classes[self.curClass]["parent"]:
-                            self.curClass = self.classes[self.curClass]["parent"]
+                            self.curClass = self.classes[self.curClass]["parent"][
+                                "name"
+                            ]
                         else:
                             self.curClass = ""
                         self.stack = []
