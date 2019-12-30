@@ -589,6 +589,9 @@ class CppClass(dict):
         * ``nested_classes`` - Classes and structs defined within this class
         * ``final`` - True if final
         * ``abstract`` - True if abstract
+        * ``using`` - Using directives in this class scope: key is name for lookup,
+          value is :class:`.CppVariable`
+        * ``parent`` - If not None, the class that this class is nested in
         
         An example of how this could look is as follows::
 
@@ -653,6 +656,7 @@ class CppClass(dict):
         self._public_typedefs = {}
         self._public_forward_declares = []
         self["namespace"] = ""
+        self["using"] = {}
 
         debug_print("Class:    %s", nameStack)
         debug_print("Template: %s", curTemplate)
@@ -713,7 +717,7 @@ class CppClass(dict):
         if "doxygen" in list(self.keys()):
             rtn += self["doxygen"] + "\n"
         if "parent" in list(self.keys()) and self["parent"]:
-            rtn += "parent class: " + self["parent"] + "\n"
+            rtn += "parent class: " + self["parent"]["name"] + "\n"
 
         if "inherits" in list(self.keys()):
             rtn += "  Inherits: "
@@ -759,7 +763,7 @@ class CppClass(dict):
         if "doxygen" in list(self.keys()):
             rtn += self["doxygen"] + "\n"
         if "parent" in list(self.keys()) and self["parent"]:
-            rtn += "parent class: " + self["parent"] + "\n"
+            rtn += "parent class: " + self["parent"]["name"] + "\n"
 
         if "inherits" in list(self.keys()) and len(self["inherits"]):
             rtn += "Inherits: "
@@ -834,7 +838,7 @@ class CppUnion(CppClass):
         if "doxygen" in list(self.keys()):
             rtn += self["doxygen"] + "\n"
         if "parent" in list(self.keys()) and self["parent"]:
-            rtn += "parent class: " + self["parent"] + "\n"
+            rtn += "parent class: " + self["parent"]["name"] + "\n"
 
         rtn += "{\n"
         for member in self["members"]:
@@ -898,6 +902,7 @@ class _CppMethod(dict):
     def _params_helper2(self, params):
         for p in params:
             p["method"] = self  # save reference in variable to parent method
+            p["parent"] = self
             if "::" in p["type"]:
                 ns = p["type"].split("::")[0]
                 if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
@@ -914,6 +919,7 @@ class CppMethod(_CppMethod):
         * ``name`` - Name of the method
         * ``doxygen`` - Doxygen comments associated with the method if they exist
         * ``parameters`` - List of :class:`.CppVariable`
+        * ``parent`` - If not None, the class this method belongs to
     """
 
     def show(self):
@@ -1121,12 +1127,14 @@ class CppVariable(_CppVariable):
         * ``default`` - Default value of the variable, this key will only
           exist if there is a default value
         * ``extern`` - True if its an extern, False if not
+        * ``parent`` - If not None, either the class this is a property of, or the
+          method this variable is a parameter in
     """
 
     Vars = []
 
     def __init__(self, nameStack, doxygen, location, **kwargs):
-        debug_print("trace %s", nameStack)
+        debug_print("var trace %s", nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
             del nameStack[0]
@@ -1494,21 +1502,33 @@ class Resolver(object):
                 result["fundamental"] = False
                 result["class"] = klass
                 result["unresolved"] = False
-            elif self.using:
-                # search for type in all enclosing namespaces
-                for ns in _iter_ns_str_reversed(result.get("namespace", "")):
-                    nsalias = ns + alias
-                    used = self.using.get(nsalias)
-                    if used:
-                        for i in ("type", "namespace", "ctypes_type", "raw_type"):
-                            if i in used:
-                                result[i] = used[i]
-                        result["unresolved"] = False
-                        break
-                else:
-                    result["unresolved"] = True
             else:
-                result["unresolved"] = True
+                used = None
+
+                # Search for using directives in parents
+                parent = result["parent"]
+                while parent:
+                    p_using = parent.get("using")
+                    if p_using:
+                        used = p_using.get(alias)
+                        if used:
+                            break
+                    parent = parent["parent"]
+
+                if not used and self.using:
+                    # search for type in all enclosing namespaces
+                    # TODO: would be nice if namespaces were an object?
+                    for ns in _iter_ns_str_reversed(result.get("namespace", "")):
+                        nsalias = ns + alias
+                        used = self.using.get(nsalias)
+                        if used:
+                            break
+
+                if used:
+                    for i in ("type", "namespace", "ctypes_type", "raw_type"):
+                        if i in used:
+                            result[i] = used[i]
+                    result["unresolved"] = False
         else:
             result["fundamental"] = True
             result["unresolved"] = False
@@ -1538,14 +1558,16 @@ class Resolver(object):
                     nestedEnum = None
                     nestedStruct = None
                     nestedTypedef = None
-                    if "method" in var and "parent" in list(var["method"].keys()):
-                        klass = var["method"]["parent"]
-                        if tag in var["method"]["parent"]._public_enums:
-                            nestedEnum = var["method"]["parent"]._public_enums[tag]
-                        elif tag in var["method"]["parent"]._public_typedefs:
-                            nestedTypedef = var["method"]["parent"]._public_typedefs[
-                                tag
-                            ]
+
+                    parent = var["parent"]
+                    while parent:
+                        nestedEnum = getattr(parent, "_public_enums", {}).get(tag)
+                        if nestedEnum:
+                            break
+                        nestedTypedef = getattr(parent, "_public_typedefs", {}).get(tag)
+                        if nestedTypedef:
+                            break
+                        parent = parent["parent"]
 
                     if "<" in tag:  # should also contain '>'
                         var["template"] = tag  # do not resolve templates
@@ -1604,7 +1626,7 @@ class Resolver(object):
                             var["enum"] = enum["namespace"] + enum["name"]
                             var["fundamental"] = True
 
-                        elif var["parent"]:
+                        elif var["parent"] and var["unresolved"]:
                             warning_print("WARN unresolved %s", _tag)
                             var["ctypes_type"] = "ctypes.c_void_p"
                             var["unresolved"] = True
@@ -1750,8 +1772,8 @@ class Resolver(object):
                             var["raw_type"] = (
                                 var["class"]["namespace"] + "::" + var["raw_type"]
                             )
-                        elif var["class"]["parent"] in self.classes:
-                            parent = self.classes[var["class"]["parent"]]
+                        else:
+                            parent = var["class"]["parent"]
                             var["raw_type"] = (
                                 parent["namespace"]
                                 + "::"
@@ -1759,8 +1781,6 @@ class Resolver(object):
                                 + "::"
                                 + var["raw_type"]
                             )
-                        else:
-                            var["unresolved"] = True
 
                     elif (
                         "::" in var["raw_type"]
@@ -2166,6 +2186,7 @@ class _CppHeader(Resolver):
                     self._get_stmt_doxygen(),
                     self._get_location(self.nameStack),
                 )
+                newMethod["parent"] = None
                 self.functions.append(newMethod)
             global parseHistory
             parseHistory.append(
@@ -2299,6 +2320,7 @@ class _CppHeader(Resolver):
                 klass = self.classes[self.curClass]
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar["property_of_class"] = klass["name"]
+                newVar["parent"] = klass
             parseHistory.append(
                 {"braceDepth": self.braceDepth, "item_type": "variable", "item": newVar}
             )
@@ -2373,16 +2395,17 @@ class _CppHeader(Resolver):
 
         if parent:
             newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
-            newClass["parent"] = parent
+            newClass["parent"] = self.classes[parent]
             self.classes[parent]["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
             self.curClass = key = parent + "::" + classKey
             self._classes_brace_level[key] = self.braceDepth
 
         elif newClass["parent"]:  # nested class defined outside of parent.  A::B {...}
-            parent = newClass["parent"]
-            newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
-            self.classes[parent]["nested_classes"].append(newClass)
+            pcls = newClass["parent"]
+            parent = pcls["name"]
+            newClass["namespace"] = pcls["namespace"] + "::" + parent
+            pcls["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
             self.curClass = key = parent + "::" + classKey
             self._classes_brace_level[key] = self.braceDepth
@@ -2538,8 +2561,8 @@ class CppHeader(_CppHeader):
         self.anon_struct_counter = 0
         self.anon_union_counter = [-1, 0]
 
-        #: Using directives in this header: key is full name for lookup, value
-        #: is :class:`.CppVariable`
+        #: Using directives in this header outside of class scope: key is
+        #: full name for lookup, value is :class:`.CppVariable`
         self.using = {}
 
         if len(self.headerFileName):
@@ -2767,7 +2790,9 @@ class CppHeader(_CppHeader):
                             self.curAccessSpecifier = self.accessSpecifierStack[-1]
                             self.accessSpecifierStack = self.accessSpecifierStack[:-1]
                         if self.curClass and self.classes[self.curClass]["parent"]:
-                            self.curClass = self.classes[self.curClass]["parent"]
+                            self.curClass = self.classes[self.curClass]["parent"][
+                                "name"
+                            ]
                         else:
                             self.curClass = ""
                         self.stack = []
@@ -3108,23 +3133,40 @@ class CppHeader(_CppHeader):
             else:
                 if len(self.nameStack) > 3 and self.nameStack[2] == "=":
                     # using foo = ns::bar
+                    # -> type alias: same behavior in all scopes
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
                     atype = CppVariable(
                         stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
+
+                    # namespace refers to the embedded type
+                    atype["namespace"] = ns
                 else:
                     # using foo::bar
+                    # -> in global scope this is bringing in something
+                    #    from a different namespace
+                    # -> in class scope this is bringing in a member
+                    #    from a base class
                     ns, stack = _split_namespace(self.nameStack[1:])
                     atype = CppVariable(
                         stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
                     alias = atype["type"]
+                    if self.curClass:
+                        atype["baseclass"] = ns
+                    else:
+                        atype["namespace"] = ns
 
-                atype["namespace"] = ns
                 atype["raw_type"] = ns + atype["type"]
-                alias = self.current_namespace() + alias
-                self.using[alias] = atype
+
+                if self.curClass:
+                    klass = self.classes[self.curClass]
+                    klass["using"][alias] = atype
+                else:
+                    # lookup is done
+                    alias = self.current_namespace() + alias
+                    self.using[alias] = atype
         elif is_method_namestack(self.stack) and "(" in self.nameStack:
             debug_print("trace")
             self._evaluate_method_stack()

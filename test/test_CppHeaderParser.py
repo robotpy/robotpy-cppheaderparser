@@ -952,7 +952,7 @@ class Panda_TestCase(unittest.TestCase):
             "unresolved": False,
             "constant": 1,
             "name": "CONST_A",
-            "parent": None,
+            "parent": self.cppHeader.classes["PandaClass"],
             "pointer": 0,
             "namespace": "",
             "raw_type": "int",
@@ -981,7 +981,7 @@ class Panda_TestCase(unittest.TestCase):
             "unresolved": False,
             "constant": 1,
             "name": "CONST_B",
-            "parent": None,
+            "parent": self.cppHeader.classes["PandaClass"],
             "pointer": 0,
             "namespace": "",
             "raw_type": "int",
@@ -1052,7 +1052,7 @@ class Hog_TestCase(unittest.TestCase):
     def test_union(self):
         cmp_values = {
             "name": "union HogUnion",
-            "parent": "HogClass",
+            "parent": self.cppHeader.classes["HogClass"],
             "declaration_method": "union",
         }
         self.assertEqual(
@@ -2787,18 +2787,26 @@ namespace a {
     using VoidFunction = std::function<void()>;
 
     void fn(string &s, VoidFunction fn, thing * t);
+
+    class A : public B {
+    public:
+        using B::B;
+        using IntFunction = std::function<int()>;
+
+        void a(string &s, IntFunction fn, thing * t);
+    };
 }
 """,
             "string",
         )
 
     def test_using(self):
+        self.assertEqual(len(self.cppHeader.using), 3)
         self.assertIn("a::string", self.cppHeader.using)
         self.assertIn("a::VoidFunction", self.cppHeader.using)
         self.assertIn("thing", self.cppHeader.using)
 
     def test_fn(self):
-        self.maxDiff = None
         self.assertEqual(len(self.cppHeader.functions), 1)
         fn = self.cppHeader.functions[0]
         self.assertEqual(fn["name"], "fn")
@@ -2818,6 +2826,43 @@ namespace a {
                     "desc": None,
                     "namespace": "std::",
                     "raw_type": "std::function<void ( )>",
+                },
+                {
+                    "type": "thing",
+                    "name": "t",
+                    "desc": None,
+                    "namespace": "std::",
+                    "raw_type": "std::thing",
+                },
+            ],
+        )
+
+    def test_class(self):
+        c = self.cppHeader.classes["A"]
+
+        self.assertEqual(len(c["using"]), 2)
+        self.assertIn("B", c["using"])
+        self.assertIn("IntFunction", c["using"])
+
+        self.assertEqual(len(c["methods"]["public"]), 1)
+        fn = c["methods"]["public"][0]
+        self.assertEqual(fn["name"], "a")
+        self.assertEqual(
+            filter_pameters(fn["parameters"], ["namespace", "raw_type"]),
+            [
+                {
+                    "type": "string",
+                    "name": "s",
+                    "desc": None,
+                    "namespace": "std::",
+                    "raw_type": "std::string",
+                },
+                {
+                    "type": "function<int ( )>",
+                    "name": "fn",
+                    "desc": None,
+                    "namespace": "std::",
+                    "raw_type": "std::function<int ( )>",
                 },
                 {
                     "type": "thing",
