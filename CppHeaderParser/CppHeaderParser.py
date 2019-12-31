@@ -647,6 +647,21 @@ class CppClass(dict):
                 r[meth["name"]] = meth
         return r
 
+    def _lookup_type(self, name):
+        # TODO: should have indexes for these lookups... and they
+        #       should be more unified
+        for access in supportedAccessSpecifier:
+            for e in self["enums"][access]:
+                if e.get("name") == name:
+                    return {
+                        "enum": self["name"] + "::" + e["name"],
+                        "type": e["name"],
+                        "namespace": e["namespace"],
+                    }
+        for n in self["nested_classes"]:
+            if n["name"] == name:
+                return {"raw_type": self["name"] + "::" + n["name"], "type": n["name"]}
+
     def __init__(self, nameStack, curTemplate, doxygen, location):
         self["nested_classes"] = []
         self["parent"] = None
@@ -1505,15 +1520,21 @@ class Resolver(object):
             else:
                 used = None
 
-                # Search for using directives in parents
-                parent = result["parent"]
-                while parent:
-                    p_using = parent.get("using")
-                    if p_using:
-                        used = p_using.get(alias)
-                        if used:
-                            break
-                    parent = parent["parent"]
+                # Search for in parents
+                if not used:
+                    parent = result["parent"]
+                    while parent:
+                        p_using = parent.get("using")
+                        if p_using:
+                            used = p_using.get(alias)
+                            if used:
+                                break
+                        lookup = getattr(parent, "_lookup_type", None)
+                        if lookup:
+                            used = lookup(alias)
+                            if used:
+                                break
+                        parent = parent["parent"]
 
                 if not used and self.using:
                     # search for type in all enclosing namespaces
@@ -1525,7 +1546,7 @@ class Resolver(object):
                             break
 
                 if used:
-                    for i in ("type", "namespace", "ctypes_type", "raw_type"):
+                    for i in ("enum", "type", "namespace", "ctypes_type", "raw_type"):
                         if i in used:
                             result[i] = used[i]
                     result["unresolved"] = False
@@ -1859,6 +1880,26 @@ class _CppHeader(Resolver):
             for meth in cls.get_all_methods():
                 if meth["pure_virtual"]:
                     cls["abstract"] = True
+
+                # hack
+                rtnType = {
+                    "aliases": [],
+                    "parent": cls,
+                    "unresolved": True,
+                    "constant": 0,
+                    "constexpr": 0,
+                    "static": 0,
+                    "pointer": 0,
+                    "reference": 0,
+                }
+                self.resolve_type(meth["rtnType"], rtnType)
+                if not rtnType["unresolved"]:
+                    if "enum" in rtnType:
+                        meth["rtnType"] = rtnType["enum"]
+                    elif "raw_type" in rtnType:
+                        meth["rtnType"] = rtnType["raw_type"]
+
+                # TODO: all of this needs to die and be replaced by CppVariable
 
                 if (
                     not meth["returns_fundamental"]

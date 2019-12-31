@@ -3488,5 +3488,39 @@ enum class MyEnum {
         )
 
 
+class NestedResolving_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+struct A {
+
+    enum { ANON };
+
+    struct B {};
+    enum C { X };
+
+    B fnested(B b);
+    C fenum(C c);
+};
+
+""",
+            "string",
+        )
+
+    def test_nothing(self):
+        c = self.cppHeader.classes["A"]
+        fn = c["methods"]["public"][0]
+        self.assertEqual(fn["name"], "fnested")
+        self.assertEqual(fn["rtnType"], "A::B")
+        self.assertEqual(len(fn["parameters"]), 1)
+        self.assertEqual(fn["parameters"][0]["raw_type"], "A::B")
+
+        fn = c["methods"]["public"][1]
+        self.assertEqual(fn["name"], "fenum")
+        self.assertEqual(fn["rtnType"], "A::C")
+        self.assertEqual(len(fn["parameters"]), 1)
+        self.assertEqual(fn["parameters"][0]["enum"], "A::C")
+
+
 if __name__ == "__main__":
     unittest.main()
