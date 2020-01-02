@@ -1597,15 +1597,19 @@ class Resolver(object):
 
                     elif nestedEnum:
                         enum = nestedEnum
-                        if enum["type"] is int:
+                        etype = enum.get("type")
+                        if etype is int:
                             var["ctypes_type"] = "ctypes.c_int"
                             var["raw_type"] = "int"
 
-                        elif enum["type"] is str:
+                        elif etype is str:
                             var["ctypes_type"] = "ctypes.c_char_p"
                             var["raw_type"] = "char*"
 
-                        var["enum"] = var["method"]["path"] + "::" + enum["name"]
+                        if "method" in var:
+                            var["enum"] = var["method"]["path"] + "::" + enum["name"]
+                        else:
+                            var["enum"] = enum["name"]
                         var["fundamental"] = True
 
                     elif nestedStruct:
@@ -1663,10 +1667,11 @@ class Resolver(object):
                                 if b in klass._public_enums:
                                     trace_print("...found nested enum", b)
                                     enum = klass._public_enums[b]
-                                    if enum["type"] is int:
+                                    etype = enum.get("type")
+                                    if etype is int:
                                         var["ctypes_type"] = "ctypes.c_int"
                                         var["raw_type"] = "int"
-                                    elif enum["type"] is str:
+                                    elif etype is str:
                                         var["ctypes_type"] = "ctypes.c_char_p"
                                         var["raw_type"] = "char*"
                                     try:
@@ -1700,10 +1705,11 @@ class Resolver(object):
                             ):  # falling back, this is a big ugly
                                 enum = self.global_enums[b]
                                 assert a in enum["namespace"].split("::")
-                                if enum["type"] is int:
+                                etype = enum.get("type")
+                                if etype is int:
                                     var["ctypes_type"] = "ctypes.c_int"
                                     var["raw_type"] = "int"
-                                elif enum["type"] is str:
+                                elif etype is str:
                                     var["ctypes_type"] = "ctypes.c_char_p"
                                     var["raw_type"] = "char*"
                                 var["fundamental"] = True
@@ -1931,18 +1937,18 @@ class _CppHeader(Resolver):
 
                     elif meth["returns"] in cls._public_enums:
                         enum = cls._public_enums[meth["returns"]]
-                        meth["returns_enum"] = enum["type"]
+                        meth["returns_enum"] = enum.get("type")
                         meth["returns_fundamental"] = True
-                        if enum["type"] == int:
+                        if enum.get("type") == int:
                             meth["returns"] = "int"
                         else:
                             meth["returns"] = "char*"
 
                     elif meth["returns"] in self.global_enums:
                         enum = self.global_enums[meth["returns"]]
-                        meth["returns_enum"] = enum["type"]
+                        meth["returns_enum"] = enum.get("type")
                         meth["returns_fundamental"] = True
-                        if enum["type"] == int:
+                        if enum.get("type") == int:
                             meth["returns"] = "int"
                         else:
                             meth["returns"] = "char*"
@@ -1958,9 +1964,9 @@ class _CppHeader(Resolver):
                                 meth["returns_unknown"] = True
                             elif b in self.global_enums:
                                 enum = self.global_enums[b]
-                                meth["returns_enum"] = enum["type"]
+                                meth["returns_enum"] = enum.get("type")
                                 meth["returns_fundamental"] = True
-                                if enum["type"] == int:
+                                if enum.get("type") == int:
                                     meth["returns"] = "int"
                                 else:
                                     meth["returns"] = "char*"
@@ -1975,9 +1981,9 @@ class _CppHeader(Resolver):
                             if b in klass._public_enums:
                                 trace_print("...found nested enum", b)
                                 enum = klass._public_enums[b]
-                                meth["returns_enum"] = enum["type"]
+                                meth["returns_enum"] = enum.get("type")
                                 meth["returns_fundamental"] = True
-                                if enum["type"] == int:
+                                if enum.get("type") == int:
                                     meth["returns"] = "int"
                                 else:
                                     meth["returns"] = "char*"

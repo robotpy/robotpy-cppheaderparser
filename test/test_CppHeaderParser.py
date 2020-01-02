@@ -3522,5 +3522,28 @@ struct A {
         self.assertEqual(fn["parameters"][0]["enum"], "A::C")
 
 
+class EnumCrash_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+enum HAL_Type {
+  HAL_UNASSIGNED = 0,
+};
+
+struct HAL_Value {
+  union {
+    HAL_Bool v_boolean;
+  } data;
+  enum HAL_Type type;
+};
+
+""",
+            "string",
+        )
+
+    def test_nothing(self):
+        pass
+
+
 if __name__ == "__main__":
     unittest.main()
