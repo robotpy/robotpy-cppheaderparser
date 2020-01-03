@@ -3170,6 +3170,10 @@ class CppHeader(_CppHeader):
         elif self.nameStack[0] == "namespace":
             # Taken care of outside of here
             pass
+        elif len(self.nameStack) == 2 and self.nameStack[0] == "extern":
+            debug_print("trace extern")
+            self.stack = []
+            self.stmtTokens = []
         elif (
             len(self.nameStack) == 2 and self.nameStack[0] == "friend"
         ):  # friend class declaration

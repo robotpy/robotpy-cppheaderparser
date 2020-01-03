@@ -3545,5 +3545,39 @@ struct HAL_Value {
         pass
 
 
+class ExternInline_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+extern "C++" {
+inline HAL_Value HAL_GetSimValue(HAL_SimValueHandle handle) {
+  HAL_Value v;
+  return v;
+}
+}  // extern "C++"
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        self.assertEqual(self.cppHeader.variables, [])
+        self.assertEqual(len(self.cppHeader.functions), 1)
+        fn = self.cppHeader.functions[0]
+        self.assertEqual(fn["name"], "HAL_GetSimValue")
+        self.assertEqual(
+            filter_pameters(fn["parameters"], ["namespace", "raw_type"]),
+            [
+                {
+                    "type": "HAL_SimValueHandle",
+                    "name": "handle",
+                    "desc": None,
+                    "namespace": "",
+                    "raw_type": "HAL_SimValueHandle",
+                },
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
