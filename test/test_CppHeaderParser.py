@@ -2782,6 +2782,7 @@ class UsingNamespace_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader(
             """
 using std::thing;
+using MyThing = SomeThing;
 namespace a {
     using std::string;
     using VoidFunction = std::function<void()>;
@@ -2801,10 +2802,77 @@ namespace a {
         )
 
     def test_using(self):
-        self.assertEqual(len(self.cppHeader.using), 3)
-        self.assertIn("a::string", self.cppHeader.using)
-        self.assertIn("a::VoidFunction", self.cppHeader.using)
-        self.assertIn("thing", self.cppHeader.using)
+        self.assertEqual(len(self.cppHeader.using), 4)
+
+        self.assertEqual(
+            filter_pameters(
+                [self.cppHeader.using["a::string"]],
+                extra=["using_type", "raw_type", "namespace"],
+            ),
+            [
+                {
+                    "desc": None,
+                    "name": "",
+                    "namespace": "std::",
+                    "raw_type": "std::string",
+                    "type": "string",
+                    "using_type": "declaration",
+                }
+            ],
+        )
+
+        self.assertEqual(
+            filter_pameters(
+                [self.cppHeader.using["a::VoidFunction"]],
+                extra=["using_type", "raw_type", "namespace", "typealias"],
+            ),
+            [
+                {
+                    "desc": None,
+                    "name": "",
+                    "namespace": "std::",
+                    "raw_type": "std::function<void ( )>",
+                    "type": "function<void ( )>",
+                    "typealias": "VoidFunction",
+                    "using_type": "typealias",
+                }
+            ],
+        )
+
+        self.assertEqual(
+            filter_pameters(
+                [self.cppHeader.using["thing"]],
+                extra=["using_type", "raw_type", "namespace"],
+            ),
+            [
+                {
+                    "desc": None,
+                    "name": "",
+                    "namespace": "std::",
+                    "raw_type": "std::thing",
+                    "type": "thing",
+                    "using_type": "declaration",
+                }
+            ],
+        )
+
+        self.assertEqual(
+            filter_pameters(
+                [self.cppHeader.using["MyThing"]],
+                extra=["using_type", "raw_type", "namespace", "typealias"],
+            ),
+            [
+                {
+                    "desc": None,
+                    "name": "",
+                    "namespace": "",
+                    "raw_type": "SomeThing",
+                    "type": "SomeThing",
+                    "typealias": "MyThing",
+                    "using_type": "typealias",
+                }
+            ],
+        )
 
     def test_fn(self):
         self.assertEqual(len(self.cppHeader.functions), 1)

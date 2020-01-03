@@ -3193,6 +3193,8 @@ class CppHeader(_CppHeader):
 
                     # namespace refers to the embedded type
                     atype["namespace"] = ns
+                    atype["using_type"] = "typealias"
+                    atype["typealias"] = alias
                 else:
                     # using foo::bar
                     # -> in global scope this is bringing in something
@@ -3204,6 +3206,7 @@ class CppHeader(_CppHeader):
                         stack, self._get_stmt_doxygen(), self._get_location(stack)
                     )
                     alias = atype["type"]
+                    atype["using_type"] = "declaration"
                     if self.curClass:
                         atype["baseclass"] = ns
                     else:
