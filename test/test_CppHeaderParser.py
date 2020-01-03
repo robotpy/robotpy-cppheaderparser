@@ -3645,6 +3645,7 @@ inline HAL_Value HAL_GetSimValue(HAL_SimValueHandle handle) {
                 },
             ],
         )
+        self.assertEqual(fn["rtnType"], "HAL_Value")
 
 
 if __name__ == "__main__":

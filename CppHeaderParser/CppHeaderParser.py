@@ -972,6 +972,8 @@ class CppMethod(_CppMethod):
             self["rtnType"] = self["rtnType"][len("virtual") :].strip()
         elif self["rtnType"].startswith("static"):
             self["rtnType"] = self["rtnType"][len("static") :].strip()
+        elif self["rtnType"].startswith("inline"):
+            self["rtnType"] = self["rtnType"][len("inline") :].strip()
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
 
