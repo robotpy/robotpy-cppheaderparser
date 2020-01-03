@@ -3648,5 +3648,35 @@ inline HAL_Value HAL_GetSimValue(HAL_SimValueHandle handle) {
         self.assertEqual(fn["rtnType"], "HAL_Value")
 
 
+class PointerTemplate_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+
+std::vector<Pointer*> * fn(std::vector<Pointer*> * ps);
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        self.assertEqual(len(self.cppHeader.functions), 1)
+        fn = self.cppHeader.functions[0]
+        self.assertEqual(fn["name"], "fn")
+        self.assertEqual(
+            filter_pameters(fn["parameters"], ["namespace", "raw_type"]),
+            [
+                {
+                    "type": "std::vector<Pointer *> *",
+                    "name": "ps",
+                    "desc": None,
+                    "namespace": None,
+                    "raw_type": "std::vector<Pointer *>",
+                },
+            ],
+        )
+        self.assertEqual(fn["rtnType"], "std::vector<Pointer *> *")
+
+
 if __name__ == "__main__":
     unittest.main()

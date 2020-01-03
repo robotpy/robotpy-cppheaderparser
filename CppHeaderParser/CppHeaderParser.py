@@ -1470,6 +1470,23 @@ class Resolver(object):
             x += ")" * pointers
             return x
 
+    def _remove_modifiers(self, vtype):
+        return " ".join(x for x in vtype.split() if x not in self.C_MODIFIERS)
+
+    def _create_raw_type(self, vtype):
+        lt = vtype.find("<")
+        if lt != -1:
+            gt = vtype.rfind(">")
+            vtype = (
+                self._remove_modifiers(vtype[:lt])
+                + vtype[lt : gt + 1]
+                + self._remove_modifiers(vtype[gt + 1 :])
+            )
+        else:
+            vtype = self._remove_modifiers(vtype)
+
+        return vtype
+
     def resolve_type(self, string, result):  # recursive
         """
         keeps track of useful things like: how many pointers, number of typedefs, is fundamental or a class, etc...
@@ -1788,11 +1805,7 @@ class Resolver(object):
         # create stripped raw_type #
         for var in CppVariable.Vars:
             if "raw_type" not in var:
-                raw = []
-                for x in var["type"].split():
-                    if x not in self.C_MODIFIERS:
-                        raw.append(x)
-                var["raw_type"] = " ".join(raw)
+                var["raw_type"] = self._create_raw_type(var["type"])
 
                 # if 'AutoConstantEntry' in var['raw_type']: print(var); assert 0
                 if var["class"]:
