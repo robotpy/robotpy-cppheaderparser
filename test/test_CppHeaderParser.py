@@ -3678,5 +3678,35 @@ std::vector<Pointer*> * fn(std::vector<Pointer*> * ps);
         self.assertEqual(fn["rtnType"], "std::vector<Pointer *> *")
 
 
+class ParamWithInitializer_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+template <typename T, typename U>
+void fn(something<T, U> s = something<T, U>{1,2,3});
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        self.assertEqual(len(self.cppHeader.functions), 1)
+        fn = self.cppHeader.functions[0]
+        self.assertEqual(fn["name"], "fn")
+        self.assertEqual(
+            filter_pameters(fn["parameters"], ["namespace", "raw_type", "default"]),
+            [
+                {
+                    "type": "something<T, U >",
+                    "name": "s",
+                    "desc": None,
+                    "namespace": "",
+                    "raw_type": "something<T, U >",
+                    "default": "something<T, U>{ 1, 2, 3}",
+                },
+            ],
+        )
+        self.assertEqual(fn["rtnType"], "void")
+
+
 if __name__ == "__main__":
     unittest.main()

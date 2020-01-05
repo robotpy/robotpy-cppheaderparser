@@ -1043,20 +1043,31 @@ class CppMethod(_CppMethod):
             # Find commas that are not nexted in <>'s like template types
             open_template_count = 0
             open_paren_count = 0
+            open_brace_count = 0
             param_separator = 0
             i = 0
             for elm in paramsStack:
-                if "<" in elm:
-                    open_template_count += 1
-                elif ">" in elm:
-                    open_template_count -= 1
-                elif "(" in elm:
-                    open_paren_count += 1
-                elif ")" in elm:
-                    open_paren_count -= 1
-                elif elm == "," and open_template_count == 0 and open_paren_count == 0:
-                    param_separator = i
-                    break
+                if elm in "<>(){},":
+                    if elm == ",":
+                        if (
+                            open_template_count == 0
+                            and open_paren_count == 0
+                            and open_brace_count == 0
+                        ):
+                            param_separator = i
+                            break
+                    elif "<" == elm:
+                        open_template_count += 1
+                    elif ">" == elm:
+                        open_template_count -= 1
+                    elif "(" == elm:
+                        open_paren_count += 1
+                    elif ")" == elm:
+                        open_paren_count -= 1
+                    elif "{" == elm:
+                        open_brace_count += 1
+                    elif "}" == elm:
+                        open_brace_count -= 1
                 i += 1
 
             if param_separator:
@@ -1215,9 +1226,11 @@ class CppVariable(_CppVariable):
         elif "=" in nameStack:
             self["type"] = " ".join(nameStack[: nameStack.index("=") - 1])
             self["name"] = nameStack[nameStack.index("=") - 1]
-            self["default"] = " ".join(nameStack[nameStack.index("=") + 1 :])
+            default = " ".join(nameStack[nameStack.index("=") + 1 :])
+            default = self._filter_name(default)
+            self["default"] = default
             # backwards compat; deprecate camelCase in dicts
-            self["defaultValue"] = self["default"]
+            self["defaultValue"] = default
 
         elif is_fundamental(nameStack[-1]) or nameStack[-1] in [">", "<", ":", "."]:
             # Un named parameter
@@ -1228,12 +1241,7 @@ class CppVariable(_CppVariable):
             self["type"] = " ".join(nameStack[:-1])
             self["name"] = nameStack[-1]
 
-        self["type"] = self["type"].replace(" :", ":")
-        self["type"] = self["type"].replace(": ", ":")
-        self["type"] = self["type"].replace(" < ", "<")
-        self["type"] = self["type"].replace(" > ", "> ").replace(">>", "> >")
-        self["type"] = self["type"].replace(") >", ")>")
-        self["type"] = self["type"].replace(" ,", ",")
+        self["type"] = self._filter_name(self["type"])
 
         # Optional doxygen description
         try:
@@ -1243,6 +1251,15 @@ class CppVariable(_CppVariable):
 
         self.init()
         CppVariable.Vars.append(self)  # save and resolve later
+
+    def _filter_name(self, name):
+        name = name.replace(" :", ":").replace(": ", ":")
+        name = name.replace(" < ", "<")
+        name = name.replace(" > ", "> ").replace(">>", "> >")
+        name = name.replace(") >", ")>")
+        name = name.replace(" {", "{").replace(" }", "}")
+        name = name.replace(" ,", ",")
+        return name
 
     def __str__(self):
         keys_white_list = [
@@ -2508,8 +2525,8 @@ class _CppHeader(Resolver):
 
 # fmt: off
 _namestack_append_tokens = {
-    "(",
-    ")",
+    "{",
+    "}",
     "[",
     "]",
     "=",
@@ -2729,6 +2746,7 @@ class CppHeader(_CppHeader):
         self.braceHandled = False
         tok = None
         self.stmtTokens = []
+        parenDepth = 0
 
         try:
             while True:
@@ -2779,7 +2797,7 @@ class CppHeader(_CppHeader):
                     self.nameStack = []
                     continue
 
-                if tok.type == "{":
+                if parenDepth == 0 and tok.type == "{":
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
                     ):  # namespace {} with no name used in boost, this sets default?
@@ -2830,7 +2848,7 @@ class CppHeader(_CppHeader):
                     if not self.braceHandled:
                         self.braceDepth += 1
 
-                elif tok.type == "}":
+                elif parenDepth == 0 and tok.type == "}":
                     if self.braceDepth == 0:
                         continue
                     if self.braceDepth == len(self.nameSpaces):
@@ -2862,7 +2880,6 @@ class CppHeader(_CppHeader):
                             self.curClass = ""
                         self.stack = []
                         self.stmtTokens = []
-
                 elif tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
                     nameStackAppended = True
@@ -2922,6 +2939,15 @@ class CppHeader(_CppHeader):
                     self.stack = []
                     self.nameStack = []
                     self.stmtTokens = []
+                elif tok.type == "(":
+                    parenDepth += 1
+                    self.nameStack.append(tok.value)
+                    nameStackAppended = True
+                elif tok.type == ")":
+                    self.nameStack.append(tok.value)
+                    nameStackAppended = True
+                    if parenDepth != 0:
+                        parenDepth -= 1
 
                 newNsLen = len(self.nameStack)
                 if nslen != newNsLen and newNsLen == 1:
