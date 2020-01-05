@@ -2976,6 +2976,7 @@ class CppHeader(_CppHeader):
             "mainClass",
             "_template_typenames",
             "braceDepth",
+            "stmtTokens",
             "typedefs_order",
             "curTemplate",
         ]:
