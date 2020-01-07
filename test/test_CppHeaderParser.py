@@ -3708,5 +3708,41 @@ void fn(something<T, U> s = something<T, U>{1,2,3});
         self.assertEqual(fn["rtnType"], "void")
 
 
+class NestedClassAccess_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class Outer {
+    struct Inner {
+        void fn();
+    };
+
+    void ofn();
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        self.assertEqual(len(self.cppHeader.functions), 0)
+
+        outer = self.cppHeader.classes["Outer"]
+        self.assertEqual(outer["parent"], None)
+
+        self.assertEqual(0, len(outer["methods"]["public"]))
+        self.assertEqual(0, len(outer["methods"]["protected"]))
+        self.assertEqual(1, len(outer["methods"]["private"]))
+        self.assertEqual("ofn", outer["methods"]["private"][0]["name"])
+
+        inner = self.cppHeader.classes["Outer::Inner"]
+        self.assertIs(inner["parent"], outer)
+        self.assertEqual(inner["access_in_parent"], "private")
+
+        self.assertEqual(1, len(inner["methods"]["public"]))
+        self.assertEqual(0, len(inner["methods"]["protected"]))
+        self.assertEqual(0, len(inner["methods"]["private"]))
+        self.assertEqual("fn", inner["methods"]["public"][0]["name"])
+
+
 if __name__ == "__main__":
     unittest.main()

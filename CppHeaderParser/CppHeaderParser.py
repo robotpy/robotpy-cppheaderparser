@@ -2428,12 +2428,9 @@ class _CppHeader(Resolver):
         # dont support sub classes today
         # print( 'eval class stack', self.nameStack )
         parent = self.curClass
-        if self.braceDepth > len(self.nameSpaces) and parent:
-            trace_print("HIT NESTED SUBCLASS")
+        if parent:
+            debug_print("found nested subclass")
             self.accessSpecifierStack.append(self.curAccessSpecifier)
-        elif self.braceDepth != len(self.nameSpaces):
-            error_print("ERROR: WRONG BRACE DEPTH")
-            return
 
         # When dealing with typedefed structs, get rid of typedef keyword to handle later on
         if self.nameStack[0] == "typedef":
@@ -2478,6 +2475,7 @@ class _CppHeader(Resolver):
         if parent:
             newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
             newClass["parent"] = self.classes[parent]
+            newClass["access_in_parent"] = self.accessSpecifierStack[-1]
             self.classes[parent]["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
             self.curClass = key = parent + "::" + classKey
