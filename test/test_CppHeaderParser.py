@@ -3744,5 +3744,46 @@ class Outer {
         self.assertEqual("fn", inner["methods"]["public"][0]["name"])
 
 
+class AnonUnion_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+struct Outer {
+    union {
+        int x;
+        int y;
+    };
+    int z;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        self.assertEqual(len(self.cppHeader.functions), 0)
+
+        outer = self.cppHeader.classes["Outer"]
+        self.assertEqual(outer["parent"], None)
+
+        inner = self.cppHeader.classes["Outer::union "]
+        self.assertIs(inner["parent"], outer)
+
+        self.assertEqual(2, len(outer["properties"]["public"]))
+        self.assertEqual(0, len(outer["properties"]["protected"]))
+        self.assertEqual(0, len(outer["properties"]["private"]))
+
+        props = outer["properties"]["public"]
+        self.assertEqual(props[0]["name"], "")
+        self.assertEqual(props[1]["name"], "z")
+
+        self.assertEqual(2, len(outer["properties"]["public"]))
+        self.assertEqual(0, len(outer["properties"]["protected"]))
+        self.assertEqual(0, len(outer["properties"]["private"]))
+
+        props = inner["properties"]["public"]
+        self.assertEqual(props[0]["name"], "x")
+        self.assertEqual(props[1]["name"], "y")
+
+
 if __name__ == "__main__":
     unittest.main()

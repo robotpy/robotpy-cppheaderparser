@@ -2871,8 +2871,9 @@ class CppHeader(_CppHeader):
                             self.curAccessSpecifier = self.accessSpecifierStack[-1]
                             self.accessSpecifierStack = self.accessSpecifierStack[:-1]
                         if self.curClass and self.classes[self.curClass]["parent"]:
-                            self.curClass = self.classes[self.curClass]["parent"][
-                                "name"
+                            thisClass = self.classes[self.curClass]
+                            self.curClass = self.curClass[
+                                : -(len(thisClass["name"]) + 2)
                             ]
                         else:
                             self.curClass = ""
