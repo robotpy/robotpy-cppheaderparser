@@ -497,8 +497,13 @@ def _parse_cppclass_name(c, stack):
     c["namespace"] = ""
 
     # backwards compat
-    if name.startswith("anon-struct-"):
-        name = "<" + name + ">"
+    if name.startswith("anon-"):
+        if (
+            name.startswith("anon-class-")
+            or name.startswith("anon-struct-")
+            or name.startswith("anon-union-")
+        ):
+            name = "<" + name + ">"
     c["name"] = name
     c["bare_name"] = name
     debug_print("Found class '%s'", name)
@@ -820,7 +825,6 @@ class CppUnion(CppClass):
 
     def __init__(self, nameStack, doxygen, location):
         CppClass.__init__(self, nameStack, None, doxygen, location)
-        self["name"] = "union " + self["name"]
         self["members"] = self["properties"]["public"]
 
     def transform_to_union_keys(self):
@@ -2435,14 +2439,24 @@ class _CppHeader(Resolver):
         # When dealing with typedefed structs, get rid of typedef keyword to handle later on
         if self.nameStack[0] == "typedef":
             del self.nameStack[0]
-            if len(self.nameStack) == 1:
+
+        if len(self.nameStack) == 1:
+            if self.nameStack[0] == "struct":
                 self.anon_struct_counter += 1
                 # We cant handle more than 1 anonymous struct, so name them uniquely
                 self.nameStack.append("anon-struct-%d" % self.anon_struct_counter)
+            elif self.nameStack[0] == "union":
+                self.anon_union_counter += 1
+                # We cant handle more than 1 anonymous union, so name them uniquely
+                self.nameStack.append("anon-union-%d" % self.anon_union_counter)
+            elif self.nameStack[0] == "class":
+                self.anon_class_counter += 1
+                # We cant handle more than 1 anonymous class, so name them uniquely
+                self.nameStack.append("anon-class-%d" % self.anon_class_counter)
 
         if self.nameStack[0] == "class":
             self.curAccessSpecifier = "private"
-        else:  # struct
+        else:  # struct/union
             self.curAccessSpecifier = "public"
         debug_print(
             "curAccessSpecifier changed/defaulted to %s", self.curAccessSpecifier
@@ -2453,11 +2467,6 @@ class _CppHeader(Resolver):
                 self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
-            if newClass["name"] == "union ":
-                self.anon_union_counter = [self.braceDepth, 2]
-            else:
-                self.anon_union_counter = [self.braceDepth, 1]
-            trace_print("NEW UNION", newClass["name"])
         else:
             newClass = CppClass(
                 self.nameStack,
@@ -2465,7 +2474,6 @@ class _CppHeader(Resolver):
                 self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
-            trace_print("NEW CLASS", newClass["name"])
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append(newClass)  # good idea to save ordering
         self.stack = []  # fixes if class declared with ';' in closing brace
@@ -2639,7 +2647,8 @@ class CppHeader(_CppHeader):
         # Old namestacks for a given level
         self.nameStackHistory = []
         self.anon_struct_counter = 0
-        self.anon_union_counter = [-1, 0]
+        self.anon_union_counter = 0
+        self.anon_class_counter = 0
 
         #: Using directives in this header outside of class scope: key is
         #: full name for lookup, value is :class:`.CppVariable`
@@ -2751,11 +2760,6 @@ class CppHeader(_CppHeader):
                 tok = lex.token(eof_ok=True)
                 if not tok:
                     break
-                if (
-                    self.anon_union_counter[0] == self.braceDepth
-                    and self.anon_union_counter[1]
-                ):
-                    self.anon_union_counter[1] -= 1
                 tok.value = TagStr(tok.value, location=tok.location)
 
                 # debug_print("TOK: %s", tok)
@@ -2875,6 +2879,24 @@ class CppHeader(_CppHeader):
                             self.curClass = self.curClass[
                                 : -(len(thisClass["name"]) + 2)
                             ]
+
+                            # Detect anonymous union members
+                            if (
+                                self.curClass
+                                and thisClass["declaration_method"] == "union"
+                                and thisClass["name"].startswith("<")
+                                and self.lex.token_if(";")
+                            ):
+                                debug_print("Creating anonymous union")
+                                # Force the processing of an anonymous union
+                                self.nameStack = [""]
+                                self.stack = self.nameStack + [";"]
+                                debug_print("pre eval anon stack")
+                                self._evaluate_stack(";")
+                                debug_print("post eval anon stack")
+                                self.stack = []
+                                self.nameStack = []
+                                self.stmtTokens = []
                         else:
                             self.curClass = ""
                         self.stack = []
@@ -2891,8 +2913,6 @@ class CppHeader(_CppHeader):
                         self.nameStack.append(tok.value)
                     else:
                         self.nameStack.append(tok.value)
-                        if self.anon_union_counter[0] == self.braceDepth:
-                            self.anon_union_counter = [-1, 0]
                 elif tok.type == ":":
                     if self.nameStack and self.nameStack[0] in supportedAccessSpecifier:
                         specifier = " ".join(self.nameStack)
@@ -2916,24 +2936,6 @@ class CppHeader(_CppHeader):
                         self.nameStack.append(tok.value)
 
                 elif tok.type == ";":
-                    if (
-                        self.anon_union_counter[0] == self.braceDepth
-                        and self.anon_union_counter[1]
-                    ):
-                        debug_print("Creating anonymous union")
-                        # Force the processing of an anonymous union
-                        saved_namestack = self.nameStack[:]
-                        saved_stack = self.stack[:]
-                        self.nameStack = [""]
-                        self.stack = self.nameStack + [";"]
-                        self.nameStack = self.nameStack[0:1]
-                        debug_print("pre eval anon stack")
-                        self._evaluate_stack(tok.type)
-                        debug_print("post eval anon stack")
-                        self.nameStack = saved_namestack
-                        self.stack = saved_stack
-                        self.anon_union_counter = [-1, 0]
-
                     self._evaluate_stack(tok.type)
                     self.stack = []
                     self.nameStack = []
@@ -2995,6 +2997,7 @@ class CppHeader(_CppHeader):
             "nameStackHistory",
             "anon_struct_counter",
             "anon_union_counter",
+            "anon_class_counter",
             "_classes_brace_level",
             "_forward_decls",
             "stack",

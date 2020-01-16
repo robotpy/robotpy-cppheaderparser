@@ -855,7 +855,7 @@ class AnonHolderClass_TestCase(unittest.TestCase):
             "constant": 0,
             "name": "a",
             "reference": 0,
-            "type": "",
+            "type": "<anon-struct-1>",
             "static": 0,
             "pointer": 0,
         }
@@ -1037,7 +1037,7 @@ class Hog_TestCase(unittest.TestCase):
             "constant": 0,
             "name": "u",
             "reference": 0,
-            "type": "union HogUnion",
+            "type": "HogUnion",
             "static": 0,
             "pointer": 0,
         }
@@ -1051,13 +1051,13 @@ class Hog_TestCase(unittest.TestCase):
 
     def test_union(self):
         cmp_values = {
-            "name": "union HogUnion",
+            "name": "HogUnion",
             "parent": self.cppHeader.classes["HogClass"],
             "declaration_method": "union",
         }
         self.assertEqual(
             filter_dict_keys(
-                self.cppHeader.classes["HogClass::union HogUnion"], cmp_values.keys()
+                self.cppHeader.classes["HogClass::HogUnion"], cmp_values.keys()
             ),
             cmp_values,
         )
@@ -1073,7 +1073,7 @@ class Hog_TestCase(unittest.TestCase):
         }
         self.assertEqual(
             filter_dict_keys(
-                self.cppHeader.classes["HogClass::union HogUnion"]["members"][0],
+                self.cppHeader.classes["HogClass::HogUnion"]["members"][0],
                 cmp_values.keys(),
             ),
             cmp_values,
@@ -1090,7 +1090,7 @@ class Hog_TestCase(unittest.TestCase):
         }
         self.assertEqual(
             filter_dict_keys(
-                self.cppHeader.classes["HogClass::union HogUnion"]["members"][1],
+                self.cppHeader.classes["HogClass::HogUnion"]["members"][1],
                 cmp_values.keys(),
             ),
             cmp_values,
@@ -1891,6 +1891,14 @@ class Beans_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
+    def test_public_props(self):
+        self.assertEqual(
+            len(self.cppHeader.classes["Beans"]["properties"]["public"]), 4
+        )
+        self.assertEqual(
+            self.cppHeader.classes["Beans"]["properties"]["public"][2]["name"], "data"
+        )
+
     def test_anonymous_union_name(self):
         return self.assertEqual(
             self.cppHeader.classes["Beans"]["properties"]["public"][1]["name"], ""
@@ -2179,11 +2187,11 @@ class Raspberry_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
     def test_anon_struct_1_exists(self):
-        self.assertEqual("<anon-struct-1>" in self.cppHeader.classes, True)
+        self.assertEqual("<anon-struct-5>" in self.cppHeader.classes, True)
 
     def test_beta_exists(self):
         self.assertEqual(
-            self.cppHeader.classes["<anon-struct-1>"]["properties"]["public"][0][
+            self.cppHeader.classes["<anon-struct-5>"]["properties"]["public"][0][
                 "name"
             ],
             "anon_struct_variable",
@@ -2469,7 +2477,7 @@ class Olive_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
     def test_Olive_exists(self):
-        self.assertEqual("union olive" in self.cppHeader.classes, True)
+        self.assertEqual("olive" in self.cppHeader.classes, True)
 
     def test_union_member_x(self):
         cmp_values = {
@@ -2482,7 +2490,7 @@ class Olive_TestCase(unittest.TestCase):
         }
         self.assertEqual(
             filter_dict_keys(
-                self.cppHeader.classes["union olive"]["members"][0], cmp_values.keys()
+                self.cppHeader.classes["olive"]["members"][0], cmp_values.keys()
             ),
             cmp_values,
         )
@@ -3765,7 +3773,7 @@ struct Outer {
         outer = self.cppHeader.classes["Outer"]
         self.assertEqual(outer["parent"], None)
 
-        inner = self.cppHeader.classes["Outer::union "]
+        inner = self.cppHeader.classes["Outer::<anon-union-1>"]
         self.assertIs(inner["parent"], outer)
 
         self.assertEqual(2, len(outer["properties"]["public"]))
