@@ -98,19 +98,33 @@ def warning_print(fmt, *args):
         print(fmt % args)
 
 
-def debug_print(fmt, *args):
-    if debug:
+if debug:
+
+    def debug_print(fmt, *args):
         fmt = "[%4d] " + fmt
         args = (inspect.currentframe().f_back.f_lineno,) + args
         print(fmt % args)
 
 
-def trace_print(*args):
-    if debug_trace:
+else:
+
+    def debug_print(fmt, *args):
+        pass
+
+
+if debug_trace:
+
+    def trace_print(*args):
         sys.stdout.write("[%s] " % (inspect.currentframe().f_back.f_lineno))
         for a in args:
             sys.stdout.write("%s " % a)
         sys.stdout.write("\n")
+
+
+else:
+
+    def trace_print(*args):
+        pass
 
 
 #: Access specifiers
@@ -2861,10 +2875,10 @@ class CppHeader(_CppHeader):
                         self._evaluate_stack()
                     self.braceDepth -= 1
 
-                    if self.curClass:
-                        debug_print(
-                            "CURBD %s", self._classes_brace_level[self.curClass]
-                        )
+                    # if self.curClass:
+                    #     debug_print(
+                    #         "CURBD %s", self._classes_brace_level[self.curClass]
+                    #     )
 
                     if (self.braceDepth == 0) or (
                         self.curClass
