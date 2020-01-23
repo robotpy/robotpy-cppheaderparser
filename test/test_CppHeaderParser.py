@@ -3187,7 +3187,7 @@ struct S : public T... {};
         self.assertEqual(
             [
                 {
-                    "access": "private",
+                    "access": "public",
                     "class": "build_index_impl<N-1,N-1,I...>",
                     "decltype": False,
                     "decl_name": "build_index_impl",
@@ -3217,7 +3217,7 @@ struct S : public T... {};
         self.assertEqual(
             [
                 {
-                    "access": "private",
+                    "access": "public",
                     "class": "index_sequence<I...>",
                     "decltype": False,
                     "decl_name": "index_sequence",

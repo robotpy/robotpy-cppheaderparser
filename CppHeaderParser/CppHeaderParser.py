@@ -384,8 +384,8 @@ class CppBaseDecl(dict):
 
     """
 
-    def __init__(self):
-        self["access"] = "private"
+    def __init__(self, default_access):
+        self["access"] = default_access
         self["class"] = ""
         self["decl_name"] = ""
         self["decltype"] = False
@@ -530,13 +530,13 @@ def _parse_cppclass_name(c, stack):
     return i
 
 
-def _parse_cpp_base(stack):
-    debug_print("Parsing base: %s", stack)
+def _parse_cpp_base(stack, default_access):
+    debug_print("Parsing base: %s (access %s)", stack, default_access)
     inherits = []
     i = 0
     sl = len(stack)
     init = True
-    base = CppBaseDecl()
+    base = CppBaseDecl(default_access)
     require_ending = False
     while i < sl:
         t = stack[i]
@@ -558,7 +558,7 @@ def _parse_cpp_base(stack):
 
         if t == ",":
             inherits.append(base)
-            base = CppBaseDecl()
+            base = CppBaseDecl(default_access)
             init = True
             require_ending = False
             continue
@@ -681,7 +681,7 @@ class CppClass(dict):
             if n["name"] == name:
                 return {"raw_type": self["name"] + "::" + n["name"], "type": n["name"]}
 
-    def __init__(self, nameStack, curTemplate, doxygen, location):
+    def __init__(self, nameStack, curTemplate, doxygen, location, defaultAccess):
         self["nested_classes"] = []
         self["parent"] = None
         self["abstract"] = False
@@ -706,7 +706,7 @@ class CppClass(dict):
         # consume bases
         baseStack = nameStack[n:]
         if baseStack:
-            self["inherits"] = _parse_cpp_base(baseStack)
+            self["inherits"] = _parse_cpp_base(baseStack, defaultAccess)
         else:
             self["inherits"] = []
 
@@ -838,7 +838,7 @@ class CppUnion(CppClass):
     """
 
     def __init__(self, nameStack, doxygen, location):
-        CppClass.__init__(self, nameStack, None, doxygen, location)
+        CppClass.__init__(self, nameStack, None, doxygen, location, "public")
         self["members"] = self["properties"]["public"]
 
     def transform_to_union_keys(self):
@@ -2487,6 +2487,7 @@ class _CppHeader(Resolver):
                 self.curTemplate,
                 self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
+                self.curAccessSpecifier,
             )
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append(newClass)  # good idea to save ordering
