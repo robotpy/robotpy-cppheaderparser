@@ -3792,6 +3792,22 @@ struct Outer {
         self.assertEqual(props[0]["name"], "x")
         self.assertEqual(props[1]["name"], "y")
 
+class Deleted_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class A {
+public:
+    A() = delete;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        m = self.cppHeader.classes["A"]["methods"]["public"][0]
+        self.assertEqual(m["constructor"], True)
+        self.assertEqual(m["deleted"], True)
 
 if __name__ == "__main__":
     unittest.main()

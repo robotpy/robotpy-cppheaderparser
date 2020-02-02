@@ -2091,7 +2091,7 @@ class _CppHeader(Resolver):
 
     _method_type_defaults = {
         n: False
-        for n in "defined pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default".split()
+        for n in "defined deleted pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default".split()
     }
 
     def parse_method_type(self, stack):
@@ -2131,13 +2131,11 @@ class _CppHeader(Resolver):
         else:
             assert 0
 
-        if (
-            len(stack) > 3
-            and stack[-1] == ";"
-            and stack[-2] == "0"
-            and stack[-3] == "="
-        ):
-            info["pure_virtual"] = True
+        if len(stack) > 3 and stack[-1] == ";" and stack[-3] == "=":
+            if stack[-2] == "0":
+                info["pure_virtual"] = True
+            elif stack[-2] == "delete":
+                info["deleted"] = True
 
         r = header.split()
         name = None
