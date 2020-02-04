@@ -2367,7 +2367,7 @@ class _CppHeader(Resolver):
             else:
                 assert 0
         elif self.curClass:
-            if len(self.nameStack) == 1:
+            if(len(self.nameStack) == 1 or self.nameStack[1]=="["):
                 # See if we can de anonymize the type
                 filteredParseHistory = [
                     h for h in parseHistory if h["braceDepth"] == self.braceDepth
