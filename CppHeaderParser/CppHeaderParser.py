@@ -2453,15 +2453,15 @@ class _CppHeader(Resolver):
             del self.nameStack[0]
 
         if len(self.nameStack) == 1:
-            if self.nameStack[0] == "struct":
+            if "struct" in self.nameStack:
                 self.anon_struct_counter += 1
                 # We cant handle more than 1 anonymous struct, so name them uniquely
                 self.nameStack.append("anon-struct-%d" % self.anon_struct_counter)
-            elif self.nameStack[0] == "union":
+            elif "union" in self.nameStack:
                 self.anon_union_counter += 1
                 # We cant handle more than 1 anonymous union, so name them uniquely
                 self.nameStack.append("anon-union-%d" % self.anon_union_counter)
-            elif self.nameStack[0] == "class":
+            elif "class" in self.nameStack:
                 self.anon_class_counter += 1
                 # We cant handle more than 1 anonymous class, so name them uniquely
                 self.nameStack.append("anon-class-%d" % self.anon_class_counter)
