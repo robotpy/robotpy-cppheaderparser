@@ -3809,5 +3809,39 @@ public:
         self.assertEqual(m["constructor"], True)
         self.assertEqual(m["deleted"], True)
 
+# Github issue #37 : https://github.com/robotpy/robotpy-cppheaderparser/issues/37
+class AnonUnionArray_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+struct Outer {
+    union {
+        int x;
+        int y;
+    } anon_union[3];
+    int z;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        outer = self.cppHeader.classes["Outer"]
+        self.assertEqual(outer["parent"], None)
+
+        inner = self.cppHeader.classes["Outer::<anon-union-1>"]
+        self.assertEqual(2, len(outer["properties"]["public"]))
+        self.assertEqual(2, len(inner["properties"]["public"]))
+        self.assertEqual(2, len(inner["members"]))
+
+        anon_union_instance = outer["properties"]["public"][0]
+        self.assertEqual(anon_union_instance["name"],"anon_union")
+        self.assertEqual(anon_union_instance["array_size"],"3")
+        self.assertEqual(anon_union_instance["type"],"<anon-union-1>")
+
+
+
+
+
 if __name__ == "__main__":
     unittest.main()
