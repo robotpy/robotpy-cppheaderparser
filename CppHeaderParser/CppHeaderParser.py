@@ -408,7 +408,7 @@ class CppBaseDecl(dict):
         if self["..."]:
             s += "..."
 
-        self["class"] = s
+        return s
 
 
 def _consume_parens(stack):
@@ -564,7 +564,14 @@ def _parse_cpp_base(stack, default_access):
             continue
 
         if require_ending:
-            raise CppParseError("expected comma, found '%s'" % t)
+            if t == "::":
+                if "decl_params" in base:
+                    base["decl_name"] = base._fix_classname()
+                    del base["decl_params"]
+                    base["..."]
+                require_ending = False
+            else:
+                raise CppParseError("expected comma, found '%s'" % t)
 
         if t == "(":
             s = stack[i:]
@@ -585,7 +592,7 @@ def _parse_cpp_base(stack, default_access):
     # backwards compat
     inherits.append(base)
     for base in inherits:
-        base._fix_classname()
+        base["class"] = base._fix_classname()
 
     return inherits
 
