@@ -3792,6 +3792,7 @@ struct Outer {
         self.assertEqual(props[0]["name"], "x")
         self.assertEqual(props[1]["name"], "y")
 
+
 class Deleted_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader(
@@ -3808,6 +3809,34 @@ public:
         m = self.cppHeader.classes["A"]["methods"]["public"][0]
         self.assertEqual(m["constructor"], True)
         self.assertEqual(m["deleted"], True)
+
+
+class BaseTemplateNs_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class A : public B<int, int>::C {};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["A"]
+        self.assertEqual("A", c["name"])
+        self.assertEqual(
+            [
+                {
+                    "access": "public",
+                    "class": "B<int,int>::C",
+                    "decl_name": "B<int,int>::C",
+                    "virtual": False,
+                    "...": False,
+                    "decltype": False,
+                }
+            ],
+            c["inherits"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
