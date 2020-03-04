@@ -1957,6 +1957,7 @@ class _CppHeader(Resolver):
                     "static": 0,
                     "pointer": 0,
                     "reference": 0,
+                    "typedefs": 0,
                 }
                 self.resolve_type(meth["rtnType"], rtnType)
                 if not rtnType["unresolved"]:

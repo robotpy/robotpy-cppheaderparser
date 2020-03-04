@@ -3868,5 +3868,30 @@ template <class SomeType> class A {
         self.assertEqual(c["type"], "C")
 
 
+class MoreTypedef(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+typedef C A;
+
+class B {
+public:
+  A aMethod();
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["B"]
+        self.assertEqual("B", c["name"])
+
+        m = c["methods"]["public"][0]
+        self.assertEqual(m["name"], "aMethod")
+        self.assertEqual(m["rtnType"], "A")
+
+        self.assertEqual(self.cppHeader.typedefs["A"], "C")
+
+
 if __name__ == "__main__":
     unittest.main()
