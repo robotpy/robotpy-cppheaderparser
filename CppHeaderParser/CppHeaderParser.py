@@ -1685,7 +1685,7 @@ class Resolver(object):
 
                     elif nestedTypedef:
                         var["fundamental"] = is_fundamental(nestedTypedef)
-                        if not var["fundamental"]:
+                        if not var["fundamental"] and "method" in var:
                             var["raw_type"] = var["method"]["path"] + "::" + tag
 
                     else:

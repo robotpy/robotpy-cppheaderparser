@@ -3838,5 +3838,35 @@ class A : public B<int, int>::C {};
         )
 
 
+class NestedTypedef(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+template <class SomeType> class A {
+ public:
+  typedef B <SomeType> C;
+  
+  A();
+
+ protected:
+  C aCInstance;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["A"]
+        self.assertEqual("A", c["name"])
+
+        self.assertEqual(0, len(c["properties"]["public"]))
+        self.assertEqual(1, len(c["properties"]["protected"]))
+        self.assertEqual(0, len(c["properties"]["private"]))
+
+        c = c["properties"]["protected"][0]
+        self.assertEqual(c["name"], "aCInstance")
+        self.assertEqual(c["type"], "C")
+
+
 if __name__ == "__main__":
     unittest.main()
