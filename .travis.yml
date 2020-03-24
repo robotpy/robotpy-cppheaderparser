@@ -1,5 +1,4 @@
 language: python
-sudo: required
 dist: xenial
 
 python:
@@ -8,18 +7,16 @@ python:
   - "3.5"
   - "2.7"
 
-matrix:
-  fast_finish: true
 
 jobs:
   include:
   - stage: format-check
-    python:
-    - "3.6"
+    python: "3.6"
     install:
     - pip install black
     script:
     - black --check --diff .
+  fast_finish: true
 
 # command to install dependencies
 install:

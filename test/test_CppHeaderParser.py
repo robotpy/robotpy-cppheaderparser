@@ -1869,15 +1869,27 @@ class Macro_TestCase(unittest.TestCase):
 
     def test_includes(self):
         self.assertEqual(self.cppHeader.includes, ["<string.h>", '"../../debug.h"'])
+        self.assertEqual(self.cppHeader.includes_detail[0]["value"], "<string.h>")
+        self.assertEqual(self.cppHeader.includes_detail[0]["line_number"], 2)
+        self.assertEqual(self.cppHeader.includes_detail[1]["value"], '"../../debug.h"')
+        self.assertEqual(self.cppHeader.includes_detail[1]["line_number"], 3)
 
     def test_pragmas(self):
         self.assertEqual(self.cppHeader.pragmas, ["once"])
+        self.assertEqual(self.cppHeader.pragmas_detail[0]["value"], "once")
+        self.assertEqual(self.cppHeader.pragmas_detail[0]["line_number"], 7)
 
     def test_pragmas0(self):
         self.assertEqual(self.cppHeader.defines[0], "ONE 1")
+        self.assertEqual(self.cppHeader.defines_detail[0]["value"], "ONE 1")
+        self.assertEqual(self.cppHeader.defines_detail[0]["line_number"], 5)
 
     def test_pragmas1(self):
         self.assertEqual(self.cppHeader.defines[1], 'TWO_NUM_N_NAME "2 (TWO)"')
+        self.assertEqual(
+            self.cppHeader.defines_detail[1]["value"], 'TWO_NUM_N_NAME "2 (TWO)"'
+        )
+        self.assertEqual(self.cppHeader.defines_detail[1]["line_number"], 6)
 
     def test_pragmas2(self):
         self.assertEqual(
