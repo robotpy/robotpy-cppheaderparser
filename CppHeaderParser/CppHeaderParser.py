@@ -1384,6 +1384,37 @@ class CppEnum(_CppEnum):
         set_location_info(self, location)
 
 
+class _CppPreprocessorLiteral(dict):
+    """ Implementation for #pragmas, #defines and #includes, contains the
+     following keys:
+
+     * ``value`` the value literal of the preprocessor item
+     * ``line_number`` line number at which the item was found
+    """
+
+    def __init__(self, macro, location):
+        self["value"] = re.split("[\t ]+", macro, 1)[1].strip()
+        set_location_info(self, location)
+
+    def __str__(self):
+        return self["value"]
+
+
+# Implementation is shared between CppPragma, CppDefine, CppInclude but they are
+# distinct so that they may diverge if required without interface-breaking
+# changes
+class CppPragma(_CppPreprocessorLiteral):
+    pass
+
+
+class CppDefine(_CppPreprocessorLiteral):
+    pass
+
+
+class CppInclude(_CppPreprocessorLiteral):
+    pass
+
+
 C99_NONSTANDARD = {
     "int8": "signed char",
     "int16": "short int",
@@ -1905,19 +1936,25 @@ class Resolver(object):
 
         # Take care of #defines and #pragmas etc
         trace_print("Processing precomp_macro_buf: %s" % self._precomp_macro_buf)
-        for m in self._precomp_macro_buf:
+        for m, location in self._precomp_macro_buf:
             macro = m.replace("<CppHeaderParser_newline_temp_replacement>\\n", "\n")
             ml = macro.lower()
             try:
                 if ml.startswith("#define"):
                     trace_print("Adding #define %s" % macro)
-                    self.defines.append(re.split("[\t ]+", macro, 1)[1].strip())
+                    define = CppDefine(macro, location)
+                    self.defines.append(define["value"])
+                    self.defines_detail.append(define)
                 elif ml.startswith("#pragma"):
                     trace_print("Adding #pragma %s" % macro)
-                    self.pragmas.append(re.split("[\t ]+", macro, 1)[1].strip())
+                    pragma = CppPragma(macro, location)
+                    self.pragmas_detail.append(pragma)
+                    self.pragmas.append(pragma["value"])
                 elif ml.startswith("#include"):
                     trace_print("Adding #include %s" % macro)
-                    self.includes.append(re.split("[\t ]+", macro, 1)[1].strip())
+                    include = CppInclude(macro, location)
+                    self.includes.append(include["value"])
+                    self.includes_detail.append(include)
                 else:
                     debug_print("Cant detect what to do with precomp macro '%s'", macro)
             except:
@@ -2635,11 +2672,20 @@ class CppHeader(_CppHeader):
         #: List of #pragma directives found as strings
         self.pragmas = []
 
+        #: List of pragmas with location information
+        self.pragmas_detail = []
+
         #: List of #define directives found
         self.defines = []
 
+        #: List of #define directives found, with location information
+        self.defines_detail = []
+
         #: List of #include directives found
         self.includes = []
+
+        #: List of #include directives found with location information
+        self.includes_detail = []
 
         #: Filenames encountered in #line directives while parsing
         self.headerFileNames = []
@@ -2814,7 +2860,7 @@ class CppHeader(_CppHeader):
 
                 if tok.type in ("PRECOMP_MACRO", "PRECOMP_MACRO_CONT"):
                     debug_print("PRECOMP: %s", tok)
-                    self._precomp_macro_buf.append(tok.value)
+                    self._precomp_macro_buf.append((tok.value, tok.location))
                     self.stack = []
                     self.stmtTokens = []
                     self.nameStack = []
