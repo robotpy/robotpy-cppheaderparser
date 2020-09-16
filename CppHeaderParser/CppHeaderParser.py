@@ -990,23 +990,26 @@ class CppMethod(_CppMethod):
                 break
 
         if "operator" in nameStack:
-            self["rtnType"] = " ".join(nameStack[: nameStack.index("operator")])
+            rtnType = " ".join(nameStack[: nameStack.index("operator")])
             self["name"] = "".join(
                 nameStack[nameStack.index("operator") : nameStack.index("(")]
             )
         else:
-            self["rtnType"] = " ".join(nameStack[: nameStack.index("(") - 1])
+            rtnType = " ".join(nameStack[: nameStack.index("(") - 1])
             self["name"] = " ".join(
                 nameStack[nameStack.index("(") - 1 : nameStack.index("(")]
             )
 
-        if len(self["rtnType"]) == 0 or self["name"] == curClass:
-            self["rtnType"] = "void"
+        if len(rtnType) == 0 or self["name"] == curClass:
+            rtnType = "void"
 
-        self["rtnType"] = self["rtnType"].replace(" :: ", "::")
-        self["rtnType"] = self["rtnType"].replace(" < ", "<")
-        self["rtnType"] = self["rtnType"].replace(" > ", "> ").replace(">>", "> >")
-        self["rtnType"] = self["rtnType"].replace(" ,", ",")
+        self["rtnType"] = (
+            rtnType.replace(" :: ", "::")
+            .replace(" < ", "<")
+            .replace(" > ", "> ")
+            .replace(">>", "> >")
+            .replace(" ,", ",")
+        )
 
         # deal with "noexcept" specifier/operator
         self["noexcept"] = None
