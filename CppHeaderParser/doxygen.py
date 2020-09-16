@@ -1,6 +1,6 @@
 def extract_doxygen_method_params(doxystr):
     """
-        Given a doxygen string for a method, extract parameter descriptions
+    Given a doxygen string for a method, extract parameter descriptions
     """
     doxyVarDesc = {}
     doxyLines = doxystr.split("\n")

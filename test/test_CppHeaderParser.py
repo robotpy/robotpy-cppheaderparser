@@ -3572,7 +3572,8 @@ enum class MyEnum {
 
         self.assertEqual(e["name"], "MyEnum")
         self.assertEqual(
-            e["values"], [{"name": "V", "value": 1}],
+            e["values"],
+            [{"name": "V", "value": 1}],
         )
 
 
