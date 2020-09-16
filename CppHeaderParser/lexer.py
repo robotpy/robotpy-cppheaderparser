@@ -142,11 +142,11 @@ class Lexer(object):
 
     def get_doxygen(self):
         """
-            This should be called after the first element of something has
-            been consumed.
+        This should be called after the first element of something has
+        been consumed.
 
-            It will lookahead for comments that come after the item, if prior
-            comments don't exist.
+        It will lookahead for comments that come after the item, if prior
+        comments don't exist.
         """
 
         # Assumption: This function is either called at the beginning of a

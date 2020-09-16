@@ -266,10 +266,10 @@ _nhack = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 def _split_namespace(namestack):
     """
-        Given a list of name elements, find the namespace portion
-        and return that as a string
+    Given a list of name elements, find the namespace portion
+    and return that as a string
 
-        :rtype: Tuple[str, list]
+    :rtype: Tuple[str, list]
     """
     # TODO: this should be using tokens instead of nhack
 
@@ -293,9 +293,9 @@ def _split_namespace(namestack):
 
 def _iter_ns_str_reversed(namespace):
     """
-        Take a namespace string, and yield successively smaller portions
-        of it (ex foo::bar::baz::, foo::bar::, foo::). The last item yielded
-        will always be an empty string
+    Take a namespace string, and yield successively smaller portions
+    of it (ex foo::bar::baz::, foo::bar::, foo::). The last item yielded
+    will always be an empty string
     """
     if namespace:
         parts = namespace.split("::")
@@ -334,13 +334,13 @@ class CppParseError(Exception):
 
 class CppTemplateParam(dict):
     """
-        Dictionary that contains the following:
+    Dictionary that contains the following:
 
-        - ``decltype`` - If True, this is a decltype
-        - ``param`` - Parameter value or typename
-        - ``params`` - Only present if a template specialization. Is a list of
-            :class:`.CppTemplateParam`
-        - ``...`` - If True, indicates a parameter pack
+    - ``decltype`` - If True, this is a decltype
+    - ``param`` - Parameter value or typename
+    - ``params`` - Only present if a template specialization. Is a list of
+        :class:`.CppTemplateParam`
+    - ``...`` - If True, indicates a parameter pack
     """
 
     def __init__(self):
@@ -370,17 +370,17 @@ class CppTemplateParam(dict):
 
 class CppBaseDecl(dict):
     """
-        Dictionary that contains the following
+    Dictionary that contains the following
 
-        - ``access`` - Anything in supportedAccessSpecifier
-        - ``class`` - Name of the type, along with template specializations
-        - ``decl_name`` - Name of the type only
-        - ``decl_params`` - Only present if a template specialization (Foo<int>).
-          Is a list of :class:`.CppTemplateParam`.
-        - ``decltype`` - True/False indicates a decltype, the contents are in
-          ``decl_name``
-        - ``virtual`` - True/False indicates virtual inheritance
-        - ``...`` - True/False indicates a parameter pack
+    - ``access`` - Anything in supportedAccessSpecifier
+    - ``class`` - Name of the type, along with template specializations
+    - ``decl_name`` - Name of the type only
+    - ``decl_params`` - Only present if a template specialization (Foo<int>).
+      Is a list of :class:`.CppTemplateParam`.
+    - ``decltype`` - True/False indicates a decltype, the contents are in
+      ``decl_name``
+    - ``virtual`` - True/False indicates virtual inheritance
+    - ``...`` - True/False indicates a parameter pack
 
     """
 
@@ -599,50 +599,50 @@ def _parse_cpp_base(stack, default_access):
 
 class CppClass(dict):
     """
-        Dictionary that contains at least the following keys:
+    Dictionary that contains at least the following keys:
 
-        * ``name`` - Name of the class
-        * ``doxygen`` - Doxygen comments associated with the class if they exist
-        * ``inherits`` - List of Classes that this one inherits. Values are
-          :class:`.CppBaseDecl`
-        * ``methods`` - Dictionary where keys are from supportedAccessSpecifier
-          and values are a lists of :class:`.CppMethod`
-        * ``namespace`` - Namespace of class
-        * ``properties`` - Dictionary where keys are from supportedAccessSpecifier
-          and values are lists of :class:`.CppVariable`
-        * ``enums`` - Dictionary where keys are from supportedAccessSpecifier and
-          values are lists of :class:`.CppEnum`
-        * ``nested_classes`` - Classes and structs defined within this class
-        * ``final`` - True if final
-        * ``abstract`` - True if abstract
-        * ``using`` - Using directives in this class scope: key is name for lookup,
-          value is :class:`.CppVariable`
-        * ``parent`` - If not None, the class that this class is nested in
-        
-        An example of how this could look is as follows::
+    * ``name`` - Name of the class
+    * ``doxygen`` - Doxygen comments associated with the class if they exist
+    * ``inherits`` - List of Classes that this one inherits. Values are
+      :class:`.CppBaseDecl`
+    * ``methods`` - Dictionary where keys are from supportedAccessSpecifier
+      and values are a lists of :class:`.CppMethod`
+    * ``namespace`` - Namespace of class
+    * ``properties`` - Dictionary where keys are from supportedAccessSpecifier
+      and values are lists of :class:`.CppVariable`
+    * ``enums`` - Dictionary where keys are from supportedAccessSpecifier and
+      values are lists of :class:`.CppEnum`
+    * ``nested_classes`` - Classes and structs defined within this class
+    * ``final`` - True if final
+    * ``abstract`` - True if abstract
+    * ``using`` - Using directives in this class scope: key is name for lookup,
+      value is :class:`.CppVariable`
+    * ``parent`` - If not None, the class that this class is nested in
 
+    An example of how this could look is as follows::
+
+        {
+            'name': ""
+            'inherits':[]
+            'methods':
             {
-                'name': ""
-                'inherits':[]
-                'methods':
-                {
-                    'public':[],
-                    'protected':[], 
-                    'private':[]
-                }, 
-                'properties':
-                {
-                    'public':[],
-                    'protected':[], 
-                    'private':[]
-                },
-                'enums':
-                {
-                    'public':[],
-                    'protected':[], 
-                    'private':[]
-                }
+                'public':[],
+                'protected':[],
+                'private':[]
+            },
+            'properties':
+            {
+                'public':[],
+                'protected':[],
+                'private':[]
+            },
+            'enums':
+            {
+                'public':[],
+                'protected':[],
+                'private':[]
             }
+        }
     """
 
     def get_all_methods(self):
@@ -837,11 +837,11 @@ class CppClass(dict):
 
 class CppUnion(CppClass):
     """
-        Dictionary that contains at least the following keys:
+    Dictionary that contains at least the following keys:
 
-        * ``name`` - Name of the union
-        * ``doxygen`` - Doxygen comments associated with the union if they exist
-        * ``members`` - List of members of the union
+    * ``name`` - Name of the union
+    * ``doxygen`` - Doxygen comments associated with the union if they exist
+    * ``members`` - List of members of the union
     """
 
     def __init__(self, nameStack, doxygen, location):
@@ -953,13 +953,13 @@ class _CppMethod(dict):
 
 class CppMethod(_CppMethod):
     """
-        Dictionary that contains at least the following keys:
+    Dictionary that contains at least the following keys:
 
-        * ``rtnType`` - Return type of the method (ex. "int")
-        * ``name`` - Name of the method
-        * ``doxygen`` - Doxygen comments associated with the method if they exist
-        * ``parameters`` - List of :class:`.CppVariable`
-        * ``parent`` - If not None, the class this method belongs to
+    * ``rtnType`` - Return type of the method (ex. "int")
+    * ``name`` - Name of the method
+    * ``doxygen`` - Doxygen comments associated with the method if they exist
+    * ``parameters`` - List of :class:`.CppVariable`
+    * ``parent`` - If not None, the class this method belongs to
     """
 
     def show(self):
@@ -983,29 +983,33 @@ class CppMethod(_CppMethod):
         if doxygen:
             self["doxygen"] = doxygen
 
+        # Remove leading keywords
+        for i, word in enumerate(nameStack):
+            if word not in Resolver.C_KEYWORDS:
+                nameStack = nameStack[i:]
+                break
+
         if "operator" in nameStack:
-            self["rtnType"] = " ".join(nameStack[: nameStack.index("operator")])
+            rtnType = " ".join(nameStack[: nameStack.index("operator")])
             self["name"] = "".join(
                 nameStack[nameStack.index("operator") : nameStack.index("(")]
             )
         else:
-            self["rtnType"] = " ".join(nameStack[: nameStack.index("(") - 1])
+            rtnType = " ".join(nameStack[: nameStack.index("(") - 1])
             self["name"] = " ".join(
                 nameStack[nameStack.index("(") - 1 : nameStack.index("(")]
             )
-        if self["rtnType"].startswith("virtual"):
-            self["rtnType"] = self["rtnType"][len("virtual") :].strip()
-        elif self["rtnType"].startswith("static"):
-            self["rtnType"] = self["rtnType"][len("static") :].strip()
-        elif self["rtnType"].startswith("inline"):
-            self["rtnType"] = self["rtnType"][len("inline") :].strip()
-        if len(self["rtnType"]) == 0 or self["name"] == curClass:
-            self["rtnType"] = "void"
 
-        self["rtnType"] = self["rtnType"].replace(" :: ", "::")
-        self["rtnType"] = self["rtnType"].replace(" < ", "<")
-        self["rtnType"] = self["rtnType"].replace(" > ", "> ").replace(">>", "> >")
-        self["rtnType"] = self["rtnType"].replace(" ,", ",")
+        if len(rtnType) == 0 or self["name"] == curClass:
+            rtnType = "void"
+
+        self["rtnType"] = (
+            rtnType.replace(" :: ", "::")
+            .replace(" < ", "<")
+            .replace(" > ", "> ")
+            .replace(">>", "> >")
+            .replace(" ,", ",")
+        )
 
         # deal with "noexcept" specifier/operator
         self["noexcept"] = None
@@ -1173,18 +1177,18 @@ class _CppVariable(dict):
 
 class CppVariable(_CppVariable):
     """
-        Dictionary that contains at least the following keys:
-    
-        * ``type`` - Type for the variable (ex. "const string &")
-        * ``name`` - Name of the variable (ex. "numItems")
-        * ``namespace`` - Namespace
-        * ``desc`` - If a method/function parameter, doxygen description for this parameter (optional)
-        * ``doxygen`` - If a normal property/variable, doxygen description for this
-        * ``default`` - Default value of the variable, this key will only
-          exist if there is a default value
-        * ``extern`` - True if its an extern, False if not
-        * ``parent`` - If not None, either the class this is a property of, or the
-          method this variable is a parameter in
+    Dictionary that contains at least the following keys:
+
+    * ``type`` - Type for the variable (ex. "const string &")
+    * ``name`` - Name of the variable (ex. "numItems")
+    * ``namespace`` - Namespace
+    * ``desc`` - If a method/function parameter, doxygen description for this parameter (optional)
+    * ``doxygen`` - If a normal property/variable, doxygen description for this
+    * ``default`` - Default value of the variable, this key will only
+      exist if there is a default value
+    * ``extern`` - True if its an extern, False if not
+    * ``parent`` - If not None, either the class this is a property of, or the
+      method this variable is a parameter in
     """
 
     Vars = []
@@ -1308,7 +1312,7 @@ class _CppEnum(dict):
     def resolve_enum_values(self, values):
         """Evaluates the values list of dictionaries passed in and figures out what the enum value
         for each enum is editing in place:
-        
+
         Example
         From: [{'name': 'ORANGE'},
                {'name': 'RED'},
@@ -1365,9 +1369,9 @@ class CppEnum(_CppEnum):
 
     * ``name`` - Name of the enum (ex. "ItemState")
     * ``namespace`` - Namespace containing the enum
-    * ``values`` - List of values. The values are a dictionary with 
+    * ``values`` - List of values. The values are a dictionary with
       the following key/values:
-      
+
       - ``name`` - name of the key (ex. "PARSING_HEADER"),
       - ``value`` - Specified value of the enum, this key will only exist
         if a value for a given enum value was defined
@@ -1385,11 +1389,11 @@ class CppEnum(_CppEnum):
 
 
 class _CppPreprocessorLiteral(dict):
-    """ Implementation for #pragmas, #defines and #includes, contains the
-     following keys:
+    """Implementation for #pragmas, #defines and #includes, contains the
+    following keys:
 
-     * ``value`` the value literal of the preprocessor item
-     * ``line_number`` line number at which the item was found
+    * ``value`` the value literal of the preprocessor item
+    * ``line_number`` line number at which the item was found
     """
 
     def __init__(self, macro, location):
@@ -1444,6 +1448,7 @@ class Resolver(object):
     C_MODIFIERS = set(C_MODIFIERS)
 
     C_KEYWORDS = "extern virtual static explicit inline friend".split()
+    C_KEYWORDS = set(C_KEYWORDS)
 
     SubTypedefs = {}  # TODO deprecate?
     NAMESPACES = []
@@ -2638,7 +2643,7 @@ class CppHeader(_CppHeader):
 
     def __init__(self, headerFileName, argType="file", encoding=None, **kwargs):
         """Create the parsed C++ header file parse tree
-        
+
         headerFileName - Name of the file to parse OR actual file contents (depends on argType)
         argType - Indicates how to interpret headerFileName as a file string or file name
         kwargs - Supports the following keywords
@@ -3045,7 +3050,8 @@ class CppHeader(_CppHeader):
                 )
 
             raise_exc(
-                CppParseError(msg), e,
+                CppParseError(msg),
+                e,
             )
 
         self.finalize()
@@ -3172,16 +3178,16 @@ class CppHeader(_CppHeader):
 
     def _discard_ctor_initializer(self):
         """
-            ctor_initializer: ":" mem_initializer_list
+        ctor_initializer: ":" mem_initializer_list
 
-            mem_initializer_list: mem_initializer ["..."]
-                                | mem_initializer "," mem_initializer_list ["..."]
+        mem_initializer_list: mem_initializer ["..."]
+                            | mem_initializer "," mem_initializer_list ["..."]
 
-            mem_initializer: mem_initializer_id "(" [expression_list] ")"
-                           | mem_initializer_id braced_init_list
-            
-            mem_initializer_id: class_or_decltype
-                              | IDENTIFIER
+        mem_initializer: mem_initializer_id "(" [expression_list] ")"
+                       | mem_initializer_id braced_init_list
+
+        mem_initializer_id: class_or_decltype
+                          | IDENTIFIER
         """
         debug_print("discarding ctor intializer")
         # all of this is discarded.. the challenge is to determine
@@ -3451,19 +3457,19 @@ class CppHeader(_CppHeader):
 
     def _parse_enum(self):
         """
-            opaque_enum_declaration: enum_key [attribute_specifier_seq] IDENTIFIER [enum_base] ";"
+        opaque_enum_declaration: enum_key [attribute_specifier_seq] IDENTIFIER [enum_base] ";"
 
-            enum_specifier: enum_head "{" [enumerator_list] "}"
-                          | enum_head "{" enumerator_list "," "}"
+        enum_specifier: enum_head "{" [enumerator_list] "}"
+                      | enum_head "{" enumerator_list "," "}"
 
-            enum_head: enum_key [attribute_specifier_seq] [IDENTIFIER] [enum_base]
-                     | enum_key [attribute_specifier_seq] nested_name_specifier IDENTIFIER [enum_base]
-            
-            enum_key: "enum"
-                    | "enum" "class"
-                    | "enum" "struct"
-            
-            enum_base: ":" type_specifier_seq
+        enum_head: enum_key [attribute_specifier_seq] [IDENTIFIER] [enum_base]
+                 | enum_key [attribute_specifier_seq] nested_name_specifier IDENTIFIER [enum_base]
+
+        enum_key: "enum"
+                | "enum" "class"
+                | "enum" "struct"
+
+        enum_base: ":" type_specifier_seq
         """
         debug_print("parsing enum")
 
@@ -3573,13 +3579,13 @@ class CppHeader(_CppHeader):
 
     def _parse_enumerator_list(self, values):
         """
-            enumerator_list: enumerator_definition
-                           | enumerator_list "," enumerator_definition
-            
-            enumerator_definition: enumerator
-                                 | enumerator "=" constant_expression
-            
-            enumerator: IDENTIFIER
+        enumerator_list: enumerator_definition
+                       | enumerator_list "," enumerator_definition
+
+        enumerator_definition: enumerator
+                             | enumerator "=" constant_expression
+
+        enumerator: IDENTIFIER
         """
         while True:
             name_tok = self._next_token_must_be("}", "NAME")
