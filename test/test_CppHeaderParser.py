@@ -3906,5 +3906,27 @@ public:
         self.assertEqual(self.cppHeader.typedefs["A"], "C")
 
 
+class InlineVirtual(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class B {
+public:
+  virtual inline int aMethod();
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["B"]
+        self.assertEqual("B", c["name"])
+
+        m = c["methods"]["public"][0]
+        self.assertEqual(m["name"], "aMethod")
+        self.assertEqual(m["rtnType"], "int")
+        self.assertEqual(m["returns"], "int")
+
+
 if __name__ == "__main__":
     unittest.main()

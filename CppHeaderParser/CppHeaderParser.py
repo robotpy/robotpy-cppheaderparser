@@ -983,6 +983,12 @@ class CppMethod(_CppMethod):
         if doxygen:
             self["doxygen"] = doxygen
 
+        # Remove leading keywords
+        for i, word in enumerate(nameStack):
+            if word not in Resolver.C_KEYWORDS:
+                nameStack = nameStack[i:]
+                break
+
         if "operator" in nameStack:
             self["rtnType"] = " ".join(nameStack[: nameStack.index("operator")])
             self["name"] = "".join(
@@ -993,12 +999,7 @@ class CppMethod(_CppMethod):
             self["name"] = " ".join(
                 nameStack[nameStack.index("(") - 1 : nameStack.index("(")]
             )
-        if self["rtnType"].startswith("virtual"):
-            self["rtnType"] = self["rtnType"][len("virtual") :].strip()
-        elif self["rtnType"].startswith("static"):
-            self["rtnType"] = self["rtnType"][len("static") :].strip()
-        elif self["rtnType"].startswith("inline"):
-            self["rtnType"] = self["rtnType"][len("inline") :].strip()
+
         if len(self["rtnType"]) == 0 or self["name"] == curClass:
             self["rtnType"] = "void"
 
@@ -1444,6 +1445,7 @@ class Resolver(object):
     C_MODIFIERS = set(C_MODIFIERS)
 
     C_KEYWORDS = "extern virtual static explicit inline friend".split()
+    C_KEYWORDS = set(C_KEYWORDS)
 
     SubTypedefs = {}  # TODO deprecate?
     NAMESPACES = []
