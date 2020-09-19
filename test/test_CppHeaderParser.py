@@ -3575,6 +3575,7 @@ enum class MyEnum {
             e["values"],
             [{"name": "V", "value": 1}],
         )
+        self.assertTrue(e["isclass"])
 
 
 class NestedResolving_TestCase(unittest.TestCase):

@@ -1369,6 +1369,7 @@ class CppEnum(_CppEnum):
 
     * ``name`` - Name of the enum (ex. "ItemState")
     * ``namespace`` - Namespace containing the enum
+    * ``isclass`` - True if created via 'enum class' or 'enum struct'
     * ``values`` - List of values. The values are a dictionary with
       the following key/values:
 
