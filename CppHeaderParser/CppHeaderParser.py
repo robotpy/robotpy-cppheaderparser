@@ -1384,6 +1384,7 @@ class CppEnum(_CppEnum):
             self["name"] = name
         self["namespace"] = ""
         self["typedef"] = False
+        self["isclass"] = False
         self["values"] = []
         set_location_info(self, location)
 
@@ -3488,8 +3489,10 @@ class CppHeader(_CppHeader):
 
         location = tok.location
 
+        is_class = False
         nametok = self.lex.token()
         if nametok.value in ("class", "struct"):
+            is_class = True
             nametok = self.lex.token()
 
         if nametok.value == "__attribute__":
@@ -3521,6 +3524,8 @@ class CppHeader(_CppHeader):
         newEnum = CppEnum(name, doxygen, location)
         if is_typedef:
             newEnum["typedef"] = True
+        if is_class:
+            newEnum["isclass"] = True
         if base:
             newEnum["type"] = "".join(base)
 
