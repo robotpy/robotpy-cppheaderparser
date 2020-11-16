@@ -100,6 +100,12 @@ def warning_print(fmt, *args):
 
 if debug:
 
+    class _debug_caller_lineno:
+        def __str__(self):
+            return str(inspect.currentframe().f_back.f_back.f_back.f_lineno)
+
+    debug_caller_lineno = _debug_caller_lineno()
+
     def debug_print(fmt, *args):
         fmt = "[%4d] " + fmt
         args = (inspect.currentframe().f_back.f_lineno,) + args
@@ -107,6 +113,8 @@ if debug:
 
 
 else:
+
+    debug_caller_lineno = None
 
     def debug_print(fmt, *args):
         pass
@@ -3237,10 +3245,10 @@ class CppHeader(_CppHeader):
         nameStackCopy = self.nameStack[:]
 
         debug_print(
-            "Evaluating stack %s\n       BraceDepth: %s (called from %d)",
+            "Evaluating stack %s\n       BraceDepth: %s (called from %s)",
             self.nameStack,
             self.braceDepth,
-            inspect.currentframe().f_back.f_lineno,
+            debug_caller_lineno,
         )
 
         # Handle special case of overloading operator ()
