@@ -3280,12 +3280,12 @@ class CppHeader(_CppHeader):
             not self.curClass
             and "typedef" in self.nameStack
             and (
-                (
+                self.stack[-1] == ";"
+                or (
                     "struct" not in self.nameStack
                     and "union" not in self.nameStack
                     and "enum" not in self.nameStack
                 )
-                or self.stack[-1] == ";"
             )
         ):
             debug_print("trace")
@@ -3350,7 +3350,7 @@ class CppHeader(_CppHeader):
                     # lookup is done
                     alias = self.current_namespace() + alias
                     self.using[alias] = atype
-        elif is_method_namestack(self.stack) and "(" in self.nameStack:
+        elif "(" in self.nameStack and is_method_namestack(self.stack):
             debug_print("trace")
             self._evaluate_method_stack()
         elif is_enum_namestack(self.nameStack):
@@ -3377,7 +3377,7 @@ class CppHeader(_CppHeader):
             self.classes[new_name] = type_to_rename
             if new_name != type_name_to_rename:
                 del self.classes[type_name_to_rename]
-        elif is_property_namestack(self.nameStack) and self.stack[-1] == ";":
+        elif self.stack[-1] == ";" and is_property_namestack(self.nameStack):
             debug_print("trace")
             if self.nameStack[0] in ("class", "struct") and len(self.stack) == 3:
                 self.evalute_forward_decl()
