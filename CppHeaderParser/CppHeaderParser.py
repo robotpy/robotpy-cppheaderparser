@@ -100,6 +100,12 @@ def warning_print(fmt, *args):
 
 if debug:
 
+    class _debug_caller_lineno:
+        def __str__(self):
+            return str(inspect.currentframe().f_back.f_back.f_back.f_lineno)
+
+    debug_caller_lineno = _debug_caller_lineno()
+
     def debug_print(fmt, *args):
         fmt = "[%4d] " + fmt
         args = (inspect.currentframe().f_back.f_lineno,) + args
@@ -108,6 +114,8 @@ if debug:
 
 else:
 
+    debug_caller_lineno = None
+
     def debug_print(fmt, *args):
         pass
 
@@ -115,9 +123,9 @@ else:
 if debug_trace:
 
     def trace_print(*args):
-        sys.stdout.write("[%s] " % (inspect.currentframe().f_back.f_lineno))
+        sys.stdout.write("[%s]" % (inspect.currentframe().f_back.f_lineno))
         for a in args:
-            sys.stdout.write("%s " % a)
+            sys.stdout.write(" %s" % a)
         sys.stdout.write("\n")
 
 
@@ -721,7 +729,7 @@ class CppClass(dict):
 
         if curTemplate:
             self["template"] = curTemplate
-            trace_print("Setting template to '%s'" % self["template"])
+            trace_print("Setting template to", self["template"])
 
         methodAccessSpecificList = {}
         propertyAccessSpecificList = {}
@@ -1857,7 +1865,6 @@ class Resolver(object):
                             else:
                                 trace_print("WARN-this should almost never happen!")
                                 trace_print(var)
-                                trace_print("-" * 80)
                                 var["unresolved"] = True
 
                         elif tag in self._template_typenames:
@@ -1942,23 +1949,23 @@ class Resolver(object):
                 # var['raw_type'] = var['raw_type'][2:]
 
         # Take care of #defines and #pragmas etc
-        trace_print("Processing precomp_macro_buf: %s" % self._precomp_macro_buf)
+        trace_print("Processing precomp_macro_buf:", self._precomp_macro_buf)
         for m, location in self._precomp_macro_buf:
             macro = m.replace("<CppHeaderParser_newline_temp_replacement>\\n", "\n")
             ml = macro.lower()
             try:
                 if ml.startswith("#define"):
-                    trace_print("Adding #define %s" % macro)
+                    trace_print("Adding #define", macro)
                     define = CppDefine(macro, location)
                     self.defines.append(define["value"])
                     self.defines_detail.append(define)
                 elif ml.startswith("#pragma"):
-                    trace_print("Adding #pragma %s" % macro)
+                    trace_print("Adding #pragma", macro)
                     pragma = CppPragma(macro, location)
                     self.pragmas_detail.append(pragma)
                     self.pragmas.append(pragma["value"])
                 elif ml.startswith("#include"):
-                    trace_print("Adding #include %s" % macro)
+                    trace_print("Adding #include", macro)
                     include = CppInclude(macro, location)
                     self.includes.append(include["value"])
                     self.includes_detail.append(include)
@@ -2447,8 +2454,9 @@ class _CppHeader(Resolver):
                 # Is it really a list of variables?
                 if leftMostComma != 0:
                     trace_print(
-                        "Multiple variables for namestack in %s.  Separating processing"
-                        % self.nameStack
+                        "Multiple variables for namestack in",
+                        self.nameStack,
+                        ".  Separating processing",
                     )
                     orig_nameStack = self.nameStack[:]
 
@@ -2572,7 +2580,6 @@ class _CppHeader(Resolver):
             if key in self.classes:
                 trace_print("ERROR name collision:", key)
                 self.classes[key].show()
-                trace_print("-" * 80)
                 newClass.show()
                 assert key not in self.classes  # namespace collision
         self.classes[key] = newClass
@@ -3237,10 +3244,10 @@ class CppHeader(_CppHeader):
         nameStackCopy = self.nameStack[:]
 
         debug_print(
-            "Evaluating stack %s\n       BraceDepth: %s (called from %d)",
+            "Evaluating stack %s\n       BraceDepth: %s (called from %s)",
             self.nameStack,
             self.braceDepth,
-            inspect.currentframe().f_back.f_lineno,
+            debug_caller_lineno,
         )
 
         # Handle special case of overloading operator ()
@@ -3282,7 +3289,7 @@ class CppHeader(_CppHeader):
             )
         ):
             debug_print("trace")
-            trace_print("typedef %s", self.stack)
+            trace_print("typedef", self.stack)
             self._evaluate_typedef()
             return
 
@@ -3399,7 +3406,7 @@ class CppHeader(_CppHeader):
         elif self.braceDepth > len(self.nameSpaces) + 1:
             debug_print("trace")
         else:
-            debug_print("Discarded statement %s" % (self.nameStack,))
+            debug_print("Discarded statement %s", self.nameStack)
 
         try:
             self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
@@ -3635,17 +3642,17 @@ class CppHeader(_CppHeader):
         obj_queue = [self]
         while len(obj_queue):
             obj = obj_queue.pop()
-            trace_print("pop %s type %s" % (obj, type(obj)))
+            trace_print("pop", obj, "type", type(obj))
             try:
                 if "parent" in obj.keys():
                     del obj["parent"]
-                    trace_print("Stripped parent from %s" % obj.keys())
+                    trace_print("Stripped parent from", obj.keys())
             except:
                 pass
             try:
                 if "method" in obj.keys():
                     del obj["method"]
-                    trace_print("Stripped method from %s" % obj.keys())
+                    trace_print("Stripped method from", obj.keys())
             except:
                 pass
             # Figure out what sub types are one of ours
@@ -3653,17 +3660,17 @@ class CppHeader(_CppHeader):
                 if not hasattr(obj, "keys"):
                     obj = obj.__dict__
                 for k in obj.keys():
-                    trace_print("-Try key %s" % (k))
-                    trace_print("-type  %s" % (type(obj[k])))
+                    trace_print("-Try key", k)
+                    trace_print("-type", type(obj[k]))
                     if k in ["nameStackHistory", "parent", "_public_typedefs"]:
                         continue
                     if type(obj[k]) == list:
                         for i in obj[k]:
-                            trace_print("push l %s" % i)
+                            trace_print("push l", i)
                             obj_queue.append(i)
                     elif type(obj[k]) == dict:
                         if len(obj):
-                            trace_print("push d %s" % obj[k])
+                            trace_print("push d", obj[k])
                             obj_queue.append(obj[k])
                     elif type(obj[k]) == type(type(0)):
                         if type(obj[k]) == int:
