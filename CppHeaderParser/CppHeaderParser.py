@@ -419,21 +419,59 @@ class CppBaseDecl(dict):
         return s
 
 
-def _consume_parens(stack):
-    i = 0
-    sl = len(stack)
-    nested = 1
-    while i < sl:
-        t = stack[i]
-        i += 1
-        if t == ")":
-            nested -= 1
-            if nested == 0:
-                return i
-        elif t == "(":
-            nested += 1
+_end_balanced_items = {">", "}", "]", ")", "]]"}
+_start_balanced_items = {
+    "<": ">",
+    "{": "}",
+    "(": ")",
+    "[": "]",
+    "[[": "]]",
+}
 
-    raise CppParseError("Unmatched (")
+
+def _consume_balanced_items(stack, init_expected, i):
+    """
+     identical to consume_balanced_tokens, but works on a stack instead
+     TODO: make them the same function
+
+    :param stack:           Stack of tokens to search
+    :param init_expected:   expected token to balance
+    :param i:               Position in stack of initial token
+
+    :returns: position of next token after balanced token
+    """
+    match_stack = deque((init_expected,))
+    sl = len(stack)
+
+    while True:
+        i += 1
+        if i >= sl:
+            errmsg = "Did not find matching '%s'" % init_expected
+            raise CppParseError(errmsg)
+
+        tok = stack[i]
+        if tok in _end_balanced_items:
+            expected = match_stack.pop()
+            if tok != expected:
+                # hack: ambiguous right-shift issues here, really
+                # should be looking at the context
+                if tok == ">":
+                    i += 1
+                    if i < sl and stack[i] == ">":
+                        match_stack.append(expected)
+                        continue
+
+                errmsg = "Expected '%s', found '%s'" % (expected, tok)
+                raise CppParseError(errmsg)
+
+            if len(match_stack) == 0:
+                return i + 1
+
+            continue
+
+        next_end = _start_balanced_items.get(tok)
+        if next_end:
+            match_stack.append(next_end)
 
 
 def _parse_template_decl(stack):
@@ -472,7 +510,7 @@ def _parse_template_decl(stack):
             require_ending = True
         elif t == "(":
             s = stack[i:]
-            n = _consume_parens(s)
+            n = _consume_balanced_items(s, ")", -1)
             i += n
             param["param"] = param["param"] + "".join(s[:n])
         else:
@@ -583,7 +621,7 @@ def _parse_cpp_base(stack, default_access):
 
         if t == "(":
             s = stack[i:]
-            n = _consume_parens(s)
+            n = _consume_balanced_items(s, ")", -1)
             i += n
             base["decl_name"] = base["decl_name"] + "".join(s[:n])
         elif t == "...":
