@@ -3288,13 +3288,6 @@ class CppHeader(_CppHeader):
             debug_caller_lineno,
         )
 
-        # Handle special case of overloading operator ()
-        if "operator()(" in "".join(self.nameStack):
-            operator_index = self.nameStack.index("operator")
-            self.nameStack.pop(operator_index + 2)
-            self.nameStack.pop(operator_index + 1)
-            self.nameStack[operator_index] = "operator()"
-
         if len(self.curClass):
             debug_print("%s (%s) ", self.curClass, self.curAccessSpecifier)
         else:
