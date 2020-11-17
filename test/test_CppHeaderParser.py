@@ -2648,7 +2648,7 @@ class Grackle_TestCase(unittest.TestCase):
 
 
 # Test enhancement 13 (default constructor / destructor)
-class DefaultConstDest_TestCase:
+class DefaultConstDest_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
@@ -3805,6 +3805,24 @@ struct Outer {
         props = inner["properties"]["public"]
         self.assertEqual(props[0]["name"], "x")
         self.assertEqual(props[1]["name"], "y")
+
+
+class Default_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class A {
+public:
+    A() = default;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        m = self.cppHeader.classes["A"]["methods"]["public"][0]
+        self.assertEqual(m["constructor"], True)
+        self.assertEqual(m["default"], True)
 
 
 class Deleted_TestCase(unittest.TestCase):

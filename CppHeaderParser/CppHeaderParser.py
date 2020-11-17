@@ -2233,6 +2233,9 @@ class _CppHeader(Resolver):
                 info["pure_virtual"] = True
             elif stack[-2] == "delete":
                 info["deleted"] = True
+            elif stack[-2] == "default":
+                info["default"] = True
+                info["defined"] = True
 
         r = header.split()
         name = None
@@ -2274,15 +2277,9 @@ class _CppHeader(Resolver):
 
         if name.startswith("~"):
             info["destructor"] = True
-            if "default;" in stack:
-                info["defined"] = True
-                info["default"] = True
             name = name[1:]
         elif not a or (name == self.curClass and len(self.curClass)):
             info["constructor"] = True
-            if "default;" in stack:
-                info["defined"] = True
-                info["default"] = True
 
         info["name"] = name
 
