@@ -52,7 +52,7 @@ private:
 
     double prop7;   //!< prop7 description
                     //!< with two lines
-    
+
     /// prop8 description
     int prop8;
 };
@@ -642,6 +642,7 @@ public:
     int a, b,c;
     map<string, int> d;
     map<string, int> e, f;
+		const int* g, const& h, const* i, j;
 };
 
 // Bug BitBucket #14
@@ -719,7 +720,7 @@ struct Lemon
     virtual void foo() final;
     virtual void foo2();
 };
- 
+
 struct Lime final : Lemon
 {
     void abc();
@@ -749,12 +750,12 @@ union olive {
 
 // Sourceforge bug 61
 typedef struct
-{ 
-    enum BeetEnum : int 
-    { 
+{
+    enum BeetEnum : int
+    {
         FAIL = 0,
         PASS = 1
-    }; 
+    };
 } BeetStruct;
 
 void set_callback(int* b, long (*callback) (struct test_st *, int, const char*, int long, long, long));
