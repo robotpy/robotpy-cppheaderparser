@@ -1507,6 +1507,12 @@ class CrowClass_TestCase(unittest.TestCase):
     def test_rtntype_public_slot_method(self):
         self.assertEqual(
             self.cppHeader.classes["CrowClass"]["methods"]["public slots"][0][
+                "returns"
+            ],
+            "void",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["CrowClass"]["methods"]["public slots"][0][
                 "rtnType"
             ],
             "void",
@@ -1574,6 +1580,10 @@ class Snail_TestCase(unittest.TestCase):
 
     def test_rtn_type(self):
         self.assertEqual(
+            self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["returns"],
+            "SnailNamespace::SnailClass",
+        )
+        self.assertEqual(
             self.cppHeader.classes["Snail2Class"]["methods"]["public"][0]["rtnType"],
             "SnailNamespace::SnailClass",
         )
@@ -1602,6 +1612,10 @@ class Quale_TestCase(unittest.TestCase):
 
     def test_rtn_type(self):
         self.assertEqual(
+            self.cppHeader.classes["QualeClass"]["methods"]["private"][0]["returns"],
+            "void",
+        )
+        self.assertEqual(
             self.cppHeader.classes["QualeClass"]["methods"]["private"][0]["rtnType"],
             "void",
         )
@@ -1629,6 +1643,10 @@ class Almond_TestCase(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
     def test_rtn_type(self):
+        self.assertEqual(
+            self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["returns"],
+            "std::map<unsigned , std::pair<unsigned , SnailTemplateClass<SnailNamespace::SnailClass> >>",
+        )
         self.assertEqual(
             self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["rtnType"],
             "std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > >",
@@ -2080,6 +2098,7 @@ class print_statement_TestCase(unittest.TestCase):
 
     def test_return_type(self):
         self.assertEqual(self.cppHeader.functions[7]["returns"], "int")
+        self.assertEqual(self.cppHeader.functions[7]["rtnType"], "int")
 
 
 # Bug BitBucket #8
@@ -2185,10 +2204,18 @@ class Avacado_TestCase(unittest.TestCase):
             self.cppHeader.classes["Avacado"]["methods"]["public"][0]["returns"],
             "uint8_t",
         )
+        self.assertEqual(
+            self.cppHeader.classes["Avacado"]["methods"]["public"][0]["rtnType"],
+            "uint8_t",
+        )
 
     def test_bar_return_type(self):
         self.assertEqual(
             self.cppHeader.classes["Avacado"]["methods"]["public"][1]["returns"],
+            "::uint8_t",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["Avacado"]["methods"]["public"][1]["rtnType"],
             "::uint8_t",
         )
 
@@ -2977,6 +3004,7 @@ class A {
     def test_fn(self):
         m = self.cppHeader.classes["A"]["methods"]["private"][0]
         self.assertEqual(m["static"], True)
+        self.assertEqual(m["returns"], "int")
         self.assertEqual(m["rtnType"], "int")
 
 
@@ -3477,11 +3505,13 @@ enum E fn_with_enum_retval2(void) {
         self.assertEqual("fn_with_enum_retval1", fn["name"])
         self.assertEqual(0, len(fn["parameters"]))
         self.assertEqual("enum E", fn["rtnType"])
+        self.assertEqual("enum E", fn["returns"])
 
         fn = self.cppHeader.functions[3]
         self.assertEqual("fn_with_enum_retval2", fn["name"])
         self.assertEqual(0, len(fn["parameters"]))
         self.assertEqual("enum E", fn["rtnType"])
+        self.assertEqual("enum E", fn["returns"])
 
 
 class StaticAssert_TestCase(unittest.TestCase):
@@ -3602,12 +3632,14 @@ struct A {
         fn = c["methods"]["public"][0]
         self.assertEqual(fn["name"], "fnested")
         self.assertEqual(fn["rtnType"], "A::B")
+        self.assertEqual(fn["returns"], "B")
         self.assertEqual(len(fn["parameters"]), 1)
         self.assertEqual(fn["parameters"][0]["raw_type"], "A::B")
 
         fn = c["methods"]["public"][1]
         self.assertEqual(fn["name"], "fenum")
         self.assertEqual(fn["rtnType"], "A::C")
+        self.assertEqual(fn["returns"], "C")
         self.assertEqual(len(fn["parameters"]), 1)
         self.assertEqual(fn["parameters"][0]["enum"], "A::C")
 
@@ -3668,6 +3700,7 @@ inline HAL_Value HAL_GetSimValue(HAL_SimValueHandle handle) {
             ],
         )
         self.assertEqual(fn["rtnType"], "HAL_Value")
+        self.assertEqual(fn["returns"], "HAL_Value")
 
 
 class PointerTemplate_TestCase(unittest.TestCase):
@@ -3698,6 +3731,8 @@ std::vector<Pointer*> * fn(std::vector<Pointer*> * ps);
             ],
         )
         self.assertEqual(fn["rtnType"], "std::vector<Pointer *> *")
+        self.assertEqual(fn["returns"], "std::vector<Pointer *>")
+        self.assertEqual(fn["returns_pointer"], 1)
 
 
 class ParamWithInitializer_TestCase(unittest.TestCase):
@@ -3728,6 +3763,7 @@ void fn(something<T, U> s = something<T, U>{1,2,3});
             ],
         )
         self.assertEqual(fn["rtnType"], "void")
+        self.assertEqual(fn["returns"], "void")
 
 
 class NestedClassAccess_TestCase(unittest.TestCase):
@@ -3920,6 +3956,7 @@ public:
 
         m = c["methods"]["public"][0]
         self.assertEqual(m["name"], "aMethod")
+        self.assertEqual(m["returns"], "A")
         self.assertEqual(m["rtnType"], "A")
 
         self.assertEqual(self.cppHeader.typedefs["A"], "C")

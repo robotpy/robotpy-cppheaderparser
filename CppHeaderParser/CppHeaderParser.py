@@ -50,6 +50,7 @@ from __future__ import print_function
 
 from collections import deque
 import os
+from os import name
 import sys
 import re
 import io
@@ -201,38 +202,6 @@ def is_function_pointer_stack(stack):
         return True
     else:
         return False
-
-
-def is_method_namestack(stack):
-    r = False
-    if "(" not in stack:
-        r = False
-    elif stack[0] == "typedef":
-        r = False  # TODO deal with typedef function prototypes
-    # elif '=' in stack and stack.index('=') < stack.index('(') and stack[stack.index('=')-1] != 'operator': r = False    #disabled July6th - allow all operators
-    elif "operator" in stack:
-        r = True  # allow all operators
-    elif "{" in stack and stack.index("{") < stack.index("("):
-        r = False  # struct that looks like a method/class
-    elif "(" in stack and ")" in stack:
-        if stack[-1] == ":":
-            r = True
-        elif "{" in stack and "}" in stack:
-            r = True
-        elif stack[-1] == ";":
-            if is_function_pointer_stack(stack):
-                r = False
-            else:
-                r = True
-        elif "{" in stack:
-            r = True  # ideally we catch both braces... TODO
-    else:
-        r = False
-    # Test for case of property set to something with parens such as "static const int CONST_A = (1 << 7) - 1;"
-    if r and "(" in stack and "=" in stack and "operator" not in stack:
-        if stack.index("=") < stack.index("("):
-            r = False
-    return r
 
 
 def is_property_namestack(nameStack):
@@ -419,7 +388,6 @@ class CppBaseDecl(dict):
         return s
 
 
-_end_balanced_items = {">", "}", "]", ")", "]]"}
 _start_balanced_items = {
     "<": ">",
     "{": "}",
@@ -427,6 +395,10 @@ _start_balanced_items = {
     "[": "]",
     "[[": "]]",
 }
+_end_balanced_items = set(_start_balanced_items.values())
+
+_start_rev_balanced_items = {v: k for k, v in _start_balanced_items.items()}
+_end_rev_balanced_items = set(_start_rev_balanced_items.values())
 
 
 def _consume_balanced_items(stack, init_expected, i):
@@ -470,6 +442,35 @@ def _consume_balanced_items(stack, init_expected, i):
             continue
 
         next_end = _start_balanced_items.get(tok)
+        if next_end:
+            match_stack.append(next_end)
+
+
+def _consume_balanced_items_rev(stack, init_expected, i):
+
+    # TODO: doesn't always work for ambiguous >> case, but since when did
+    #       that stop CppHeaderParser from doing something?
+
+    match_stack = deque((init_expected,))
+    while True:
+        i -= 1
+        if i < 0:
+            errmsg = "Did not find matching '%s'" % init_expected
+            raise CppParseError(errmsg)
+
+        tok = stack[i]
+        if tok in _end_rev_balanced_items:
+            expected = match_stack.pop()
+            if tok != expected:
+                errmsg = "Expected '%s', found '%s'" % (expected, tok)
+                raise CppParseError(errmsg)
+
+            if len(match_stack) == 0:
+                return i - 1
+
+            continue
+
+        next_end = _start_rev_balanced_items.get(tok)
         if next_end:
             match_stack.append(next_end)
 
@@ -933,217 +934,184 @@ class CppUnion(CppClass):
         return rtn
 
 
+_method_type_defaults = {
+    "parent": None,
+    "class": None,
+    "constructor": False,
+    "const": False,
+    "constexpr": False,
+    "destructor": False,
+    "defined": False,
+    "default": False,
+    "deleted": False,
+    "explicit": False,
+    "extern": False,
+    "final": False,
+    "friend": False,
+    "inline": False,
+    "namespace": "",
+    "override": False,
+    "noexcept": None,
+    "operator": False,
+    "parameters": [],
+    "pointer": False,
+    "pure_virtual": False,
+    "returns": False,
+    "returns_class": False,
+    "returns_pointer": 0,
+    "returns_fundamental": False,
+    "static": False,
+    "template": False,
+    "template_specialization": None,
+    "vararg": False,
+    "virtual": False,
+}
+
+
 class _CppMethod(dict):
-    def _params_helper1(self, stack):
-        # deal with "throw" keyword
-        if "throw" in stack:
-            stack = stack[: stack.index("throw")]
+    def _process_name_segment():
+        pass
 
-        ## remove GCC keyword __attribute__(...) and preserve returns ##
-        cleaned = []
-        hit = False
-        hitOpen = 0
-        hitClose = 0
-        for a in stack:
-            if a == "__attribute__":
-                hit = True
-            if hit:
-                if a == "(":
-                    hitOpen += 1
-                elif a == ")":
-                    hitClose += 1
-                if a == ")" and hitOpen == hitClose:
-                    hit = False
-            else:
-                cleaned.append(a)
-        stack = cleaned
+    def _process_rtn_and_name(self, stack, clsname, operator_loc):
 
-        # also deal with attribute((const)) function prefix #
-        # TODO this needs to be better #
-        if len(stack) > 5:
-            a = "".join(stack)
-            if a.startswith("((__const__))"):
-                stack = stack[5:]
-            elif a.startswith("__attribute__((__const__))"):
-                stack = stack[6:]
+        assert len(stack) > 0
 
-        stack = stack[stack.index("(") + 1 :]
-        if not stack:
-            return []
-        if (
-            len(stack) >= 3 and stack[0] == ")" and stack[1] == ":"
-        ):  # is this always a constructor?
-            self["constructor"] = True
-            return []
+        # extract the name first -- start at the end and work backwards
+        name = None
+        if operator_loc is not None:
+            op = "".join(stack[operator_loc + 1 :])
+            self["operator"] = op
+            name = "operator" + op
+            end = operator_loc
 
-        stack.reverse()
-        _end_ = stack.index(")")
-        stack.reverse()
-        stack = stack[: len(stack) - (_end_ + 1)]
-        if "(" not in stack:
-            return stack  # safe to return, no defaults that init a class
-
-        return stack
-
-    def _params_helper2(self, params):
-        for p in params:
-            p["method"] = self  # save reference in variable to parent method
-            p["parent"] = self
-            if "::" in p["type"]:
-                ns = p["type"].split("::")[0]
-                if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
-                    p["type"] = self["namespace"] + p["type"]
-            else:
-                p["namespace"] = self["namespace"]
-
-
-class CppMethod(_CppMethod):
-    """
-    Dictionary that contains at least the following keys:
-
-    * ``rtnType`` - Return type of the method (ex. "int")
-    * ``name`` - Name of the method
-    * ``doxygen`` - Doxygen comments associated with the method if they exist
-    * ``parameters`` - List of :class:`.CppVariable`
-    * ``parent`` - If not None, the class this method belongs to
-    """
-
-    def show(self):
-        r = ["method name: %s (%s)" % (self["name"], self["debug"])]
-        if self["returns"]:
-            r.append("returns: %s" % self["returns"])
-        if self["parameters"]:
-            r.append("number arguments: %s" % len(self["parameters"]))
-        if self["pure_virtual"]:
-            r.append("pure virtual: %s" % self["pure_virtual"])
-        if self["constructor"]:
-            r.append("constructor")
-        if self["destructor"]:
-            r.append("destructor")
-        return "\n\t\t  ".join(r)
-
-    def __init__(self, nameStack, curClass, methinfo, curTemplate, doxygen, location):
-        debug_print("Method:   %s", nameStack)
-        debug_print("Template: %s", curTemplate)
-
-        if doxygen:
-            self["doxygen"] = doxygen
-
-        # Remove leading keywords
-        for i, word in enumerate(nameStack):
-            if word not in Resolver.C_KEYWORDS:
-                nameStack = nameStack[i:]
-                break
-
-        if "operator" in nameStack:
-            rtnType = " ".join(nameStack[: nameStack.index("operator")])
-            self["name"] = "".join(
-                nameStack[nameStack.index("operator") : nameStack.index("(")]
-            )
         else:
-            rtnType = " ".join(nameStack[: nameStack.index("(") - 1])
-            self["name"] = " ".join(
-                nameStack[nameStack.index("(") - 1 : nameStack.index("(")]
+            name = stack[-1]
+            end = len(stack) - 1
+            # if the very first thing is a >, then it's a template_specialization
+            # .. match backwards for it
+            if name == ">":
+                end = _consume_balanced_items_rev(stack, "<", end)
+                if end <= 0:
+                    raise CppParseError("Ambiguous name %s" % stack)
+                name = stack[end]
+                self["template_specialization"] = " ".join(stack[end + 1 :])
+
+            # otherwise, should be a normal token
+            # ... let's just assume this is true, can't check it at this point
+            #     without access to the lexer and if it's not true then it's
+            #     weird and/or invalid C++
+
+        # Next, check for class/namespace. This is actually ambiguous, but we're
+        # going to assume that it's a class first
+        # while end != 0:
+        #     end -= 1
+        #     tok = stack[end]
+        #     if tok == "::":
+
+        # check for ::
+        # append if ns
+        # now check for class specializations
+
+        # repeat, rinse
+
+        if name.startswith("~"):
+            self["destructor"] = True
+            name = name[1:]
+
+        self["name"] = name
+
+        # collect returns
+        returns = []
+        rtnType = []
+        pointers = 0
+
+        i = 0
+
+        keywords = Resolver.C_KEYWORDS
+        while i < end:
+            tok = stack[i]
+            if tok in keywords:
+                self[tok] = True
+            elif tok == "&":
+                self["returns_reference"] = True
+                rtnType.append(tok)
+            elif tok == "*":
+                pointers += 1
+                rtnType.append(tok)
+            elif tok in ("const", "__const__"):
+                self["returns_const"] = True
+                returns.append(tok)
+                rtnType.append(tok)
+            else:
+                baltok = _start_balanced_items.get(tok)
+                if baltok is not None:
+                    n = _consume_balanced_items(stack, baltok, i)
+                    returns.extend(stack[i:n])
+                    rtnType.extend(stack[i:n])
+                    i = n
+                    continue
+
+                returns.append(tok)
+                rtnType.append(tok)
+
+            i += 1
+
+        self["returns_pointer"] = pointers
+
+        if len(rtnType) == 0 or self["name"] == clsname:
+            self["constructor"] = not self["destructor"]
+            self["returns"] = "void"
+            self["rtnType"] = "void"
+        else:
+            self["returns"] = (
+                (" ".join(returns))
+                .replace(" :: ", "::")
+                .replace(" < ", "<")
+                .replace(" > ", "> ")
+                .replace(">>", "> >")
+                .replace(" ,", ",")
+            )
+            self["rtnType"] = (
+                (" ".join(rtnType))
+                .replace(" :: ", "::")
+                .replace(" < ", "<")
+                .replace(" > ", "> ")
+                .replace(">>", "> >")
+                .replace(" ,", ",")
             )
 
-        if len(rtnType) == 0 or self["name"] == curClass:
-            rtnType = "void"
+        self["returns_fundamental"] = is_fundamental(self["returns"])
 
-        self["rtnType"] = (
-            rtnType.replace(" :: ", "::")
-            .replace(" < ", "<")
-            .replace(" > ", "> ")
-            .replace(">>", "> >")
-            .replace(" ,", ",")
-        )
-
-        # deal with "noexcept" specifier/operator
-        self["noexcept"] = None
-        if "noexcept" in nameStack:
-            noexcept_idx = nameStack.index("noexcept")
-            hit = True
-            cleaned = nameStack[:noexcept_idx]
-            parentCount = 0
-            noexcept = "noexcept"
-            for a in nameStack[noexcept_idx + 1 :]:
-                if a == "noexcept":
-                    hit = True
-                if hit:
-                    if a == "(":
-                        parentCount += 1
-                    elif a == ")":
-                        parentCount -= 1
-                    elif parentCount == 0 and a != "noexcept":
-                        hit = False
-                        cleaned.append(a)
-                        continue  # noexcept without parenthesis
-                    if a == ")" and parentCount == 0:
-                        hit = False
-                    noexcept += a
-                else:
-                    cleaned.append(a)
-            self["noexcept"] = noexcept
-            nameStack = cleaned
-
-        for spec in ["const", "final", "override"]:
-            self[spec] = False
-            for i in reversed(nameStack):
-                if i == spec:
-                    self[spec] = True
-                    break
-                elif i == ")":
-                    break
-
-        self.update(methinfo)
-        set_location_info(self, location)
-
-        paramsStack = self._params_helper1(nameStack)
-
-        debug_print("curTemplate: %s", curTemplate)
-        if curTemplate:
-            self["template"] = curTemplate
-            debug_print("SET self['template'] to `%s`", self["template"])
+    def _process_params(self, paramsStack, location):
 
         params = []
+
         # See if there is a doxygen comment for the variable
         if "doxygen" in self:
             doxyVarDesc = extract_doxygen_method_params(self["doxygen"])
         else:
             doxyVarDesc = {}
 
-        # non-vararg by default
-        self["vararg"] = False
         # Create the variable now
-        while len(paramsStack):
-            # Find commas that are not nexted in <>'s like template types
-            open_template_count = 0
-            open_paren_count = 0
-            open_brace_count = 0
+        while True:
+            pslen = len(paramsStack)
+            if pslen == 0:
+                break
+
+            # Find the end of this variable
             param_separator = 0
             i = 0
-            for elm in paramsStack:
-                if elm in "<>(){},":
-                    if elm == ",":
-                        if (
-                            open_template_count == 0
-                            and open_paren_count == 0
-                            and open_brace_count == 0
-                        ):
-                            param_separator = i
-                            break
-                    elif "<" == elm:
-                        open_template_count += 1
-                    elif ">" == elm:
-                        open_template_count -= 1
-                    elif "(" == elm:
-                        open_paren_count += 1
-                    elif ")" == elm:
-                        open_paren_count -= 1
-                    elif "{" == elm:
-                        open_brace_count += 1
-                    elif "}" == elm:
-                        open_brace_count -= 1
-                i += 1
+            while i < pslen:
+                elm = paramsStack[i]
+                if elm == ",":
+                    param_separator = i
+                    break
+
+                baltok = _start_balanced_items.get(elm)
+                if baltok:
+                    i = _consume_balanced_items(paramsStack, baltok, i)
+                else:
+                    i += 1
 
             if param_separator:
                 tpstack = paramsStack[0:param_separator]
@@ -1174,8 +1142,124 @@ class CppMethod(_CppMethod):
         if len(params) == 1 and params[0]["type"] == "void":
             params = []
 
+        for p in params:
+            p["method"] = self  # save reference in variable to parent method
+            p["parent"] = self
+            if "::" in p["type"]:
+                ns = p["type"].split("::")[0]
+                if ns not in Resolver.NAMESPACES and ns in Resolver.CLASSES:
+                    p["type"] = self["namespace"] + p["type"]
+            else:
+                p["namespace"] = self["namespace"]
+
         self["parameters"] = params
-        self._params_helper2(params)  # mods params inplace
+
+    def _process_end(self, stack):
+
+        sl = len(stack)
+
+        # This can only be at the end
+        if len(stack) > 3 and stack[-1] == ";" and stack[-3] == "=":
+            if stack[-2] == "0":
+                self["pure_virtual"] = True
+                sl -= 3
+            elif stack[-2] == "delete":
+                self["deleted"] = True
+                sl -= 3
+            elif stack[-2] == "default":
+                self["default"] = True
+                self["defined"] = True
+                sl -= 3
+
+        # Other keywords at the end of a function
+        i = 0
+        while i < sl:
+            tok = stack[i]
+            if tok == "throw":
+                if i + 1 < sl and stack[i + 1] == "(":
+                    i = _consume_balanced_items(stack, ")", i + 1)
+            elif tok == "noexcept":
+                noexcept = "noexcept"
+                if i + 1 < sl and stack[i + 1] == "(":
+                    n = _consume_balanced_items(stack, ")", i + 1)
+                    noexcept = " ".join(stack[i + 2 : n - 1])
+                    i = n
+                self["noexcept"] = noexcept
+            elif tok == "const":
+                self["const"] = True
+            elif tok == "final":
+                self["final"] = True
+            elif tok == "override":
+                self["override"] = True
+
+            i += 1
+
+
+class CppMethod(_CppMethod):
+    """
+    Dictionary that contains at least the following keys:
+
+    * ``rtnType`` - Return type of the method (ex. "int")
+    * ``returns`` - Return type of the method without ``*`` or ``&`` (ex. "int")
+    * ``name`` - Name of the method
+    * ``doxygen`` - Doxygen comments associated with the method if they exist
+    * ``parameters`` - List of :class:`.CppVariable`
+    * ``parent`` - If not None, the class this method belongs to
+    """
+
+    def show(self):
+        r = ["method name: %s" % (self["name"])]
+        if self["returns"]:
+            r.append("returns: %s" % self["returns"])
+        if self["parameters"]:
+            r.append("number arguments: %s" % len(self["parameters"]))
+        if self["pure_virtual"]:
+            r.append("pure virtual: %s" % self["pure_virtual"])
+        if self["constructor"]:
+            r.append("constructor")
+        if self["destructor"]:
+            r.append("destructor")
+        return "\n\t\t  ".join(r)
+
+    def __init__(
+        self,
+        stack,
+        namespace,
+        clsname,
+        template,
+        doxygen,
+        location,
+        params_start,
+        params_end,
+        operator_loc,
+    ):
+        debug_print("Method:   %s", stack)
+        debug_print("Template: %s", template)
+
+        self.update(_method_type_defaults)
+
+        self["class"] = clsname
+        self["namespace"] = namespace
+
+        if doxygen:
+            self["doxygen"] = doxygen
+
+        if template:
+            self["template"] = template
+
+        set_location_info(self, location)
+
+        # Partition the stack into the parts we already parsed
+        start = stack[:params_start]
+        params = stack[params_start + 1 : params_end]
+        end = stack[params_end + 1 :]
+
+        debug_print("Method split: %s %s %s", start, params, end)
+
+        # Process each piece
+        self._process_rtn_and_name(start, clsname, operator_loc)
+        self._process_params(params, location)
+        self._process_end(end)
 
     def __str__(self):
         filter_keys = ("parent", "defined", "operator", "returns_reference")
@@ -1495,7 +1579,7 @@ class Resolver(object):
     C_MODIFIERS = "* & const constexpr static mutable".split()
     C_MODIFIERS = set(C_MODIFIERS)
 
-    C_KEYWORDS = "extern virtual static explicit inline friend".split()
+    C_KEYWORDS = "constexpr extern virtual static explicit inline friend".split()
     C_KEYWORDS = set(C_KEYWORDS)
 
     SubTypedefs = {}  # TODO deprecate?
@@ -2186,213 +2270,153 @@ class _CppHeader(Resolver):
                             cls["abstract"] = True
                             break
 
-    _method_type_defaults = {
-        n: False
-        for n in "defined deleted pure_virtual operator constructor destructor extern template virtual static explicit inline friend returns returns_pointer returns_fundamental returns_class default".split()
-    }
+    def _consume_operator(self, stack, i):
+        stack = self.stack
 
-    def parse_method_type(self, stack):
-        trace_print("meth type info", stack)
-        info = {
-            "debug": " ".join(stack)
-            .replace(" :: ", "::")
-            .replace(" < ", "<")
-            .replace(" > ", "> ")
-            .replace(" >", ">")
-            .replace(">>", "> >")
-            .replace(">>", "> >"),
-            "class": None,
-            "namespace": self.cur_namespace(add_double_colon=True),
-        }
+        try:
+            n = stack.index("(", i + 1)
+        except ValueError:
+            raise CppParseError("Unexpected end when parsing operator")
 
-        info.update(self._method_type_defaults)
+        # special case: operator()
+        if n == i + 1:
+            n = i + 3
+            if len(stack) < i + 2:
+                raise CppParseError("Unexpected end when parsing operator()")
+            if stack[i + 2] != ")" or stack[i + 3] != "(":
+                errmsg = "Unexpected '%s' when parsing operator()" % stack[i + 2]
+                raise CppParseError(errmsg)
 
-        header = stack[: stack.index("(")]
-        header = " ".join(header)
-        header = header.replace(" :: ", "::")
-        header = header.replace(" < ", "<")
-        header = header.replace(" > ", "> ")
-        header = header.replace("default ", "default")
-        header = header.strip()
+        return i, n
+
+    def _maybe_evaluate_method(self):
+        """Try to parse as a method, return False if unsuccessful"""
+
+        # TODO: "type fn(x);" is ambiguous here. Currently just
+        # assumes it's a function, not a variable declaration
+
+        # TODO: explicit (operator int)() in C++20
+
+        stack = self.stack
+
+        # cheap sanity checks first
+        # -> TODO deal with typedef function prototypes
+        if stack[0] == "typedef" or "(" not in stack or ")" not in stack:
+            return False
+
+        # Break this into components and decide whether this is a function
+        i = 0
+        sl = len(stack)
+
+        # points at the (
+        params_start = None
+        # points at the )
+        params_end = None
+        operator_loc = None
+
+        expecting_fn_ptr = False
+
+        # Try to find the function parameters
+        while i < sl:
+            tok = stack[i]
+
+            if tok == "operator":
+                # consume the operator, must be params after it
+                operator_loc, i = self._consume_operator(stack, i)
+                tok = "("
+                baltok = ")"
+            elif tok == "=":
+                # Not a function
+                return False
+            else:
+                baltok = _start_balanced_items.get(tok)
+                if baltok is None:
+                    i += 1
+                    continue
+
+            n = _consume_balanced_items(stack, baltok, i)
+
+            if tok == "(":
+                if expecting_fn_ptr:
+                    # No more matching required
+                    expecting_fn_ptr = False
+                elif i + 1 < sl and stack[i + 1] == "*":
+                    expecting_fn_ptr = True
+                else:
+                    params_start = i
+                    params_end = n - 1
+                    break
+
+            i = n
+
+        # Either 0 or None means this isn't a method so we're done
+        if not params_start:
+            return False
+
+        #
+        # Evaluate the method
+        #
+
+        debug_print("trace")
+
+        newMethod = CppMethod(
+            stack,
+            self.cur_namespace(add_double_colon=True),
+            self.curClass,
+            self.curTemplate,
+            self._get_stmt_doxygen(),
+            self._get_location(self.nameStack),
+            params_start,
+            params_end,
+            operator_loc,
+        )
 
         if stack[-1] == "{":
-            info["defined"] = True
+            newMethod["defined"] = True
             self._discard_contents("{", "}")
             self.braceHandled = True
-        elif stack[-1] == ";":
-            info["defined"] = False
         elif stack[-1] == ":":
-            info["defined"] = True
+            newMethod["defined"] = True
             self._discard_ctor_initializer()
             self.braceHandled = True
-        else:
-            assert 0
+        elif stack[-1] != ";":
+            errmsg = "Unexpected %s parsing function" % stack[-1]
+            raise CppParseError(errmsg)
 
-        if len(stack) > 3 and stack[-1] == ";" and stack[-3] == "=":
-            if stack[-2] == "0":
-                info["pure_virtual"] = True
-            elif stack[-2] == "delete":
-                info["deleted"] = True
-            elif stack[-2] == "default":
-                info["default"] = True
-                info["defined"] = True
-
-        r = header.split()
-        name = None
-        if "operator" in stack:  # rare case op overload defined outside of class
-            op = stack[stack.index("operator") + 1 : stack.index("(")]
-            op = "".join(op)
-            if not op:
-                if " ".join(["operator", "(", ")", "("]) in " ".join(stack):
-                    op = "()"
-                else:
-                    trace_print("Error parsing operator")
-                    return None
-
-            info["operator"] = op
-            name = "operator" + op
-            a = stack[: stack.index("operator")]
-
-        elif r:
-            name = r[-1]
-            a = r[:-1]  # strip name
-
-        if name is None:
-            return None
-        # if name.startswith('~'): name = name[1:]
-
-        while a and a[0] == "}":  # strip - can have multiple } }
-            a = a[1:]
-
-        if "::" in name:
-            # klass,name = name.split('::')    # methods can be defined outside of class
-            klass = name[: name.rindex("::")]
-            name = name.split("::")[-1]
-            info["class"] = klass
-            if klass in self.classes and not self.curClass:
-                # Class function defined outside the class
-                return None
-        #    info['name'] = name
-        # else: info['name'] = name
-
-        if name.startswith("~"):
-            info["destructor"] = True
-            name = name[1:]
-        elif not a or (name == self.curClass and len(self.curClass)):
-            info["constructor"] = True
-
-        info["name"] = name
-
-        for tag in self.C_KEYWORDS:
-            if tag in a:
-                info[tag] = True
-                a.remove(tag)  # inplace
-        if "template" in a:
-            a.remove("template")
-            b = " ".join(a)
-            if ">" in b:
-                info["template"] = b[: b.index(">") + 1]
-                info["returns"] = b[
-                    b.index(">") + 1 :
-                ]  # find return type, could be incorrect... TODO
-                if "<typename" in info["template"].split():
-                    typname = info["template"].split()[-1]
-                    typname = typname[:-1]  # strip '>'
-                    if typname not in self._template_typenames:
-                        self._template_typenames.append(typname)
+        if self.curClass:
+            newMethod["class"] = self.curClass
+            klass = self.classes[self.curClass]
+            klass["methods"][self.curAccessSpecifier].append(newMethod)
+            newMethod["parent"] = klass
+            if klass["namespace"]:
+                newMethod["path"] = klass["namespace"] + "::" + klass["name"]
             else:
-                info["returns"] = " ".join(a)
-        else:
-            info["returns"] = " ".join(a)
-        info["returns"] = info["returns"].replace(" <", "<").strip()
+                newMethod["path"] = klass["name"]
 
-        ## be careful with templates, do not count pointers inside template
-        info["returns_pointer"] = info["returns"].split(">")[-1].count("*")
-        if info["returns_pointer"]:
-            info["returns"] = info["returns"].replace("*", "").strip()
-
-        info["returns_reference"] = "&" in info["returns"]
-        if info["returns"]:
-            info["returns"] = info["returns"].replace("&", "").strip()
-
-        a = []
-        for b in info["returns"].split():
-            if b == "__const__":
-                info["returns_const"] = True
-            elif b == "const":
-                info["returns_const"] = True
-            else:
-                a.append(b)
-        info["returns"] = " ".join(a)
-
-        info["returns_fundamental"] = is_fundamental(info["returns"])
-        return info
-
-    def _evaluate_method_stack(self):
-        """Create a method out of the name stack"""
-
-        info = self.parse_method_type(self.stack)
-        if info:
-            if (
-                info["class"] and info["class"] in self.classes
-            ):  # case where methods are defined outside of class
-                newMethod = CppMethod(
-                    self.nameStack,
-                    info["name"],
-                    info,
-                    self.curTemplate,
-                    self._get_stmt_doxygen(),
-                    self._get_location(self.nameStack),
-                )
-                klass = self.classes[info["class"]]
+        elif newMethod["class"]:
+            if newMethod["class"] in self.classes:
+                klass = self.classes[newMethod["class"]]
                 klass["methods"]["public"].append(newMethod)
                 newMethod["parent"] = klass
                 if klass["namespace"]:
                     newMethod["path"] = klass["namespace"] + "::" + klass["name"]
                 else:
                     newMethod["path"] = klass["name"]
-
-            elif self.curClass:  # normal case
-                newMethod = CppMethod(
-                    self.nameStack,
-                    self.curClass,
-                    info,
-                    self.curTemplate,
-                    self._get_stmt_doxygen(),
-                    self._get_location(self.nameStack),
-                )
-                klass = self.classes[self.curClass]
-                klass["methods"][self.curAccessSpecifier].append(newMethod)
-                newMethod["parent"] = klass
-                if klass["namespace"]:
-                    newMethod["path"] = klass["namespace"] + "::" + klass["name"]
-                else:
-                    newMethod["path"] = klass["name"]
-            else:  # non class functions
-                debug_print("FREE FUNCTION")
-                newMethod = CppMethod(
-                    self.nameStack,
-                    None,
-                    info,
-                    self.curTemplate,
-                    self._get_stmt_doxygen(),
-                    self._get_location(self.nameStack),
-                )
-                newMethod["parent"] = None
-                self.functions.append(newMethod)
-            global parseHistory
-            parseHistory.append(
-                {
-                    "braceDepth": self.braceDepth,
-                    "item_type": "method",
-                    "item": newMethod,
-                }
-            )
+            # else class function defined outside the class
         else:
-            trace_print("free function?", self.nameStack)
+            self.functions.append(newMethod)
+
+        parseHistory.append(
+            {
+                "braceDepth": self.braceDepth,
+                "item_type": "method",
+                "item": newMethod,
+            }
+        )
 
         self.stack = []
         self.stmtTokens = []
+        return True
 
     def _parse_typedef(self, stack, namespace=""):
         if not stack or "typedef" not in stack:
@@ -3042,9 +3066,8 @@ class CppHeader(_CppHeader):
                         self.nameStack = []
                         self.stack = []
                         self.stmtTokens = []
-                    elif is_method_namestack(self.stack):
+                    elif self._maybe_evaluate_method():
                         debug_print("trace")
-                        self._evaluate_method_stack()
                         self.nameStack = []
                         self.stack = []
                         self.stmtTokens = []
@@ -3378,9 +3401,8 @@ class CppHeader(_CppHeader):
                     # lookup is done
                     alias = self.current_namespace() + alias
                     self.using[alias] = atype
-        elif "(" in self.nameStack and is_method_namestack(self.stack):
+        elif self._maybe_evaluate_method():
             debug_print("trace")
-            self._evaluate_method_stack()
         elif is_enum_namestack(self.nameStack):
             debug_print("trace")
             self._parse_enum()
