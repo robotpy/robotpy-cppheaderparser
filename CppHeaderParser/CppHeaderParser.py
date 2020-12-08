@@ -1510,7 +1510,6 @@ class Resolver(object):
         self.stack = (
             []
         )  # full name stack, good idea to keep both stacks? (simple stack and full stack)
-        self._classes_brace_level = {}  # class name : level
         self._forward_decls = []
         self._template_typenames = []  # template<typename XXX>
 
@@ -2278,7 +2277,7 @@ class _CppHeader(Resolver):
         if name.startswith("~"):
             info["destructor"] = True
             name = name[1:]
-        elif not a or (name == self.curClass and len(self.curClass)):
+        elif not a or (self.curClass and name == self.curClass["name"]):
             info["constructor"] = True
 
         info["name"] = name
@@ -2353,15 +2352,15 @@ class _CppHeader(Resolver):
                     newMethod["path"] = klass["name"]
 
             elif self.curClass:  # normal case
+                klass = self.curClass
                 newMethod = CppMethod(
                     self.nameStack,
-                    self.curClass,
+                    klass["name"],
                     info,
                     self.curTemplate,
                     self._get_stmt_doxygen(),
                     self._get_location(self.nameStack),
                 )
-                klass = self.classes[self.curClass]
                 klass["methods"][self.curAccessSpecifier].append(newMethod)
                 newMethod["parent"] = klass
                 if klass["namespace"]:
@@ -2453,11 +2452,10 @@ class _CppHeader(Resolver):
             if self.curClass:
                 typedef = self._parse_typedef(self.stack)
                 name = typedef["name"]
-                klass = self.classes[self.curClass]
-                klass["typedefs"][self.curAccessSpecifier].append(name)
+                self.curClass["typedefs"][self.curAccessSpecifier].append(name)
                 if self.curAccessSpecifier == "public":
-                    klass._public_typedefs[name] = typedef["type"]
-                Resolver.SubTypedefs[name] = self.curClass
+                    self.curClass._public_typedefs[name] = typedef["type"]
+                Resolver.SubTypedefs[name] = self.curClass["name"]
             else:
                 assert 0
         elif self.curClass:
@@ -2510,7 +2508,7 @@ class _CppHeader(Resolver):
             )
             newVar["namespace"] = self.current_namespace()
             if self.curClass:
-                klass = self.classes[self.curClass]
+                klass = self.curClass
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar["property_of_class"] = klass["name"]
                 newVar["parent"] = klass
@@ -2589,27 +2587,26 @@ class _CppHeader(Resolver):
         classKey = newClass["name"]
 
         if parent:
-            newClass["namespace"] = self.classes[parent]["namespace"] + "::" + parent
-            newClass["parent"] = self.classes[parent]
+            newClass["namespace"] = parent["namespace"] + "::" + parent["name"]
+            newClass["parent"] = parent
             newClass["access_in_parent"] = self.accessSpecifierStack[-1]
-            self.classes[parent]["nested_classes"].append(newClass)
+            parent["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
-            self.curClass = key = parent + "::" + classKey
-            self._classes_brace_level[key] = self.braceDepth
+            key = parent["name"] + "::" + classKey
 
         elif newClass["parent"]:  # nested class defined outside of parent.  A::B {...}
             pcls = newClass["parent"]
-            parent = pcls["name"]
-            newClass["namespace"] = pcls["namespace"] + "::" + parent
+            parentName = pcls["name"]
+            newClass["namespace"] = pcls["namespace"] + "::" + parentName
             pcls["nested_classes"].append(newClass)
             ## supports nested classes with the same name ##
-            self.curClass = key = parent + "::" + classKey
-            self._classes_brace_level[key] = self.braceDepth
+            key = parentName + "::" + classKey
 
         else:
             newClass["namespace"] = self.cur_namespace()
-            self.curClass = key = classKey
-            self._classes_brace_level[classKey] = self.braceDepth
+            key = classKey
+
+        self.curClass = newClass
 
         if not key.endswith("::") and not key.endswith(" ") and len(key) != 0:
             if key in self.classes:
@@ -2628,10 +2625,9 @@ class _CppHeader(Resolver):
         assert self.nameStack[0] in ("class", "struct")
         name = self.nameStack[-1]
         if self.curClass:
-            klass = self.classes[self.curClass]
-            klass["forward_declares"][self.curAccessSpecifier].append(name)
+            self.curClass["forward_declares"][self.curAccessSpecifier].append(name)
             if self.curAccessSpecifier == "public":
-                klass._public_forward_declares.append(name)
+                self.curClass._public_forward_declares.append(name)
         else:
             self._forward_decls.append(name)
 
@@ -2705,7 +2701,7 @@ class CppHeader(_CppHeader):
             headerFileStr = headerFileName
         else:
             raise Exception("Arg type must be either file or string")
-        self.curClass = ""
+        self.curClass = None
 
         # nested classes have parent::nested, but no extra namespace,
         # this keeps the API compatible, TODO proper namespace for everything.
@@ -2977,24 +2973,14 @@ class CppHeader(_CppHeader):
                         self._evaluate_stack()
                     self.braceDepth -= 1
 
-                    # if self.curClass:
-                    #     debug_print(
-                    #         "CURBD %s", self._classes_brace_level[self.curClass]
-                    #     )
-
-                    if (self.braceDepth == 0) or (
-                        self.curClass
-                        and self._classes_brace_level[self.curClass] == self.braceDepth
-                    ):
+                    if self.braceDepth == 0 or self.curClass:
                         trace_print("END OF CLASS DEF")
                         if self.accessSpecifierStack:
                             self.curAccessSpecifier = self.accessSpecifierStack[-1]
                             self.accessSpecifierStack = self.accessSpecifierStack[:-1]
-                        if self.curClass and self.classes[self.curClass]["parent"]:
-                            thisClass = self.classes[self.curClass]
-                            self.curClass = self.curClass[
-                                : -(len(thisClass["name"]) + 2)
-                            ]
+                        if self.curClass and self.curClass["parent"]:
+                            thisClass = self.curClass
+                            self.curClass = self.curClass["parent"]
 
                             # Detect anonymous union members
                             if (
@@ -3014,7 +3000,7 @@ class CppHeader(_CppHeader):
                                 self.nameStack = []
                                 self.stmtTokens = []
                         else:
-                            self.curClass = ""
+                            self.curClass = None
                         self.stack = []
                         self.stmtTokens = []
                 elif tok.type in _namestack_append_tokens:
@@ -3115,7 +3101,6 @@ class CppHeader(_CppHeader):
             "anon_struct_counter",
             "anon_union_counter",
             "anon_class_counter",
-            "_classes_brace_level",
             "_forward_decls",
             "stack",
             "mainClass",
@@ -3124,6 +3109,7 @@ class CppHeader(_CppHeader):
             "stmtTokens",
             "typedefs_order",
             "curTemplate",
+            "curClass",
         ]:
             del self.__dict__[key]
 
@@ -3285,10 +3271,10 @@ class CppHeader(_CppHeader):
             debug_caller_lineno,
         )
 
-        if len(self.curClass):
-            debug_print("%s (%s) ", self.curClass, self.curAccessSpecifier)
-        else:
-            debug_print("<anonymous> (%s) ", self.curAccessSpecifier)
+        # if len(self.curClass):
+        #     debug_print("%s (%s) ", self.curClass, self.curAccessSpecifier)
+        # else:
+        #     debug_print("<anonymous> (%s) ", self.curAccessSpecifier)
 
         # Filter special case of array with casting in it
         try:
@@ -3372,7 +3358,7 @@ class CppHeader(_CppHeader):
                 atype["raw_type"] = ns + atype["type"]
 
                 if self.curClass:
-                    klass = self.classes[self.curClass]
+                    klass = self.curClass
                     klass["using"][alias] = atype
                 else:
                     # lookup is done
@@ -3436,10 +3422,11 @@ class CppHeader(_CppHeader):
         else:
             debug_print("Discarded statement %s", self.nameStack)
 
+        className = self.curClass["name"] if self.curClass else ""
         try:
-            self.nameStackHistory[self.braceDepth] = (nameStackCopy, self.curClass)
+            self.nameStackHistory[self.braceDepth] = (nameStackCopy, className)
         except:
-            self.nameStackHistory.append((nameStackCopy, self.curClass))
+            self.nameStackHistory.append((nameStackCopy, className))
 
         # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         self.nameStack = []
@@ -3595,12 +3582,11 @@ class CppHeader(_CppHeader):
         self._install_enum(newEnum, instancesData)
 
     def _install_enum(self, newEnum, instancesData):
-        if len(self.curClass):
+        if self.curClass:
             newEnum["namespace"] = self.cur_namespace(False)
-            klass = self.classes[self.curClass]
-            klass["enums"][self.curAccessSpecifier].append(newEnum)
+            self.curClass["enums"][self.curAccessSpecifier].append(newEnum)
             if self.curAccessSpecifier == "public" and "name" in newEnum:
-                klass._public_enums[newEnum["name"]] = newEnum
+                self.curClass._public_enums[newEnum["name"]] = newEnum
         else:
             newEnum["namespace"] = self.cur_namespace(True)
             self.enums.append(newEnum)
