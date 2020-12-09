@@ -3289,10 +3289,14 @@ class CppHeader(_CppHeader):
         except:
             pass
 
+        if len(self.nameStack) == 0:
+            debug_print("trace (Empty Stack)")
+            return
+
         # if 'typedef' in self.nameStack: self._evaluate_typedef()        # allows nested typedefs, probably a bad idea
-        if (
+        elif (
             not self.curClass
-            and "typedef" in self.nameStack
+            and self.nameStack[0] == "typedef"
             and (
                 self.stack[-1] == ";"
                 or (
@@ -3307,9 +3311,6 @@ class CppHeader(_CppHeader):
             self._evaluate_typedef()
             return
 
-        elif len(self.nameStack) == 0:
-            debug_print("trace (Empty Stack)")
-            return
         elif self.nameStack[0] == "namespace":
             # Taken care of outside of here
             pass
