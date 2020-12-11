@@ -307,7 +307,7 @@ extern "C" {
 	class ExternClass
 	{
 		ExternClass();
-	}
+	};
 };
 
 // Bug 3514671
@@ -502,14 +502,14 @@ public:
 class Pea : public Vegetable<Green>
 {
 	int i;
-}
+};
 
 
 // Bug 3567172
 class Pear
 {
 	enum Stem stem_property;
-}
+};
 
 // Bug 3567854 and 3568241
 struct Beans
@@ -572,7 +572,7 @@ class ClassAfterMagicMacro
 {
 public:
   ClassAfterMagicMacro();
-}
+};
 
 // Bug BitBucket #4
 typedef unsigned int uint;
@@ -583,7 +583,7 @@ typedef std::map<std::string, std::string> StrStrMap;
 class AfterTypedefClass
 {
   public:
-}
+};
 
 // Bug BitBucket #5
 class Herb
@@ -633,7 +633,7 @@ class Plumb
 class Peach * Plumb::myMethod( class Peach * pInPtr )
 {
   return pInPtr;
-}
+};
 
 // Bug BitBucket #9
 class Grape
@@ -667,7 +667,7 @@ class Hen
 public:
 	void add(int a=100, b=0xfd, float c=1.7e-3, float d=3.14);
 	void join(string s1="", string s2="nothing");
-}
+};
 
 // Bug BitBucket #19
 template<typename VALUE,
