@@ -2912,7 +2912,7 @@ class CppHeader(_CppHeader):
                     continue
 
                 if parenDepth == 0 and tok.type == "{":
-                    if len(self.nameStack) >= 2 and is_namespace(
+                    if nslen >= 2 and is_namespace(
                         self.nameStack
                     ):  # namespace {} with no name used in boost, this sets default?
                         if (
