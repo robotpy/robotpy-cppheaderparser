@@ -3005,7 +3005,6 @@ class CppHeader(_CppHeader):
                         self.stmtTokens = []
                 elif tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
-                    nameStackAppended = True
                 elif tok.type in _namestack_pass_tokens:
                     pass
                 elif tok.type in _namestack_str_tokens:
@@ -3045,10 +3044,8 @@ class CppHeader(_CppHeader):
                 elif tok.type == "(":
                     parenDepth += 1
                     self.nameStack.append(tok.value)
-                    nameStackAppended = True
                 elif tok.type == ")":
                     self.nameStack.append(tok.value)
-                    nameStackAppended = True
                     if parenDepth != 0:
                         parenDepth -= 1
 
