@@ -142,10 +142,6 @@ supportedAccessSpecifier = ["public", "protected", "private"]
 ignoreSymbols = ["Q_OBJECT"]
 
 
-# Track what was added in what order and at what depth
-parseHistory = []
-
-
 def is_namespace(nameStack):
     """Determines if a namespace is being specified"""
     if len(nameStack) == 0:
@@ -2379,14 +2375,6 @@ class _CppHeader(Resolver):
                 )
                 newMethod["parent"] = None
                 self.functions.append(newMethod)
-            global parseHistory
-            parseHistory.append(
-                {
-                    "braceDepth": self.braceDepth,
-                    "item_type": "method",
-                    "item": newMethod,
-                }
-            )
         else:
             trace_print("free function?", self.nameStack)
 
@@ -2443,14 +2431,12 @@ class _CppHeader(Resolver):
             if name not in self.typedefs_order:
                 self.typedefs_order.append(name)
 
-    def _finish_struct_typedef(self):
+    def _finish_struct_typedef(self, toks):
         # Look for the name of a typedef struct: struct typedef {...] StructName; or unions to get renamed
         debug_print("finish struct typedef")
         self.typedef_encountered = False
 
-        toks = self._consume_up_to([], ";")
-
-        # grab the first name token, TODO: typedef struct{} X, *PX;
+        # grab the first name token
         for tok in toks:
             if tok.type == "NAME":
                 new_name = tok.value
@@ -2458,6 +2444,7 @@ class _CppHeader(Resolver):
         else:
             return
 
+        # TODO: typedef struct{} X, *PX;
         type_name_to_rename = self.curClass["name"]
         type_to_rename = self.classes[type_name_to_rename]
         type_to_rename["name"] = new_name
@@ -2466,10 +2453,52 @@ class _CppHeader(Resolver):
         if new_name != type_name_to_rename:
             del self.classes[type_name_to_rename]
 
+    def _finish_class_def(self):
+
+        # starting at the last } of a class/struct/union
+        debug_print("finish_class_def")
+
+        # consume any names for parsing
+        toks = self._consume_up_to([], ";")
+
+        is_typedef = self.typedef_encountered
+        if is_typedef:
+            self._finish_struct_typedef(toks)
+
+        thisClass = self.curClass
+        self.curClass = thisClass["parent"]
+
+        if not is_typedef:
+            if len(toks) > 1:
+                # Deal with "struct { } x;" style of things
+                expected_types = {",", "NAME", "*", ";"}
+                stack = [thisClass["name"]]
+                for tok in toks:
+                    stack.append(tok.value)
+                    if tok.type not in expected_types:
+                        self._parse_error((tok,), ",".join(expected_types))
+
+                self.nameStack = stack[:-1]
+                self.stack = stack
+                self.stmtTokens = toks
+
+                self._evaluate_property_stack(clearStack=False)
+
+            elif self.curClass and thisClass["name"].startswith("<"):
+                # anonymous class struct/union
+                stack = [thisClass["name"], "", ";"]
+                self.nameStack = stack[:-1]
+                self.stack = stack
+
+                self._evaluate_property_stack(clearStack=False)
+
+        self.stack = []
+        self.nameStack = []
+        self.stmtTokens = []
+
     def _evaluate_property_stack(self, clearStack=True, addToVar=None):
         """Create a Property out of the name stack"""
-        global parseHistory
-        debug_print("trace")
+        debug_print("evaluate_property_stack")
         if self.nameStack[0] == "typedef":
             assert self.stack and self.stack[-1] == ";"
             if self.curClass:
@@ -2482,21 +2511,6 @@ class _CppHeader(Resolver):
             else:
                 assert 0
         elif self.curClass:
-            if len(self.nameStack) == 1:
-                # See if we can de anonymize the type
-                filteredParseHistory = [
-                    h for h in parseHistory if h["braceDepth"] == self.braceDepth
-                ]
-                if (
-                    len(filteredParseHistory)
-                    and filteredParseHistory[-1]["item_type"] == "class"
-                ):
-                    self.nameStack.insert(0, filteredParseHistory[-1]["item"]["name"])
-                    debug_print(
-                        "DEANONYMOIZING %s to type '%s'",
-                        self.nameStack[1],
-                        self.nameStack[0],
-                    )
             if "," in self.nameStack:  # Maybe we have a variable list
                 # Figure out what part is the variable separator but remember templates of function pointer
                 # First find left most comma outside of a > and )
@@ -2535,9 +2549,6 @@ class _CppHeader(Resolver):
                 klass["properties"][self.curAccessSpecifier].append(newVar)
                 newVar["property_of_class"] = klass["name"]
                 newVar["parent"] = klass
-            parseHistory.append(
-                {"braceDepth": self.braceDepth, "item_type": "variable", "item": newVar}
-            )
             if addToVar:
                 newVar.update(addToVar)
         else:
@@ -2638,10 +2649,6 @@ class _CppHeader(Resolver):
                 newClass.show()
                 assert key not in self.classes  # namespace collision
         self.classes[key] = newClass
-        global parseHistory
-        parseHistory.append(
-            {"braceDepth": self.braceDepth, "item_type": "class", "item": newClass}
-        )
 
     def evalute_forward_decl(self):
         trace_print("FORWARD DECL", self.nameStack)
@@ -3003,34 +3010,9 @@ class CppHeader(_CppHeader):
                             self.curAccessSpecifier = self.accessSpecifierStack[-1]
                             self.accessSpecifierStack = self.accessSpecifierStack[:-1]
 
-                        if self.curClass and self.typedef_encountered:
-                            self._finish_struct_typedef()
+                        if self.curClass:
+                            self._finish_class_def()
 
-                        if self.curClass and self.curClass["parent"]:
-                            thisClass = self.curClass
-                            self.curClass = self.curClass["parent"]
-
-                            # Detect anonymous union members
-                            if (
-                                self.curClass
-                                and thisClass["declaration_method"] == "union"
-                                and thisClass["name"].startswith("<")
-                                and self.lex.token_if(";")
-                            ):
-                                debug_print("Creating anonymous union")
-                                # Force the processing of an anonymous union
-                                self.nameStack = [""]
-                                self.stack = self.nameStack + [";"]
-                                debug_print("pre eval anon stack")
-                                self._evaluate_stack(";")
-                                debug_print("post eval anon stack")
-                                self.stack = []
-                                self.nameStack = []
-                                self.stmtTokens = []
-                        else:
-                            self.curClass = None
-                        self.stack = []
-                        self.stmtTokens = []
                 elif tok.type in _namestack_append_tokens:
                     self.nameStack.append(tok.value)
                 elif tok.type in _namestack_pass_tokens:
@@ -3110,8 +3092,7 @@ class CppHeader(_CppHeader):
             )
 
         self.finalize()
-        global parseHistory
-        parseHistory = []
+
         # Delete some temporary variables
         for key in [
             "_precomp_macro_buf",
@@ -3181,7 +3162,7 @@ class CppHeader(_CppHeader):
             rtoks.append(tok)
             if tok.type in token_types:
                 break
-            
+
         return rtoks
 
     _end_balanced_tokens = {">", "}", "]", ")", "DBL_RBRACKET"}
