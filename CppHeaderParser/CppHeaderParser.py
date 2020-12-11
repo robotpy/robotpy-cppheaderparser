@@ -2443,6 +2443,29 @@ class _CppHeader(Resolver):
             if name not in self.typedefs_order:
                 self.typedefs_order.append(name)
 
+    def _finish_struct_typedef(self):
+        # Look for the name of a typedef struct: struct typedef {...] StructName; or unions to get renamed
+        debug_print("finish struct typedef")
+        self.typedef_encountered = False
+
+        toks = self._consume_up_to([], ";")
+
+        # grab the first name token, TODO: typedef struct{} X, *PX;
+        for tok in toks:
+            if tok.type == "NAME":
+                new_name = tok.value
+                break
+        else:
+            return
+
+        type_name_to_rename = self.curClass["name"]
+        type_to_rename = self.classes[type_name_to_rename]
+        type_to_rename["name"] = new_name
+        # Now re install it in its new location
+        self.classes[new_name] = type_to_rename
+        if new_name != type_name_to_rename:
+            del self.classes[type_name_to_rename]
+
     def _evaluate_property_stack(self, clearStack=True, addToVar=None):
         """Create a Property out of the name stack"""
         global parseHistory
@@ -2756,11 +2779,12 @@ class CppHeader(_CppHeader):
             "curAccessSpecifier changed/defaulted to %s", self.curAccessSpecifier
         )
         self.initextra()
-        # Old namestacks for a given level
-        self.nameStackHistory = []
+
         self.anon_struct_counter = 0
         self.anon_union_counter = 0
         self.anon_class_counter = 0
+
+        self.typedef_encountered = False
 
         #: Using directives in this header outside of class scope: key is
         #: full name for lookup, value is :class:`.CppVariable`
@@ -2978,6 +3002,10 @@ class CppHeader(_CppHeader):
                         if self.accessSpecifierStack:
                             self.curAccessSpecifier = self.accessSpecifierStack[-1]
                             self.accessSpecifierStack = self.accessSpecifierStack[:-1]
+
+                        if self.curClass and self.typedef_encountered:
+                            self._finish_struct_typedef()
+
                         if self.curClass and self.curClass["parent"]:
                             thisClass = self.curClass
                             self.curClass = self.curClass["parent"]
@@ -3094,10 +3122,10 @@ class CppHeader(_CppHeader):
             "nameSpaces",
             "curAccessSpecifier",
             "accessSpecifierStack",
-            "nameStackHistory",
             "anon_struct_counter",
             "anon_union_counter",
             "anon_class_counter",
+            "typedef_encountered",
             "_forward_decls",
             "stack",
             "mainClass",
@@ -3269,8 +3297,6 @@ class CppHeader(_CppHeader):
     def _evaluate_stack(self, token=None):
         """Evaluates the current name stack"""
 
-        nameStackCopy = self.nameStack[:]
-
         debug_print(
             "Evaluating stack %s\n       BraceDepth: %s (called from %s)",
             self.nameStack,
@@ -3380,25 +3406,7 @@ class CppHeader(_CppHeader):
             self._parse_enum()
             self.stack = []
             self.stmtTokens = []
-        elif (
-            len(self.nameStack) == 1
-            and len(self.nameStackHistory) > self.braceDepth
-            and (
-                self.nameStackHistory[self.braceDepth][0][0:2] == ["typedef", "struct"]
-                or self.nameStackHistory[self.braceDepth][0][0:2]
-                == ["typedef", "union"]
-            )
-        ):
-            # Look for the name of a typedef struct: struct typedef {...] StructName; or unions to get renamed
-            debug_print("found the naming of a union")
-            type_name_to_rename = self.nameStackHistory[self.braceDepth][1]
-            new_name = self.nameStack[0]
-            type_to_rename = self.classes[type_name_to_rename]
-            type_to_rename["name"] = self.nameStack[0]
-            # Now re install it in its new location
-            self.classes[new_name] = type_to_rename
-            if new_name != type_name_to_rename:
-                del self.classes[type_name_to_rename]
+
         elif self.stack[-1] == ";" and is_property_namestack(self.nameStack):
             debug_print("trace")
             if self.nameStack[0] in ("class", "struct") and len(self.stack) == 3:
@@ -3410,13 +3418,16 @@ class CppHeader(_CppHeader):
             else:
                 self._evaluate_property_stack()  # catches class props and structs in a namespace
 
-        elif (
-            self.nameStack[0] in ("class", "struct", "union")
-            or self.nameStack[0] == "typedef"
-            and self.nameStack[1] in ("struct", "union")
-        ):
-            # Parsing a union can reuse much of the class parsing
+        elif self.nameStack[0] in ("class", "struct", "union"):
             debug_print("trace")
+            self._evaluate_class_stack()
+
+        elif self.nameStack[0] == "typedef" and self.nameStack[1] in (
+            "struct",
+            "union",
+        ):
+            debug_print("trace")
+            self.typedef_encountered = True
             self._evaluate_class_stack()
 
         elif not self.curClass:
@@ -3429,12 +3440,6 @@ class CppHeader(_CppHeader):
             debug_print("trace")
         else:
             debug_print("Discarded statement %s", self.nameStack)
-
-        className = self.curClass["name"] if self.curClass else ""
-        try:
-            self.nameStackHistory[self.braceDepth] = (nameStackCopy, className)
-        except:
-            self.nameStackHistory.append((nameStackCopy, className))
 
         # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         self.nameStack = []
@@ -3684,7 +3689,7 @@ class CppHeader(_CppHeader):
                 for k in obj.keys():
                     trace_print("-Try key", k)
                     trace_print("-type", type(obj[k]))
-                    if k in ["nameStackHistory", "parent", "_public_typedefs"]:
+                    if k in ["parent", "_public_typedefs"]:
                         continue
                     if type(obj[k]) == list:
                         for i in obj[k]:
