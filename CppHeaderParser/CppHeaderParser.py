@@ -3146,6 +3146,16 @@ class CppHeader(_CppHeader):
             raise self._parse_error((tok,), "' or '".join(tokenTypes))
         return tok
 
+    def _consume_up_to(self, rtoks, *token_types):
+        token = self.lex.token
+        while True:
+            tok = token()
+            rtoks.append(tok)
+            if tok.type in token_types:
+                break
+            
+        return rtoks
+
     _end_balanced_tokens = {">", "}", "]", ")", "DBL_RBRACKET"}
     _balanced_token_map = {
         "<": ">",
