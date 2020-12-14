@@ -2491,6 +2491,7 @@ class _CppHeader(Resolver):
                 self._get_stmt_doxygen(),
                 self._get_location(self.nameStack),
             )
+            newVar["namespace"] = self.current_namespace()
             if addToVar:
                 newVar.update(addToVar)
             self.variables.append(newVar)
