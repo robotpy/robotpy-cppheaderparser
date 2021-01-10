@@ -3929,5 +3929,37 @@ public:
         self.assertEqual(m["returns"], "int")
 
 
+class ForwardDeclResolve(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+namespace n1 {
+
+class A;
+
+namespace n2 {
+
+class B {
+public:
+  explicit B(const A &a);
+};
+
+}
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["B"]
+        self.assertEqual("B", c["name"])
+
+        m = c["methods"]["public"][0]
+        self.assertEqual(m["name"], "B")
+        self.assertEqual(m["parameters"][0]["forward_declared"], "A")
+        self.assertEqual(m["parameters"][0]["namespace"], "n1::")
+        self.assertEqual(m["parameters"][0]["name"], "a")
+        self.assertEqual(m["parameters"][0]["raw_type"], "n1::A")
+
+
 if __name__ == "__main__":
     unittest.main()
