@@ -1473,7 +1473,7 @@ class Resolver(object):
             []
         )  # full name stack, good idea to keep both stacks? (simple stack and full stack)
         self._classes_brace_level = {}  # class name : level
-        self._forward_decls = []
+        self._forward_decls = {}  # name: namespace
         self._template_typenames = []  # template<typename XXX>
 
     def current_namespace(self):
@@ -1747,6 +1747,7 @@ class Resolver(object):
 
                         elif tag in self._forward_decls:
                             var["forward_declared"] = tag
+                            var["namespace"] = self._forward_decls[tag]
                             var["ctypes_type"] = "ctypes.c_void_p"
 
                         elif tag in self.global_enums:
@@ -2599,7 +2600,7 @@ class _CppHeader(Resolver):
             if self.curAccessSpecifier == "public":
                 klass._public_forward_declares.append(name)
         else:
-            self._forward_decls.append(name)
+            self._forward_decls[name] = self.current_namespace()
 
 
 # fmt: off
