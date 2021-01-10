@@ -2891,7 +2891,7 @@ class CppHeader(_CppHeader):
                             == "__IGNORED_NAMESPACE__CppHeaderParser__"
                         ):  # Used in filtering extern "C"
                             self.nameStack[1] = ""
-                        self.nameSpaces.append(self.nameStack[1])
+                        self.nameSpaces.append("".join(self.nameStack[1:]))
                         ns = self.cur_namespace()
                         self.stack = []
                         self.stmtTokens = []
