@@ -3961,5 +3961,22 @@ public:
         self.assertEqual(m["parameters"][0]["raw_type"], "n1::A")
 
 
+class CompoundNS(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+namespace N1::N2 {
+class B {};
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["B"]
+        self.assertEqual("B", c["name"])
+        self.assertEqual("N1::N2", c["namespace"])
+
+
 if __name__ == "__main__":
     unittest.main()
