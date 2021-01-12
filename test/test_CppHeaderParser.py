@@ -3978,5 +3978,37 @@ class B {};
         self.assertEqual("N1::N2", c["namespace"])
 
 
+class TemplateMustBeCleared(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+template <int States, int Inputs> class LinearPlantInversionFeedforward {
+public:
+  template <int Outputs>
+  LinearPlantInversionFeedforward(
+      const LinearSystem<States, Inputs, Outputs> &plant, units::second_t dt)
+      : LinearPlantInversionFeedforward(plant.A(), plant.B(), dt) {}
+
+  LinearPlantInversionFeedforward(
+      const Eigen::Matrix<double, States, States> &A,
+      const Eigen::Matrix<double, States, Inputs> &B, units::second_t dt)
+      : m_dt(dt) {
+    DiscretizeAB<States, Inputs>(A, B, dt, &m_A, &m_B);
+
+    m_r.setZero();
+    Reset(m_r);
+  }
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["LinearPlantInversionFeedforward"]
+        self.assertEqual("LinearPlantInversionFeedforward", c["name"])
+        self.assertEqual("template<int Outputs>", c["methods"]["public"][0]["template"])
+        self.assertEqual(False, c["methods"]["public"][1]["template"])
+
+
 if __name__ == "__main__":
     unittest.main()
