@@ -2346,6 +2346,10 @@ class _CppHeader(Resolver):
                 )
                 newMethod["parent"] = None
                 self.functions.append(newMethod)
+
+            # Reset template once it has been used
+            self.curTemplate = None
+
             global parseHistory
             parseHistory.append(
                 {
@@ -2549,6 +2553,7 @@ class _CppHeader(Resolver):
                 self._get_location(self.nameStack),
                 self.curAccessSpecifier,
             )
+            self.curTemplate = None
         newClass["declaration_method"] = self.nameStack[0]
         self.classes_order.append(newClass)  # good idea to save ordering
         self.stack = []  # fixes if class declared with ';' in closing brace
