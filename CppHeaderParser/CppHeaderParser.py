@@ -280,6 +280,10 @@ def _split_namespace(namestack):
     :rtype: Tuple[str, list]
     """
     # TODO: this should be using tokens instead of nhack
+    typename = None
+    if namestack and namestack[0] == "typename":
+        typename = namestack[0]
+        namestack = namestack[1:]
 
     last_colon = None
     for i, n in enumerate(namestack):
@@ -295,6 +299,9 @@ def _split_namespace(namestack):
         )
     else:
         ns = ""
+
+    if typename:
+        namestack = [typename] + namestack
 
     return ns, namestack
 
@@ -1269,7 +1276,11 @@ class CppVariable(_CppVariable):
             # backwards compat; deprecate camelCase in dicts
             self["defaultValue"] = default
 
-        elif is_fundamental(nameStack[-1]) or nameStack[-1] in [">", "<", ":", "."]:
+        elif (
+            is_fundamental(nameStack[-1])
+            or nameStack[-1] in [">", "<", ":", "."]
+            or (len(nameStack) > 2 and nameStack[-2] == "::")
+        ):
             # Un named parameter
             self["type"] = " ".join(nameStack)
             self["name"] = ""
@@ -3348,7 +3359,10 @@ class CppHeader(_CppHeader):
                     else:
                         atype["namespace"] = ns
 
-                atype["raw_type"] = ns + atype["type"]
+                if atype["type"].startswith("typename "):
+                    atype["raw_type"] = "typename " + ns + atype["type"][9:]
+                else:
+                    atype["raw_type"] = ns + atype["type"]
 
                 if self.curClass:
                     klass = self.classes[self.curClass]
