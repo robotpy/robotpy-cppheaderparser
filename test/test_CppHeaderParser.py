@@ -4010,5 +4010,25 @@ public:
         self.assertEqual(False, c["methods"]["public"][1]["template"])
 
 
+class UsingTypename(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+template <class D> class P {
+public:
+  using State = typename f::TP<D>::S;
+};
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader.classes["P"]
+        self.assertEqual("P", c["name"])
+        state = c["using"]["State"]
+        self.assertEqual(state["raw_type"], "typename f::TP<D >::")
+        self.assertEqual(state["type"], "typename TP<D >::")
+
+
 if __name__ == "__main__":
     unittest.main()
