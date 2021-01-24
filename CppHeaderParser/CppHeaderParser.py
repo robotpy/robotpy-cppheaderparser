@@ -1276,7 +1276,11 @@ class CppVariable(_CppVariable):
             # backwards compat; deprecate camelCase in dicts
             self["defaultValue"] = default
 
-        elif is_fundamental(nameStack[-1]) or nameStack[-1] in [">", "<", ":", "."]:
+        elif (
+            is_fundamental(nameStack[-1])
+            or nameStack[-1] in [">", "<", ":", "."]
+            or (len(nameStack) > 2 and nameStack[-2] == "::")
+        ):
             # Un named parameter
             self["type"] = " ".join(nameStack)
             self["name"] = ""

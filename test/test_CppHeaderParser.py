@@ -4017,6 +4017,7 @@ class UsingTypename(unittest.TestCase):
 template <class D> class P {
 public:
   using State = typename f::TP<D>::S;
+  P(State st);
 };
 """,
             "string",
@@ -4026,8 +4027,15 @@ public:
         c = self.cppHeader.classes["P"]
         self.assertEqual("P", c["name"])
         state = c["using"]["State"]
-        self.assertEqual(state["raw_type"], "typename f::TP<D >::")
-        self.assertEqual(state["type"], "typename TP<D >::")
+        self.assertEqual(state["raw_type"], "typename f::TP<D >::S")
+        self.assertEqual(state["type"], "typename TP<D >::S")
+
+        m = c["methods"]["public"][0]
+        self.assertEqual(m["name"], "P")
+        self.assertEqual(m["parameters"][0]["namespace"], "f::")
+        self.assertEqual(m["parameters"][0]["name"], "st")
+        self.assertEqual(m["parameters"][0]["raw_type"], "typename f::TP<D >::S")
+        self.assertEqual(m["parameters"][0]["type"], "typename TP<D >::S")
 
 
 if __name__ == "__main__":
