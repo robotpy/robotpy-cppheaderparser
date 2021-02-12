@@ -3707,17 +3707,22 @@ class CppHeader(_CppHeader):
     def toJSON(self, indent=4, separators=None):
         """Converts a parsed structure to JSON"""
         import json
+
         self._strip_parent_keys()
-        def clean_dict(markers, keys = []):
-            if (id(markers) in keys):
+
+        def clean_dict(markers, keys=[]):
+            if id(markers) in keys:
                 return None
             elif isinstance(markers, dict):
                 keys_ = keys + [id(markers)]
-                return {key: clean_dict(markers[key], keys_) for 
-                    key, value in markers.items()}
+                return {
+                    key: clean_dict(markers[key], keys_)
+                    for key, value in markers.items()
+                }
             elif type(markers) in [list, set, tuple]:
                 return type(markers)(clean_dict(m, keys) for m in markers)
             return markers
+
         try:
             del self.__dict__["classes_order"]
         except:
@@ -3725,7 +3730,7 @@ class CppHeader(_CppHeader):
 
         d = self.__dict__
         d["classes"] = clean_dict(d["classes"])
-        return json.dumps(d, indent=indent, separators=separators, default = "")
+        return json.dumps(d, indent=indent, separators=separators, default="")
 
     def __repr__(self):
         rtn = {
