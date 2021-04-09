@@ -4038,5 +4038,23 @@ public:
         self.assertEqual(m["parameters"][0]["type"], "typename TP<D >::S")
 
 
+class FunctionPointerParse(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+typedef int U32;
+typedef unsigned int(   *  p  )(int, int);
+typedef int(   *  mmmmp  )(int, int)  ;  
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader
+        self.assertEqual(c.typedefs["U32"], "int")
+        self.assertEqual(c.typedefs["p"], "typedef unsigned int ( * ) ( int , int )")
+        self.assertEqual(c.typedefs["mmmmp"], "typedef int ( * ) ( int , int )")
+
+
 if __name__ == "__main__":
     unittest.main()
