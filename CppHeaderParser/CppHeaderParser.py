@@ -2375,12 +2375,30 @@ class _CppHeader(Resolver):
         self.stack = []
         self.stmtTokens = []
 
+    _function_point_typedef_format = re.compile(r".*?\(.*?\*(.*?)\).*?\(.*?\).*?")
+
+    def _function_point_typedef_parse(self, stack):
+        idx = stack.index("typedef")
+        expression = "".join(stack[idx + 1 :])
+        m = self._function_point_typedef_format.match(expression)
+        if m is None:
+            return {}
+
+        name = m.group(1)
+        s = " ".join([i for i in stack if i != name])
+        r = {"name": name, "raw": s, "type": s}
+        return r
+
     def _parse_typedef(self, stack, namespace=""):
         if not stack or "typedef" not in stack:
             return
         stack = list(stack)  # copy just to be safe
         if stack[-1] == ";":
             stack.pop()
+
+        r = self._function_point_typedef_parse(stack)
+        if len(r) == 3:
+            return r
 
         while stack and stack[-1].isdigit():
             stack.pop()  # throw away array size for now
