@@ -4015,6 +4015,7 @@ class UsingTypename(unittest.TestCase):
         self.cppHeader = CppHeaderParser.CppHeader(
             """
 template <class D> class P {
+using A = typename f::TP<D>::A;
 public:
   using State = typename f::TP<D>::S;
   P(State st);
@@ -4026,9 +4027,15 @@ public:
     def test_fn(self):
         c = self.cppHeader.classes["P"]
         self.assertEqual("P", c["name"])
+        self.assertEqual(len(c["using"]), 2)
         state = c["using"]["State"]
         self.assertEqual(state["raw_type"], "typename f::TP<D >::S")
         self.assertEqual(state["type"], "typename TP<D >::S")
+        self.assertEqual(state["access"], "public")
+        private = c["using"]["A"]
+        self.assertEqual(private["raw_type"], "typename f::TP<D >::A")
+        self.assertEqual(private["type"], "typename TP<D >::A")
+        self.assertEqual(private["access"], "private")
 
         m = c["methods"]["public"][0]
         self.assertEqual(m["name"], "P")
