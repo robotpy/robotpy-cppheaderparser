@@ -1204,6 +1204,7 @@ class CppVariable(_CppVariable):
     * ``extern`` - True if its an extern, False if not
     * ``parent`` - If not None, either the class this is a property of, or the
       method this variable is a parameter in
+    * ``access`` - Anything in supportedAccessSpecifier
     """
 
     Vars = []
@@ -1320,6 +1321,7 @@ class CppVariable(_CppVariable):
             "desc",
             "line_number",
             "extern",
+            "access",
         ]
         cpy = dict((k, v) for (k, v) in list(self.items()) if k in keys_white_list)
         if "array_size" in self:
@@ -3382,6 +3384,7 @@ class CppHeader(_CppHeader):
                 else:
                     atype["raw_type"] = ns + atype["type"]
 
+                atype["access"] = self.curAccessSpecifier
                 if self.curClass:
                     klass = self.classes[self.curClass]
                     klass["using"][alias] = atype
