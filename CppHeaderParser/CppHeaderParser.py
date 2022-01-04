@@ -936,7 +936,17 @@ class _CppMethod(dict):
             elif a.startswith("__attribute__((__const__))"):
                 stack = stack[6:]
 
-        stack = stack[stack.index("(") + 1 :]
+        last_paren_index = len(stack) - stack[-1::-1].index(")") - 1
+        open_paren_count = 1
+        method_paren_start_idx = last_paren_index-1
+        while open_paren_count > 0:
+            if stack[method_paren_start_idx] == ")":
+                open_paren_count+=1
+            elif stack[method_paren_start_idx] == "(":
+                open_paren_count-=1
+            method_paren_start_idx -= 1
+
+        stack = stack[method_paren_start_idx + 2 :]
         if not stack:
             return []
         if (
@@ -998,33 +1008,6 @@ class CppMethod(_CppMethod):
         if doxygen:
             self["doxygen"] = doxygen
 
-        # Remove leading keywords
-        for i, word in enumerate(nameStack):
-            if word not in Resolver.C_KEYWORDS:
-                nameStack = nameStack[i:]
-                break
-
-        if "operator" in nameStack:
-            rtnType = " ".join(nameStack[: nameStack.index("operator")])
-            self["name"] = "".join(
-                nameStack[nameStack.index("operator") : nameStack.index("(")]
-            )
-        else:
-            rtnType = " ".join(nameStack[: nameStack.index("(") - 1])
-            self["name"] = " ".join(
-                nameStack[nameStack.index("(") - 1 : nameStack.index("(")]
-            )
-
-        if len(rtnType) == 0 or self["name"] == curClass:
-            rtnType = "void"
-
-        self["rtnType"] = (
-            rtnType.replace(" :: ", "::")
-            .replace(" < ", "<")
-            .replace(" > ", "> ")
-            .replace(">>", "> >")
-            .replace(" ,", ",")
-        )
 
         # deal with "noexcept" specifier/operator
         self["noexcept"] = None
@@ -1064,6 +1047,8 @@ class CppMethod(_CppMethod):
                     break
 
         self.update(methinfo)
+        if len(self["rtnType"]) == 0 or self["name"] == curClass:
+             self["rtnType"] = "void"
         set_location_info(self, location)
 
         paramsStack = self._params_helper1(nameStack)
@@ -1304,6 +1289,7 @@ class CppVariable(_CppVariable):
     def _filter_name(self, name):
         name = name.replace(" :", ":").replace(": ", ":")
         name = name.replace(" < ", "<")
+        name = name.replace(" ( ", "(").replace(" ) ", ")")
         name = name.replace(" > ", "> ").replace(">>", "> >")
         name = name.replace(") >", ")>")
         name = name.replace(" {", "{").replace(" }", "}")
@@ -2168,7 +2154,7 @@ class _CppHeader(Resolver):
     }
 
     def parse_method_type(self, stack):
-        trace_print("meth type info", stack)
+        debug_print("meth type info %s", stack)
         info = {
             "debug": " ".join(stack)
             .replace(" :: ", "::")
@@ -2183,13 +2169,57 @@ class _CppHeader(Resolver):
 
         info.update(self._method_type_defaults)
 
-        header = stack[: stack.index("(")]
+        last_paren_index = len(stack) - stack[-1::-1].index(")") - 1
+        open_paren_count = 1
+        method_paren_start_idx = last_paren_index-1
+        while open_paren_count > 0:
+            if stack[method_paren_start_idx] == ")":
+                open_paren_count+=1
+            elif stack[method_paren_start_idx] == "(":
+                open_paren_count-=1
+            method_paren_start_idx -= 1
+
+        header = stack[: method_paren_start_idx+1]
         header = " ".join(header)
+        # Replace fields that would mess up our re-split below
         header = header.replace(" :: ", "::")
         header = header.replace(" < ", "<")
         header = header.replace(" > ", "> ")
+        header = header.replace("> >", ">>")
         header = header.replace("default ", "default")
         header = header.strip()
+        # Remove leading keywords, splitting on spaces to avoid removing keywords embedded in other words
+        
+        # Re-split to find method declarations like A::B::meth() that were formed by joining separate tokens
+        header = header.split()
+        name = header.pop()
+        for word in Resolver.C_KEYWORDS.union(set(ignoreSymbols)):
+            if word in header:
+                info[word] = True
+                header.remove(word)
+        header = " ".join(header)
+        # Now replace fields for aesthetics
+        header = header.replace(" (", "(")
+        header = header.replace("( ", "(")
+        header = header.replace(" )", ")")
+        header = header.replace(") ", ")")
+        header = header.replace(" ,", ",")
+        if "operator" in stack:
+            info["rtnType"] = " ".join(stack[: stack.index("operator")])
+            op = "".join(
+                stack[stack.index("operator")+1 : method_paren_start_idx+1]
+            )
+            if not op:
+                if " ".join(["operator", "(", ")", "("]) in " ".join(stack):
+                    op = "()"
+                else:
+                    debug_print("Error parsing operator")
+                    return None
+            name = "operator"+op
+            info["operator"] = op
+        else:
+            info["rtnType"] = header
+        info["returns"] = info["rtnType"]
 
         if stack[-1] == "{":
             info["defined"] = True
@@ -2210,32 +2240,9 @@ class _CppHeader(Resolver):
             elif stack[-2] == "delete":
                 info["deleted"] = True
 
-        r = header.split()
-        name = None
-        if "operator" in stack:  # rare case op overload defined outside of class
-            op = stack[stack.index("operator") + 1 : stack.index("(")]
-            op = "".join(op)
-            if not op:
-                if " ".join(["operator", "(", ")", "("]) in " ".join(stack):
-                    op = "()"
-                else:
-                    trace_print("Error parsing operator")
-                    return None
 
-            info["operator"] = op
-            name = "operator" + op
-            a = stack[: stack.index("operator")]
-
-        elif r:
-            name = r[-1]
-            a = r[:-1]  # strip name
-
-        if name is None:
-            return None
         # if name.startswith('~'): name = name[1:]
 
-        while a and a[0] == "}":  # strip - can have multiple } }
-            a = a[1:]
 
         if "::" in name:
             # klass,name = name.split('::')    # methods can be defined outside of class
@@ -2254,7 +2261,7 @@ class _CppHeader(Resolver):
                 info["defined"] = True
                 info["default"] = True
             name = name[1:]
-        elif not a or (name == self.curClass and len(self.curClass)):
+        elif (name == self.curClass and len(self.curClass)):
             info["constructor"] = True
             if "default;" in stack:
                 info["defined"] = True
@@ -2262,27 +2269,6 @@ class _CppHeader(Resolver):
 
         info["name"] = name
 
-        for tag in self.C_KEYWORDS:
-            if tag in a:
-                info[tag] = True
-                a.remove(tag)  # inplace
-        if "template" in a:
-            a.remove("template")
-            b = " ".join(a)
-            if ">" in b:
-                info["template"] = b[: b.index(">") + 1]
-                info["returns"] = b[
-                    b.index(">") + 1 :
-                ]  # find return type, could be incorrect... TODO
-                if "<typename" in info["template"].split():
-                    typname = info["template"].split()[-1]
-                    typname = typname[:-1]  # strip '>'
-                    if typname not in self._template_typenames:
-                        self._template_typenames.append(typname)
-            else:
-                info["returns"] = " ".join(a)
-        else:
-            info["returns"] = " ".join(a)
         info["returns"] = info["returns"].replace(" <", "<").strip()
 
         ## be careful with templates, do not count pointers inside template

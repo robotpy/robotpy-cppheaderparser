@@ -1535,7 +1535,7 @@ class DriverFuncs_TestCase(unittest.TestCase):
     def test_type_0(self):
         self.assertEqual(
             self.cppHeader.classes["DriverFuncs"]["properties"]["public"][0]["type"],
-            "void * ( * ) ( )",
+            "void *(* )()",
         )
 
     def test_function_pointer_field_0(self):
@@ -1555,7 +1555,7 @@ class DriverFuncs_TestCase(unittest.TestCase):
     def test_type_1(self):
         self.assertEqual(
             self.cppHeader.classes["DriverFuncs"]["properties"]["public"][1]["type"],
-            "void ( * ) ( void * buf, int buflen )",
+            "void(* )(void * buf, int buflen )",
         )
 
     def test_function_pointer_field_1(self):
@@ -1631,7 +1631,7 @@ class Almond_TestCase(unittest.TestCase):
     def test_rtn_type(self):
         self.assertEqual(
             self.cppHeader.classes["AlmondClass"]["methods"]["public"][0]["rtnType"],
-            "std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass> > >",
+            "std::map<unsigned, std::pair<unsigned, SnailTemplateClass<SnailNamespace::SnailClass>>>",
         )
 
     def test_param_1_name(self):
@@ -2538,7 +2538,7 @@ class set_callback_TestCase(unittest.TestCase):
         )
         self.assertEqual(
             self.cppHeader.functions[8]["parameters"][1]["type"],
-            "long ( * ) ( struct test_st *, int, const char *, int long, long, long )",
+            "long(* )(struct test_st *, int, const char *, int long, long, long )",
         )
 
 
@@ -2851,8 +2851,8 @@ namespace a {
                     "desc": None,
                     "name": "",
                     "namespace": "std::",
-                    "raw_type": "std::function<void ( )>",
-                    "type": "function<void ( )>",
+                    "raw_type": "std::function<void()>",
+                    "type": "function<void()>",
                     "typealias": "VoidFunction",
                     "using_type": "typealias",
                 }
@@ -2909,11 +2909,11 @@ namespace a {
                     "raw_type": "std::string",
                 },
                 {
-                    "type": "function<void ( )>",
+                    "type": "function<void()>",
                     "name": "fn",
                     "desc": None,
                     "namespace": "std::",
-                    "raw_type": "std::function<void ( )>",
+                    "raw_type": "std::function<void()>",
                 },
                 {
                     "type": "thing",
@@ -2946,11 +2946,11 @@ namespace a {
                     "raw_type": "std::string",
                 },
                 {
-                    "type": "function<int ( )>",
+                    "type": "function<int()>",
                     "name": "fn",
                     "desc": None,
                     "namespace": "std::",
-                    "raw_type": "std::function<int ( )>",
+                    "raw_type": "std::function<int()>",
                 },
                 {
                     "type": "thing",
@@ -4061,6 +4061,74 @@ typedef int(   *  mmmmp  )(int, int)  ;
         self.assertEqual(c.typedefs["U32"], "int")
         self.assertEqual(c.typedefs["p"], "typedef unsigned int ( * ) ( int , int )")
         self.assertEqual(c.typedefs["mmmmp"], "typedef int ( * ) ( int , int )")
+
+
+class DecltypeMethodReturnClass_meth1(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+#include <vector>
+#include <string>
+using namespace std;
+
+class DecltypeMethodReturnClass
+{
+public:
+	const int returnInt();
+
+    decltype(returnInt()) meth1(decltype(returnInt()) arg1);
+
+    const std::optional<decltype(returnInt())> meth2(const decltype(returnInt()) v1);
+
+    template<typename T>
+    decltype(T::Q) meth3(int v1);
+
+}; 
+""",
+            "string",
+        )
+
+    def test_name(self):
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][1]["name"],
+            "meth1",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][2]["name"],
+            "meth2",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][3]["name"],
+            "meth3",
+        )
+
+    def test_rtntype(self):
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][1]["rtnType"],
+            "decltype(returnInt())",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][2]["rtnType"],
+            "const std::optional<decltype(returnInt())>",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][3]["rtnType"],
+            "decltype(T::Q)",
+        )
+
+    def test_parameters(self):
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][1]["parameters"][0]['type'],
+            "decltype(returnInt() )",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][2]["parameters"][0]['type'],
+            "const decltype(returnInt() )",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["DecltypeMethodReturnClass"]["methods"]["public"][3]["parameters"][0]['type'],
+            "int",
+        )
 
 
 if __name__ == "__main__":
