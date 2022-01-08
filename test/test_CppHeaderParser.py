@@ -2999,6 +2999,21 @@ class A {
         self.assertEqual(p["defaultValue"], "0.02")
 
 
+class ConstExprFn_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+constexpr int overloaded_constexpr(int a, int b, int c) { return a + b + c; }
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        m = self.cppHeader.functions[0]
+        self.assertEqual(m["constexpr"], True)
+        self.assertEqual(m["rtnType"], "int")
+
+
 class DefaultEnum_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader(

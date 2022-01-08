@@ -111,7 +111,6 @@ if debug:
         args = (inspect.currentframe().f_back.f_lineno,) + args
         print(fmt % args)
 
-
 else:
 
     debug_caller_lineno = None
@@ -127,7 +126,6 @@ if debug_trace:
         for a in args:
             sys.stdout.write(" %s" % a)
         sys.stdout.write("\n")
-
 
 else:
 
@@ -1470,7 +1468,7 @@ class Resolver(object):
     C_MODIFIERS = "* & const constexpr static mutable".split()
     C_MODIFIERS = set(C_MODIFIERS)
 
-    C_KEYWORDS = "extern virtual static explicit inline friend".split()
+    C_KEYWORDS = "extern virtual static explicit inline friend constexpr".split()
     C_KEYWORDS = set(C_KEYWORDS)
 
     SubTypedefs = {}  # TODO deprecate?
