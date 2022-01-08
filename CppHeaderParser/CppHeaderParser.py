@@ -111,7 +111,6 @@ if debug:
         args = (inspect.currentframe().f_back.f_lineno,) + args
         print(fmt % args)
 
-
 else:
 
     debug_caller_lineno = None
@@ -127,7 +126,6 @@ if debug_trace:
         for a in args:
             sys.stdout.write(" %s" % a)
         sys.stdout.write("\n")
-
 
 else:
 
