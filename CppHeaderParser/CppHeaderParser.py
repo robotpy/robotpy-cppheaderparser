@@ -1468,7 +1468,7 @@ class Resolver(object):
     C_MODIFIERS = "* & const constexpr static mutable".split()
     C_MODIFIERS = set(C_MODIFIERS)
 
-    C_KEYWORDS = "extern virtual static explicit inline friend".split()
+    C_KEYWORDS = "extern virtual static explicit inline friend constexpr".split()
     C_KEYWORDS = set(C_KEYWORDS)
 
     SubTypedefs = {}  # TODO deprecate?
