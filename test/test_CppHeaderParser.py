@@ -4063,5 +4063,23 @@ typedef int(   *  mmmmp  )(int, int)  ;
         self.assertEqual(c.typedefs["mmmmp"], "typedef int ( * ) ( int , int )")
 
 
+class ExternTemplateTest(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+extern template class MyClass<1,2>;
+extern template class __attribute__(("something")) MyClass<3,4>;
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader
+        self.assertEqual(c.typedefs["U32"], "int")
+        self.assertEqual(c.typedefs["p"], "typedef unsigned int ( * ) ( int , int )")
+        self.assertEqual(c.typedefs["mmmmp"], "typedef int ( * ) ( int , int )")
+
+
 if __name__ == "__main__":
     unittest.main()
