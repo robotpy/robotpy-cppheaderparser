@@ -4110,5 +4110,30 @@ extern template class MyClass<5,6>;
         self.assertEqual(et2["params"], "<5, 6>")
 
 
+class UsingTemplateTest(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class X {
+  template <typename T>
+  using TT = U<T>;
+};
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        u = self.cppHeader.classes["X"]["using"]
+        self.assertEqual(len(u), 1)
+        tt = u["TT"]
+
+        self.assertEqual(tt["access"], "private")
+        self.assertEqual(tt["raw_type"], "U<T >")
+        self.assertEqual(tt["type"], "U<T >")
+        self.assertEqual(tt["typealias"], "TT")
+        self.assertEqual(tt["template"], "template<typename T>")
+
+
 if __name__ == "__main__":
     unittest.main()

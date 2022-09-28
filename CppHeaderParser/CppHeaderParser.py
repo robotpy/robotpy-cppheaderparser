@@ -1207,7 +1207,7 @@ class CppVariable(_CppVariable):
 
     Vars = []
 
-    def __init__(self, nameStack, doxygen, location, **kwargs):
+    def __init__(self, nameStack, doxygen, location, is_var=True, **kwargs):
         debug_print("var trace %s", nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
@@ -1297,7 +1297,8 @@ class CppVariable(_CppVariable):
             pass
 
         self.init()
-        CppVariable.Vars.append(self)  # save and resolve later
+        if is_var:
+            CppVariable.Vars.append(self)  # save and resolve later
 
     def _filter_name(self, name):
         name = name.replace(" :", ":").replace(": ", ":")
@@ -3359,7 +3360,10 @@ class CppHeader(_CppHeader):
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
                     atype = CppVariable(
-                        stack, self._get_stmt_doxygen(), self._get_location(stack)
+                        stack,
+                        self._get_stmt_doxygen(),
+                        self._get_location(stack),
+                        is_var=False,
                     )
 
                     # namespace refers to the embedded type
@@ -3374,7 +3378,10 @@ class CppHeader(_CppHeader):
                     #    from a base class
                     ns, stack = _split_namespace(self.nameStack[1:])
                     atype = CppVariable(
-                        stack, self._get_stmt_doxygen(), self._get_location(stack)
+                        stack,
+                        self._get_stmt_doxygen(),
+                        self._get_location(stack),
+                        is_var=False,
                     )
                     alias = atype["type"]
                     atype["using_type"] = "declaration"
@@ -3382,6 +3389,9 @@ class CppHeader(_CppHeader):
                         atype["baseclass"] = ns
                     else:
                         atype["namespace"] = ns
+
+                atype["template"] = self.curTemplate
+                self.curTemplate = None
 
                 if atype["type"].startswith("typename "):
                     atype["raw_type"] = "typename " + ns + atype["type"][9:]
