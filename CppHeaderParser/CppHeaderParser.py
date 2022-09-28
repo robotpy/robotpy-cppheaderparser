@@ -1207,7 +1207,7 @@ class CppVariable(_CppVariable):
 
     Vars = []
 
-    def __init__(self, nameStack, doxygen, location, **kwargs):
+    def __init__(self, nameStack, doxygen, location, is_var=True, **kwargs):
         debug_print("var trace %s", nameStack)
         if len(nameStack) and nameStack[0] == "extern":
             self["extern"] = True
@@ -1297,7 +1297,8 @@ class CppVariable(_CppVariable):
             pass
 
         self.init()
-        CppVariable.Vars.append(self)  # save and resolve later
+        if is_var:
+            CppVariable.Vars.append(self)  # save and resolve later
 
     def _filter_name(self, name):
         name = name.replace(" :", ":").replace(": ", ":")
@@ -1423,6 +1424,10 @@ class _CppPreprocessorLiteral(dict):
 
     def __str__(self):
         return self["value"]
+
+
+class CppExternTemplate(dict):
+    pass
 
 
 # Implementation is shared between CppPragma, CppDefine, CppInclude but they are
@@ -2747,6 +2752,8 @@ class CppHeader(_CppHeader):
         #: List of enums in this header as :class:`.CppEnum`
         self.enums = []
 
+        self.extern_templates = []
+
         #: List of variables in this header as :class:`.CppVariable`
         self.variables = []
         self.global_enums = {}
@@ -2879,7 +2886,7 @@ class CppHeader(_CppHeader):
                     break
                 tok.value = TagStr(tok.value, location=tok.location)
 
-                # debug_print("TOK: %s", tok)
+                debug_print("TOK: %s", tok)
                 if tok.type == "NAME":
                     if tok.value in self.IGNORE_NAMES:
                         continue
@@ -3353,7 +3360,10 @@ class CppHeader(_CppHeader):
                     alias = self.nameStack[1]
                     ns, stack = _split_namespace(self.nameStack[3:])
                     atype = CppVariable(
-                        stack, self._get_stmt_doxygen(), self._get_location(stack)
+                        stack,
+                        self._get_stmt_doxygen(),
+                        self._get_location(stack),
+                        is_var=False,
                     )
 
                     # namespace refers to the embedded type
@@ -3368,7 +3378,10 @@ class CppHeader(_CppHeader):
                     #    from a base class
                     ns, stack = _split_namespace(self.nameStack[1:])
                     atype = CppVariable(
-                        stack, self._get_stmt_doxygen(), self._get_location(stack)
+                        stack,
+                        self._get_stmt_doxygen(),
+                        self._get_location(stack),
+                        is_var=False,
                     )
                     alias = atype["type"]
                     atype["using_type"] = "declaration"
@@ -3376,6 +3389,9 @@ class CppHeader(_CppHeader):
                         atype["baseclass"] = ns
                     else:
                         atype["namespace"] = ns
+
+                atype["template"] = self.curTemplate
+                self.curTemplate = None
 
                 if atype["type"].startswith("typename "):
                     atype["raw_type"] = "typename " + ns + atype["type"][9:]
@@ -3459,6 +3475,21 @@ class CppHeader(_CppHeader):
         self.curTemplate = None
 
     def _parse_template(self):
+        # check for 'extern template'
+        extern_template = False
+        if len(self.stmtTokens) == 1 and self.stmtTokens[0].value == "extern":
+            extern_template = True
+            tok = self._next_token_must_be("NAME")
+            if not tok.value == "class":
+                raise self._parse_error((tok,), "class")
+
+            tok = self._next_token_must_be("NAME")
+            if tok.value == "__attribute__":
+                self._parse_gcc_attribute()
+                tok = self._next_token_must_be("NAME")
+
+            extern_template_name = tok.value
+
         tok = self._next_token_must_be("<")
         consumed = self._consume_balanced_tokens(tok)
         tmpl = " ".join(tok.value for tok in consumed)
@@ -3471,7 +3502,20 @@ class CppHeader(_CppHeader):
             .replace(" , ", ", ")
             .replace(" = ", "=")
         )
-        self.curTemplate = "template" + tmpl
+
+        if extern_template:
+            self.extern_templates.append(
+                CppExternTemplate(
+                    name=extern_template_name,
+                    params=tmpl,
+                    namespace=self.cur_namespace(),
+                )
+            )
+            self.stack = []
+            self.nameStack = []
+            self.stmtTokens = []
+        else:
+            self.curTemplate = "template" + tmpl
 
     def _parse_gcc_attribute(self):
         tok1 = self._next_token_must_be("(")

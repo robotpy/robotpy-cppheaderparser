@@ -4078,5 +4078,62 @@ typedef int(   *  mmmmp  )(int, int)  ;
         self.assertEqual(c.typedefs["mmmmp"], "typedef int ( * ) ( int , int )")
 
 
+class ExternTemplateTest(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+extern template class MyClass<1,2>;
+extern template class __attribute__(("something")) MyClass<3,4>;
+
+namespace foo {
+extern template class MyClass<5,6>;
+};
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        c = self.cppHeader
+        et0, et1, et2 = c.extern_templates
+
+        self.assertEqual(et0["name"], "MyClass")
+        self.assertEqual(et0["namespace"], "")
+        self.assertEqual(et0["params"], "<1, 2>")
+
+        self.assertEqual(et1["name"], "MyClass")
+        self.assertEqual(et1["namespace"], "")
+        self.assertEqual(et1["params"], "<3, 4>")
+
+        self.assertEqual(et2["name"], "MyClass")
+        self.assertEqual(et2["namespace"], "foo")
+        self.assertEqual(et2["params"], "<5, 6>")
+
+
+class UsingTemplateTest(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class X {
+  template <typename T>
+  using TT = U<T>;
+};
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+        u = self.cppHeader.classes["X"]["using"]
+        self.assertEqual(len(u), 1)
+        tt = u["TT"]
+
+        self.assertEqual(tt["access"], "private")
+        self.assertEqual(tt["raw_type"], "U<T >")
+        self.assertEqual(tt["type"], "U<T >")
+        self.assertEqual(tt["typealias"], "TT")
+        self.assertEqual(tt["template"], "template<typename T>")
+
+
 if __name__ == "__main__":
     unittest.main()

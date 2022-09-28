@@ -31,8 +31,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"robotpy-cppheaderparser"
-copyright = u"2019 RobotPy Development Team"
+project = "robotpy-cppheaderparser"
+copyright = "2019 RobotPy Development Team"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -200,8 +200,8 @@ latex_documents = [
     (
         "index",
         "sphinx.tex",
-        u"robotpy-cppheaderparser Documentation",
-        u"Author",
+        "robotpy-cppheaderparser Documentation",
+        "Author",
         "manual",
     )
 ]
@@ -232,7 +232,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ("index", "sphinx", u"robotpy-cppheaderparser Documentation", [u"Author"], 1)
+    ("index", "sphinx", "robotpy-cppheaderparser Documentation", ["Author"], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -248,8 +248,8 @@ texinfo_documents = [
     (
         "index",
         "sphinx",
-        u"robotpy-cppheaderparser Documentation",
-        u"Author",
+        "robotpy-cppheaderparser Documentation",
+        "Author",
         "sphinx",
         "One line description of project.",
         "Miscellaneous",
@@ -272,10 +272,10 @@ texinfo_documents = [
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u"robotpy-cppheaderparser"
-epub_author = u"RobotPy Development Team"
-epub_publisher = u"RobotPy Development Team"
-epub_copyright = u"2019 RobotPy Development Team"
+epub_title = "robotpy-cppheaderparser"
+epub_author = "RobotPy Development Team"
+epub_publisher = "RobotPy Development Team"
+epub_copyright = "2019 RobotPy Development Team"
 
 # The basename for the epub file. It defaults to the project name.
 # epub_basename = u'..'
