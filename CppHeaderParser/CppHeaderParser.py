@@ -1425,6 +1425,10 @@ class _CppPreprocessorLiteral(dict):
         return self["value"]
 
 
+class CppExternTemplate(dict):
+    pass
+
+
 # Implementation is shared between CppPragma, CppDefine, CppInclude but they are
 # distinct so that they may diverge if required without interface-breaking
 # changes
@@ -2747,6 +2751,8 @@ class CppHeader(_CppHeader):
         #: List of enums in this header as :class:`.CppEnum`
         self.enums = []
 
+        self.extern_templates = []
+
         #: List of variables in this header as :class:`.CppVariable`
         self.variables = []
         self.global_enums = {}
@@ -2879,7 +2885,7 @@ class CppHeader(_CppHeader):
                     break
                 tok.value = TagStr(tok.value, location=tok.location)
 
-                # debug_print("TOK: %s", tok)
+                debug_print("TOK: %s", tok)
                 if tok.type == "NAME":
                     if tok.value in self.IGNORE_NAMES:
                         continue
@@ -3459,6 +3465,21 @@ class CppHeader(_CppHeader):
         self.curTemplate = None
 
     def _parse_template(self):
+        # check for 'extern template'
+        extern_template = False
+        if len(self.stmtTokens) == 1 and self.stmtTokens[0].value == "extern":
+            extern_template = True
+            tok = self._next_token_must_be("NAME")
+            if not tok.value == "class":
+                raise self._parse_error((tok,), "class")
+
+            tok = self._next_token_must_be("NAME")
+            if tok.value == "__attribute__":
+                self._parse_gcc_attribute()
+                tok = self._next_token_must_be("NAME")
+
+            extern_template_name = tok.value
+
         tok = self._next_token_must_be("<")
         consumed = self._consume_balanced_tokens(tok)
         tmpl = " ".join(tok.value for tok in consumed)
@@ -3471,7 +3492,20 @@ class CppHeader(_CppHeader):
             .replace(" , ", ", ")
             .replace(" = ", "=")
         )
-        self.curTemplate = "template" + tmpl
+
+        if extern_template:
+            self.extern_templates.append(
+                CppExternTemplate(
+                    name=extern_template_name,
+                    params=tmpl,
+                    namespace=self.cur_namespace(),
+                )
+            )
+            self.stack = []
+            self.nameStack = []
+            self.stmtTokens = []
+        else:
+            self.curTemplate = "template" + tmpl
 
     def _parse_gcc_attribute(self):
         tok1 = self._next_token_must_be("(")
