@@ -3414,6 +3414,10 @@ template <typename T>
 class
 C2 {};
 
+/// hasattr comment
+[[nodiscard]]
+int hasattr();
+
 """,
             "string",
         )
@@ -3442,6 +3446,11 @@ C2 {};
         c = self.cppHeader.classes["C2"]
         self.assertEqual("C2", c["name"])
         self.assertEqual("/// template comment", c["doxygen"])
+
+    def test_hasattr(self):
+        fn = self.cppHeader.functions[1]
+        self.assertEqual("hasattr", fn["name"])
+        self.assertEqual("/// hasattr comment", fn["doxygen"])
 
 
 class EnumParameter_TestCase(unittest.TestCase):

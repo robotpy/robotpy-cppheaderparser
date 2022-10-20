@@ -2895,9 +2895,11 @@ class CppHeader(_CppHeader):
                         self._parse_template()
                         continue
                     elif tok.value == "alignas":
+                        self._doxygen_cache = self.lex.get_doxygen()
                         self._parse_attribute_specifier_seq(tok)
                         continue
                     elif tok.value == "__attribute__":
+                        self._doxygen_cache = self.lex.get_doxygen()
                         self._parse_gcc_attribute()
                         continue
                     elif not self.stack and tok.value == "static_assert":
@@ -2906,6 +2908,7 @@ class CppHeader(_CppHeader):
                         continue
 
                 elif tok.type == "DBL_LBRACKET":
+                    self._doxygen_cache = self.lex.get_doxygen()
                     self._parse_attribute_specifier_seq(tok)
                     continue
 
@@ -3076,7 +3079,7 @@ class CppHeader(_CppHeader):
 
                 newNsLen = len(self.nameStack)
                 if nslen != newNsLen and newNsLen == 1:
-                    if not self.curTemplate:
+                    if not self._doxygen_cache:
                         self._doxygen_cache = self.lex.get_doxygen()
 
         except Exception as e:
@@ -3471,7 +3474,7 @@ class CppHeader(_CppHeader):
 
         # its a little confusing to have some if/else above return and others not, and then clearning the nameStack down here
         self.nameStack = []
-        self.lex.doxygenCommentCache = ""
+        self._doxygen_cache = None
         self.curTemplate = None
 
     def _parse_template(self):
