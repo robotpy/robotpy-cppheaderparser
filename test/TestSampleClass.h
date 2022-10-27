@@ -74,6 +74,7 @@ namespace Alpha
     		Z_C = 'j',
 			Z_D,
          Z_E = '9',
+         Z_F = 9,
     	} Zebra;
     };
 
