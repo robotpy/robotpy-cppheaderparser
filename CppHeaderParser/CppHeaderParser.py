@@ -1350,7 +1350,8 @@ class _CppEnum(dict):
                 # Remove single quotes from single quoted chars (unless part of some expression
                 if len(a) == 3 and a[0] == "'" and a[2] == "'":
                     a = v["value"] = a[1]
-                if a.lower().startswith("0x"):
+                    a = i = ord(a)
+                elif a.lower().startswith("0x"):
                     try:
                         i = a = int(a, 16)
                     except:

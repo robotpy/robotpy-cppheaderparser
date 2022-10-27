@@ -73,6 +73,7 @@ namespace Alpha
     		Z_B = 0x2B,
     		Z_C = 'j',
 			Z_D,
+         Z_E = '9',
     	} Zebra;
     };
 

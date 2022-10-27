@@ -418,6 +418,7 @@ class AlphaClass_Zebra_TestCase(unittest.TestCase):
                 {"name": "Z_B", "raw_value": "0x2B", "value": 43},
                 {"name": "Z_C", "raw_value": "j", "value": 106},
                 {"name": "Z_D", "value": 107},
+                {"name": "Z_E", "raw_value": "9", "value": 57},
             ],
         )
 
