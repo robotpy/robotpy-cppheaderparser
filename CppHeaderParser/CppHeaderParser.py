@@ -2208,11 +2208,21 @@ class _CppHeader(Resolver):
         else:
             assert 0
 
-        if len(stack) > 3 and stack[-1] == ";" and stack[-3] == "=":
-            if stack[-2] == "0":
-                info["pure_virtual"] = True
-            elif stack[-2] == "delete":
-                info["deleted"] = True
+        refqual = ""
+        if len(stack) > 3:
+            if stack[-1] == ";" and stack[-3] == "=":
+                if stack[-2] == "0":
+                    info["pure_virtual"] = True
+                elif stack[-2] == "delete":
+                    info["deleted"] = True
+
+            for e in reversed(stack):
+                if e == ")":
+                    break
+                elif e == "&":
+                    refqual += "&"
+
+        info["ref_qualifiers"] = refqual
 
         r = header.split()
         name = None

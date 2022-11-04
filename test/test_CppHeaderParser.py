@@ -4146,5 +4146,42 @@ class X {
         self.assertEqual(tt["template"], "template<typename T>")
 
 
+class RefQualifierTest(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+struct X {
+  void fn0();
+  void fn1() &;
+  void fn2() &&;
+  void fn3() && = 0;
+};
+
+""",
+            "string",
+        )
+
+    def test_fn0(self):
+        fn = self.cppHeader.classes["X"]["methods"]["public"][0]
+        self.assertEqual(fn["name"], "fn0")
+        self.assertEqual(fn["ref_qualifiers"], "")
+
+    def test_fn1(self):
+        fn = self.cppHeader.classes["X"]["methods"]["public"][1]
+        self.assertEqual(fn["name"], "fn1")
+        self.assertEqual(fn["ref_qualifiers"], "&")
+
+    def test_fn1(self):
+        fn = self.cppHeader.classes["X"]["methods"]["public"][2]
+        self.assertEqual(fn["name"], "fn2")
+        self.assertEqual(fn["ref_qualifiers"], "&&")
+
+    def test_fn3(self):
+        fn = self.cppHeader.classes["X"]["methods"]["public"][3]
+        self.assertEqual(fn["name"], "fn3")
+        self.assertEqual(fn["ref_qualifiers"], "&&")
+        self.assertEqual(fn["pure_virtual"], True)
+
+
 if __name__ == "__main__":
     unittest.main()
