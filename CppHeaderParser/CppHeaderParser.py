@@ -2702,7 +2702,14 @@ class CppHeader(_CppHeader):
         for className in list(self.classes.keys()):
             self.classes[className].show()
 
-    def __init__(self, headerFileName, argType="file", encoding=None, **kwargs):
+    def __init__(
+        self,
+        headerFileName,
+        argType="file",
+        encoding=None,
+        preprocessed=False,
+        **kwargs
+    ):
         """Create the parsed C++ header file parse tree
 
         headerFileName - Name of the file to parse OR actual file contents (depends on argType)
@@ -2802,21 +2809,24 @@ class CppHeader(_CppHeader):
                 "[ ]+", " ", supportedAccessSpecifier[i]
             ).strip()
 
-        # Change multi line #defines and expressions to single lines maintaining line nubmers
-        # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
-        matches = re.findall(r"(?m)^(?:.*\\\r?\n)+.*$", headerFileStr)
-        is_define = re.compile(r"[ \t\v]*#[Dd][Ee][Ff][Ii][Nn][Ee]")
-        for m in matches:
-            # Keep the newlines so that linecount doesnt break
-            num_newlines = len([a for a in m if a == "\n"])
-            if is_define.match(m):
-                new_m = m.replace("\n", "<CppHeaderParser_newline_temp_replacement>\\n")
-            else:
-                # Just expression taking up multiple lines, make it take 1 line for easier parsing
-                new_m = m.replace("\\\n", " ")
-            if num_newlines > 0:
-                new_m += "\n" * (num_newlines)
-            headerFileStr = headerFileStr.replace(m, new_m)
+        if not preprocessed:
+            # Change multi line #defines and expressions to single lines maintaining line nubmers
+            # Based from http://stackoverflow.com/questions/2424458/regular-expression-to-match-cs-multiline-preprocessor-statements
+            matches = re.findall(r"(?m)^(?:.*\\\r?\n)+.*$", headerFileStr)
+            is_define = re.compile(r"[ \t\v]*#[Dd][Ee][Ff][Ii][Nn][Ee]")
+            for m in matches:
+                # Keep the newlines so that linecount doesnt break
+                num_newlines = len([a for a in m if a == "\n"])
+                if is_define.match(m):
+                    new_m = m.replace(
+                        "\n", "<CppHeaderParser_newline_temp_replacement>\\n"
+                    )
+                else:
+                    # Just expression taking up multiple lines, make it take 1 line for easier parsing
+                    new_m = m.replace("\\\n", " ")
+                if num_newlines > 0:
+                    new_m += "\n" * (num_newlines)
+                headerFileStr = headerFileStr.replace(m, new_m)
 
         # Filter out Extern "C" statements.  These are order dependent
         matches = re.findall(
