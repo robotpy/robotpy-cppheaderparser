@@ -139,6 +139,9 @@ supportedAccessSpecifier = ["public", "protected", "private"]
 #: Symbols to ignore, usually special macros
 ignoreSymbols = ["Q_OBJECT"]
 
+_BRACE_REASON_OTHER = 0
+_BRACE_REASON_NS = 1
+_BRACE_REASON_EXTERN = 2
 
 # Track what was added in what order and at what depth
 parseHistory = []
@@ -1506,6 +1509,11 @@ class Resolver(object):
             i += 1
         return rtn
 
+    def cur_linkage(self):
+        if len(self.linkage_stack):
+            return self.linkage_stack[-1]
+        return ""
+
     def guess_ctypes_type(self, string):
         pointers = string.count("*")
         string = string.replace("*", "")
@@ -2372,6 +2380,7 @@ class _CppHeader(Resolver):
                     self._get_location(self.nameStack),
                 )
                 newMethod["parent"] = None
+                newMethod["linkage"] = self.cur_linkage()
                 self.functions.append(newMethod)
 
             # Reset template once it has been used
@@ -2524,6 +2533,7 @@ class _CppHeader(Resolver):
                 self._get_location(self.nameStack),
             )
             newVar["namespace"] = self.current_namespace()
+            newVar["linkage"] = self.cur_linkage()
             if self.curClass:
                 klass = self.classes[self.curClass]
                 klass["properties"][self.curAccessSpecifier].append(newVar)
@@ -2542,6 +2552,7 @@ class _CppHeader(Resolver):
                 self._get_location(self.nameStack),
             )
             newVar["namespace"] = self.cur_namespace(False)
+            newVar["linkage"] = self.cur_linkage()
             if addToVar:
                 newVar.update(addToVar)
             self.variables.append(newVar)
@@ -2600,6 +2611,7 @@ class _CppHeader(Resolver):
             )
             self.curTemplate = None
         newClass["declaration_method"] = self.nameStack[0]
+        newClass["linkage"] = self.cur_linkage()
         self.classes_order.append(newClass)  # good idea to save ordering
         self.stack = []  # fixes if class declared with ';' in closing brace
         self.stmtTokens = []
@@ -2782,6 +2794,7 @@ class CppHeader(_CppHeader):
         self.curAccessSpecifier = "private"  # private is default
         self.curTemplate = None
         self.accessSpecifierStack = []
+        self.linkage_stack = []
         debug_print(
             "curAccessSpecifier changed/defaulted to %s", self.curAccessSpecifier
         )
@@ -2828,16 +2841,6 @@ class CppHeader(_CppHeader):
                     new_m += "\n" * (num_newlines)
                 headerFileStr = headerFileStr.replace(m, new_m)
 
-        # Filter out Extern "C" statements.  These are order dependent
-        matches = re.findall(
-            re.compile(r'extern[\t ]+"[Cc]"[\t \n\r]*{', re.DOTALL), headerFileStr
-        )
-        for m in matches:
-            # Keep the newlines so that linecount doesnt break
-            num_newlines = len([a for a in m if a == "\n"])
-            headerFileStr = headerFileStr.replace(m, "\n" * num_newlines)
-        headerFileStr = re.sub(r'extern[ ]+"[Cc]"[ ]*', "", headerFileStr)
-
         # Filter out any ignore symbols that end with "()" to account for #define magic functions
         for ignore in ignoreSymbols:
             if not ignore.endswith("()"):
@@ -2876,6 +2879,8 @@ class CppHeader(_CppHeader):
                     )
 
         self.braceDepth = 0
+        self.braceReason = []
+        self.lastBraceReason = _BRACE_REASON_OTHER
 
         lex = Lexer(self.headerFileName)
         lex.input(headerFileStr)
@@ -2948,23 +2953,20 @@ class CppHeader(_CppHeader):
                     continue
 
                 if parenDepth == 0 and tok.type == "{":
+                    self.lastBraceReason = _BRACE_REASON_OTHER
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
                     ):  # namespace {} with no name used in boost, this sets default?
-                        if (
-                            self.nameStack[1]
-                            == "__IGNORED_NAMESPACE__CppHeaderParser__"
-                        ):  # Used in filtering extern "C"
-                            self.nameStack[1] = ""
                         self.nameSpaces.append("".join(self.nameStack[1:]))
                         ns = self.cur_namespace()
                         self.stack = []
                         self.stmtTokens = []
                         if ns not in self.namespaces:
                             self.namespaces.append(ns)
+                        self.lastBraceReason = _BRACE_REASON_NS
                     # Detect special condition of macro magic before class declaration so we
                     # can filter it out
-                    if "class" in self.nameStack and self.nameStack[0] != "class":
+                    elif "class" in self.nameStack and self.nameStack[0] != "class":
                         classLocationNS = self.nameStack.index("class")
                         classLocationS = self.stack.index("class")
                         if (
@@ -2997,13 +2999,19 @@ class CppHeader(_CppHeader):
                         self.stmtTokens = []
                     if not self.braceHandled:
                         self.braceDepth += 1
+                        self.braceReason.append(self.lastBraceReason)
 
                 elif parenDepth == 0 and tok.type == "}":
                     if self.braceDepth == 0:
                         continue
-                    if self.braceDepth == len(self.nameSpaces):
-                        tmp = self.nameSpaces.pop()
+                    reason = self.braceReason.pop()
+                    if reason == _BRACE_REASON_NS:
+                        self.nameSpaces.pop()
                         self.stack = []  # clear stack when namespace ends?
+                        self.stmtTokens = []
+                    elif reason == _BRACE_REASON_EXTERN:
+                        self.linkage_stack.pop()
+                        self.stack = []  # clear stack when linkage ends?
                         self.stmtTokens = []
                     else:
                         self._evaluate_stack()
@@ -3368,8 +3376,10 @@ class CppHeader(_CppHeader):
             pass
         elif len(self.nameStack) == 2 and self.nameStack[0] == "extern":
             debug_print("trace extern")
+            self.linkage_stack.append(self.nameStack[1].strip('"'))
             self.stack = []
             self.stmtTokens = []
+            self.lastBraceReason = _BRACE_REASON_EXTERN
         elif (
             len(self.nameStack) == 2 and self.nameStack[0] == "friend"
         ):  # friend class declaration
@@ -3677,12 +3687,14 @@ class CppHeader(_CppHeader):
     def _install_enum(self, newEnum, instancesData):
         if len(self.curClass):
             newEnum["namespace"] = self.cur_namespace(False)
+            newEnum["linkage"] = self.cur_linkage()
             klass = self.classes[self.curClass]
             klass["enums"][self.curAccessSpecifier].append(newEnum)
             if self.curAccessSpecifier == "public" and "name" in newEnum:
                 klass._public_enums[newEnum["name"]] = newEnum
         else:
             newEnum["namespace"] = self.cur_namespace(True)
+            newEnum["linkage"] = self.cur_linkage()
             self.enums.append(newEnum)
             if "name" in newEnum and newEnum["name"]:
                 self.global_enums[newEnum["name"]] = newEnum
