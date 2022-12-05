@@ -4183,5 +4183,51 @@ struct X {
         self.assertEqual(fn["pure_virtual"], True)
 
 
+class ExternCQuirk(unittest.TestCase):
+    # bug where extern "C" reset the namespace
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+namespace cs {
+extern "C" {
+	struct InCSAndExtern {};
+	void FnInCSAndExtern(InCSAndExtern *n);
+}
+
+class InCS {};
+
+}
+
+void FnNotInCSOrExtern();
+
+""",
+            "string",
+        )
+
+    def test_fn(self):
+
+        # NotCS should be in namespace cs, extern C
+        c = self.cppHeader.classes["InCSAndExtern"]
+        self.assertEqual(c["namespace"], "cs")
+        self.assertEqual(c["linkage"], "C")
+
+        # FnNotCS should be in namespace cs, extern C
+        fn = self.cppHeader.functions[0]
+        self.assertEqual(fn["name"], "FnInCSAndExtern")
+        self.assertEqual(fn["namespace"], "cs::")
+        self.assertEqual(fn["linkage"], "C")
+
+        # InCS should be in namespace cs
+        c = self.cppHeader.classes["InCS"]
+        self.assertEqual(c["namespace"], "cs")
+        self.assertEqual(c["linkage"], "")
+
+        # FnNotCS should not in namespace cs nor extern C
+        fn = self.cppHeader.functions[1]
+        self.assertEqual(fn["name"], "FnNotInCSOrExtern")
+        self.assertEqual(fn["namespace"], "")
+        self.assertEqual(fn["linkage"], "")
+
+
 if __name__ == "__main__":
     unittest.main()
