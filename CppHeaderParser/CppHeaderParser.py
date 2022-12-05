@@ -1480,7 +1480,6 @@ class Resolver(object):
     C_KEYWORDS = "extern virtual static explicit inline friend constexpr".split()
     C_KEYWORDS = set(C_KEYWORDS)
 
-    SubTypedefs = {}  # TODO deprecate?
     NAMESPACES = []
     CLASSES = {}
 
@@ -1878,21 +1877,6 @@ class Resolver(object):
                             var["ctypes_type"] = "ctypes.c_void_p"
                             var["unresolved"] = True
 
-                        elif tag in self.SubTypedefs:  # TODO remove SubTypedefs
-                            if (
-                                "property_of_class" in var
-                                or "property_of_struct" in var
-                            ):
-                                trace_print(
-                                    "class:", self.SubTypedefs[tag], "tag:", tag
-                                )
-                                var["typedef"] = self.SubTypedefs[tag]  # class name
-                                var["ctypes_type"] = "ctypes.c_void_p"
-                            else:
-                                trace_print("WARN-this should almost never happen!")
-                                trace_print(var)
-                                var["unresolved"] = True
-
                         elif tag in self._template_typenames:
                             var["typename"] = tag
                             var["ctypes_type"] = "ctypes.c_void_p"
@@ -2068,10 +2052,6 @@ class _CppHeader(Resolver):
                     elif meth["returns"] in self.classes:
                         trace_print("meth returns class:", meth["returns"])
                         meth["returns_class"] = True
-
-                    elif meth["returns"] in self.SubTypedefs:
-                        meth["returns_class"] = True
-                        meth["returns_nested"] = self.SubTypedefs[meth["returns"]]
 
                     elif meth["returns"] in cls._public_enums:
                         enum = cls._public_enums[meth["returns"]]
@@ -2481,7 +2461,6 @@ class _CppHeader(Resolver):
                 klass["typedefs"][self.curAccessSpecifier].append(name)
                 if self.curAccessSpecifier == "public":
                     klass._public_typedefs[name] = typedef["type"]
-                Resolver.SubTypedefs[name] = self.curClass
             else:
                 assert 0
         elif self.curClass:
