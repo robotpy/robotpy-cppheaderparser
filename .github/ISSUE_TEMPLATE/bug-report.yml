@@ -1,9 +1,5 @@
 name: Bug Report
-description: |
-  Please be aware that we are no longer making fixes ourselves
-  to robotpy-cppheaderparser, but we will accept pull requests with appropriately
-  tested fixes. We recommend all users migrate to our new parser which can be
-  found at https://github.com/robotpy/cxxheaderparser
+description: We are no longer making fixes ourselves to robotpy-cppheaderparser, but we will accept pull requests with appropriately tested fixes. We recommend all users migrate to cxxheaderparser.
 title: "[BUG]: "
 body:
   - type: textarea
