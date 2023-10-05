@@ -11,7 +11,7 @@ jobs:
     - uses: psf/black@stable
   
   check-doc:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     
     steps:
     - uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
         exclude:
         - os: macos-latest
           architecture: x86
-        - os: ubuntu-18.04
+        - os: ubuntu-20.04
           architecture: x86
 
     steps:
