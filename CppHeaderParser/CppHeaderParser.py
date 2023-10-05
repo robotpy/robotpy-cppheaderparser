@@ -112,7 +112,6 @@ if debug:
         print(fmt % args)
 
 else:
-
     debug_caller_lineno = None
 
     def debug_print(fmt, *args):
@@ -3192,7 +3191,6 @@ class CppHeader(_CppHeader):
     }
 
     def _consume_balanced_tokens(self, *init_tokens):
-
         _balanced_token_map = self._balanced_token_map
 
         consumed = list(init_tokens)

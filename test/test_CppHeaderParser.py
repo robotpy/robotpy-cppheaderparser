@@ -3330,7 +3330,6 @@ struct alignas(8) AS {};
         )
 
     def test_existance(self):
-
         self.assertIn("S", self.cppHeader.classes)
         self.assertIn("PS", self.cppHeader.typedefs)
         self.assertEqual("x", self.cppHeader.variables[0]["name"])
@@ -4205,7 +4204,6 @@ void FnNotInCSOrExtern();
         )
 
     def test_fn(self):
-
         # NotCS should be in namespace cs, extern C
         c = self.cppHeader.classes["InCSAndExtern"]
         self.assertEqual(c["namespace"], "cs")

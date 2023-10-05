@@ -6,7 +6,6 @@ _line_re = re.compile(r'^#line (\d+) "(.*)"')
 
 
 class Lexer(object):
-
     tokens = [
         "NUMBER",
         "FLOAT_NUMBER",
