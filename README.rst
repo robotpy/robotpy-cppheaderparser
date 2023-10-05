@@ -1,7 +1,17 @@
 robotpy-cppheaderparser
 =======================
 
-|Build Status|
+**robotpy-cppheaderparser is DEPRECATED, and we are no longer updating it**.
+We will accept pull requests that have fixes and appropriate tests, but we
+will no longer be making any fixes ourselves.
+
+We highly recommend all current and future users to migrate to cxxheaderparser,
+which supports all the syntax that CppHeaderParser does and much much more. The
+parser output is very different, but it is strictly typed and hopefully easier
+to work with. You can find it at https://github.com/robotpy/cxxheaderparser,
+or try the live interactive demo at https://robotpy.github.io/cxxheaderparser/
+
+---------
 
 CppHeaderParser is a pure python C++ header parser that parses C++
 headers and creates a data structure that you can use to do many types
@@ -62,6 +72,3 @@ Past contributors include:
 .. _CppHeaderParser: https://bitbucket.org/senex/cppheaderparser
 
 .. _pcpp: https://github.com/ned14/pcpp
-
-.. |Build Status| image:: https://travis-ci.org/robotpy/robotpy-cppheaderparser.svg?branch=master
-   :target: https://travis-ci.org/robotpy/robotpy-cppheaderparser
