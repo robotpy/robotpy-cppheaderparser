@@ -1217,29 +1217,38 @@ class CppVariable(_CppVariable):
         else:
             self["extern"] = False
 
+        if "=" in nameStack:
+            self["type"] = " ".join(nameStack[: nameStack.index("=") - 1])
+            self["name"] = nameStack[nameStack.index("=") - 1]
+            default = " ".join(nameStack[nameStack.index("=") + 1 :])
+            nameStack = nameStack[: nameStack.index("=")]
+            default = self._filter_name(default)
+            self["default"] = default
+            # backwards compat; deprecate camelCase in dicts
+            self["defaultValue"] = default
+
         _stack_ = nameStack
-        if "[" in nameStack:  # strip off array informatin
-            arrayStack = nameStack[nameStack.index("[") :]
-            if nameStack.count("[") > 1:
+        self["array"] = 0
+        while "]" in nameStack[-1]:  # strip off array information
+            arrayPos = len(nameStack) - 1 - nameStack[::-1].index("[")
+            arrayStack = nameStack[arrayPos:]
+            if self["array"] == 1:
                 debug_print("Multi dimensional array")
                 debug_print("arrayStack=%s", arrayStack)
-                nums = [x for x in arrayStack if x.isdigit()]
-                # Calculate size by multiplying all dimensions
-                p = 1
-                for n in nums:
-                    p *= int(n)
+                if len(arrayStack) == 3:
+                    n = arrayStack[1]
                 # Multi dimensional array
-                self["array_size"] = p
+                if not "multi_dimensional_array_size" in self:
+                    self["multi_dimensional_array_size"] = self["array_size"]
+                self["multi_dimensional_array_size"] += "x" + n
+                self["array_size"] = str(int(self["array_size"]) * int(n))
                 self["multi_dimensional_array"] = 1
-                self["multi_dimensional_array_size"] = "x".join(nums)
             else:
                 debug_print("Array")
                 if len(arrayStack) == 3:
                     self["array_size"] = arrayStack[1]
-            nameStack = nameStack[: nameStack.index("[")]
+            nameStack = nameStack[:arrayPos]
             self["array"] = 1
-        else:
-            self["array"] = 0
         nameStack = self._name_stack_helper(nameStack)
 
         if doxygen:
@@ -1267,15 +1276,6 @@ class CppVariable(_CppVariable):
                 nameStack[nameStack.index("(") + 2 : nameStack.index(")")]
             )
             self["function_pointer"] = 1
-
-        elif "=" in nameStack:
-            self["type"] = " ".join(nameStack[: nameStack.index("=") - 1])
-            self["name"] = nameStack[nameStack.index("=") - 1]
-            default = " ".join(nameStack[nameStack.index("=") + 1 :])
-            default = self._filter_name(default)
-            self["default"] = default
-            # backwards compat; deprecate camelCase in dicts
-            self["defaultValue"] = default
 
         elif (
             is_fundamental(nameStack[-1])
