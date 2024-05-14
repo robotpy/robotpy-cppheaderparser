@@ -4227,5 +4227,50 @@ void FnNotInCSOrExtern();
         self.assertEqual(fn["linkage"], "")
 
 
+# Github PR 85
+class ContainerOfArray_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class ContainerOfArray {
+public:
+    std::unique_ptr<int[]> variable;
+    std::unique_ptr<int[]> function(std::unique_ptr<int[]> param1);
+};
+""",
+            "string",
+        )
+
+    def test_rtntype(self):
+        self.assertEqual(
+            self.cppHeader.classes["ContainerOfArray"]["methods"]["public"][0]["rtnType"],
+            "std::unique_ptr<int [ ] >",
+        )
+
+    def test_parameters(self):
+        self.assertEqual(
+            filter_pameters(
+                self.cppHeader.classes["ContainerOfArray"]["methods"]["public"][0][
+                    "parameters"
+                ]
+            ),
+            [{"name": "param1", "desc": None, "type": "std::unique_ptr<int [ ] >"}],
+        )
+
+    def test_member(self):
+        self.assertEqual(
+            self.cppHeader.classes["ContainerOfArray"]["properties"]["public"][0][
+                "name"
+            ],
+            "variable",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["ContainerOfArray"]["properties"]["public"][0][
+                "type"
+            ],
+            "std::unique_ptr<int [ ] >",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
