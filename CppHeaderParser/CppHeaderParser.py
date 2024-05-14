@@ -141,6 +141,7 @@ ignoreSymbols = ["Q_OBJECT"]
 _BRACE_REASON_OTHER = 0
 _BRACE_REASON_NS = 1
 _BRACE_REASON_EXTERN = 2
+_BRACE_REASON_VARIABLE = 3
 
 # Track what was added in what order and at what depth
 parseHistory = []
@@ -239,10 +240,13 @@ def is_property_namestack(nameStack):
     r = False
     if "(" not in nameStack and ")" not in nameStack:
         r = True
-    elif (
-        "(" in nameStack
-        and "=" in nameStack
-        and nameStack.index("=") < nameStack.index("(")
+    elif "(" in nameStack and (
+        (  # = initialization
+            "=" in nameStack and nameStack.index("=") < nameStack.index("(")
+        )
+        or (  # {} initialization
+            "{" in nameStack and nameStack.index("{") < nameStack.index("(")
+        )
     ):
         r = True
     # See if we are a function pointer
@@ -1222,6 +1226,16 @@ class CppVariable(_CppVariable):
             self["name"] = nameStack[nameStack.index("=") - 1]
             default = " ".join(nameStack[nameStack.index("=") + 1 :])
             nameStack = nameStack[: nameStack.index("=")]
+            default = self._filter_name(default)
+            self["default"] = default
+            # backwards compat; deprecate camelCase in dicts
+            self["defaultValue"] = default
+        elif "{" in nameStack and "}" in nameStack:
+            posBracket = nameStack.index("{")
+            self["type"] = " ".join(nameStack[: posBracket - 1])
+            self["name"] = nameStack[posBracket - 1]
+            default = " ".join(nameStack[posBracket + 1 : -1])
+            nameStack = nameStack[:posBracket]
             default = self._filter_name(default)
             self["default"] = default
             # backwards compat; deprecate camelCase in dicts
@@ -2931,7 +2945,23 @@ class CppHeader(_CppHeader):
                     continue
 
                 if parenDepth == 0 and tok.type == "{":
-                    self.lastBraceReason = _BRACE_REASON_OTHER
+                    if self.nameStack[0] in (
+                        "class",
+                        "struct",
+                        "union",
+                        "namespace",
+                        "enum",
+                        "extern",
+                        "typedef",
+                    ) or (is_method_namestack(self.stack) or (not self.curClass)):
+                        self.lastBraceReason = _BRACE_REASON_OTHER
+                    else:
+                        # Case : type variable {init};
+                        self.lastBraceReason = _BRACE_REASON_VARIABLE
+                        self.braceDepth += 1
+                        self.braceReason.append(self.lastBraceReason)
+                        self.nameStack.append(tok.value)
+                        continue
                     if len(self.nameStack) >= 2 and is_namespace(
                         self.nameStack
                     ):  # namespace {} with no name used in boost, this sets default?
@@ -2991,6 +3021,10 @@ class CppHeader(_CppHeader):
                         self.linkage_stack.pop()
                         self.stack = []  # clear stack when linkage ends?
                         self.stmtTokens = []
+                    # Case : type variable {init};
+                    elif reason == _BRACE_REASON_VARIABLE:
+                        self.nameStack.append(tok.value)
+                        continue
                     else:
                         self._evaluate_stack()
                     self.braceDepth -= 1

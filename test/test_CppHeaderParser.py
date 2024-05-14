@@ -4272,5 +4272,41 @@ public:
         )
 
 
+class InitBracket_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.cppHeader = CppHeaderParser.CppHeader(
+            """
+class InitBracket {
+public:
+    int variable{10};
+    std::shared_ptr<int> variable2 {std::make_shared<int>(150)};
+};
+""",
+            "string",
+        )
+
+    def test_member(self):
+        self.assertEqual(
+            self.cppHeader.classes["InitBracket"]["properties"]["public"][0]["name"],
+            "variable",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["InitBracket"]["properties"]["public"][0][
+                "defaultValue"
+            ],
+            "10",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["InitBracket"]["properties"]["public"][1]["name"],
+            "variable2",
+        )
+        self.assertEqual(
+            self.cppHeader.classes["InitBracket"]["properties"]["public"][1][
+                "defaultValue"
+            ],
+            "std::make_shared<int> ( 150 )",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
