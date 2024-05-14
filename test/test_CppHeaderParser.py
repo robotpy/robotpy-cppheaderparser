@@ -2364,7 +2364,7 @@ class Picture_TestCase(unittest.TestCase):
     def test_array_size(self):
         self.assertEqual(
             self.cppHeader.classes["Picture"]["properties"]["public"][1]["array_size"],
-            16384,
+            "16384",
         )
 
     def test_multi_dimensional_array_size(self):
