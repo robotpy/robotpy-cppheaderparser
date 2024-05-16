@@ -1879,9 +1879,9 @@ class Resolver(object):
                         elif tag in self._template_typenames:
                             var["typename"] = tag
                             var["ctypes_type"] = "ctypes.c_void_p"
-                            var[
-                                "unresolved"
-                            ] = True  # TODO, how to deal with templates?
+                            var["unresolved"] = (
+                                True  # TODO, how to deal with templates?
+                            )
 
                         elif tag.startswith(
                             "_"

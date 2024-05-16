@@ -7,19 +7,19 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: psf/black@stable
   
   check-doc:
     runs-on: ubuntu-20.04
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         fetch-depth: 0
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Sphinx
@@ -32,22 +32,22 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-20.04]
-        python_version: [3.5, 3.6, 3.7, 3.8]
-        architecture: [x86, x64]
+        os: [windows-latest, macos-13, ubuntu-20.04]
+        python_version: [3.8]
+        architecture: [x64]
         exclude:
-        - os: macos-latest
+        - os: macos-13
           architecture: x86
         - os: ubuntu-20.04
           architecture: x86
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         fetch-depth: 0
     
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python_version }}
         architecture: ${{ matrix.architecture }}
@@ -72,12 +72,12 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         fetch-depth: 0
     
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - run: pip --disable-pip-version-check install wheel
