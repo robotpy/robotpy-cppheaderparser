@@ -4243,7 +4243,9 @@ public:
 
     def test_rtntype(self):
         self.assertEqual(
-            self.cppHeader.classes["ContainerOfArray"]["methods"]["public"][0]["rtnType"],
+            self.cppHeader.classes["ContainerOfArray"]["methods"]["public"][0][
+                "rtnType"
+            ],
             "std::unique_ptr<int [ ] >",
         )
 
