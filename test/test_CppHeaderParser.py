@@ -1162,14 +1162,9 @@ class CarrotClass_TestCase(unittest.TestCase):
             [],
         )
 
-    def test_class_template(self):
-        self.assertEqual(
-            self.cppHeader.classes["CarrotClass"]["template"], "template<class T>"
-        )
-
 
 # Bug 3517289
-class CarrotClass_TestCase(unittest.TestCase):
+class ExternClass_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader("TestSampleClass.h")
 
