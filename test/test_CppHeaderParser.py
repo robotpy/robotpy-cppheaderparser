@@ -1749,7 +1749,7 @@ class functions_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader(
             """\
-              void global_funct1(int i);             
+              void global_funct1(int i);
               int global_funct2(void);
               """,
             "string",
@@ -1784,7 +1784,7 @@ class functions2_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader(
             """\
-              void global_funct1(int i);             
+              void global_funct1(int i);
               int global_funct2(void){
                   // do something
               }
@@ -2168,6 +2168,45 @@ class Grape_TestCase(unittest.TestCase):
             self.cppHeader.classes["Grape"]["properties"]["public"][5]["name"], "f"
         )
 
+    def test_g_exists(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][6]["name"], "g"
+        )
+
+    def test_g_type(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][6]["type"], "const int *"
+        )
+
+    def test_h_exists(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][7]["name"], "h"
+        )
+
+    def test_h_type(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][7]["type"], "const int const &"
+        )
+
+    def test_i_exists(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][8]["name"], "i"
+        )
+
+    def test_i_type(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][8]["type"], "const int const *"
+        )
+
+    def test_j_exists(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][9]["name"], "j"
+        )
+
+    def test_j_type(self):
+        self.assertEqual(
+            self.cppHeader.classes["Grape"]["properties"]["public"][9]["type"], "const int"
+        )
 
 # Bug BitBucket #14
 class Avacado_TestCase(unittest.TestCase):
@@ -2430,7 +2469,7 @@ struct Lemon
     virtual void foo() final;
     virtual void foo2();
 };
- 
+
 struct Lime final : Lemon
 {
     void abc();
@@ -3508,7 +3547,7 @@ class StaticAssert_TestCase(unittest.TestCase):
     def setUp(self):
         self.cppHeader = CppHeaderParser.CppHeader(
             """
-static_assert(sizeof(int) == 4, 
+static_assert(sizeof(int) == 4,
               "integer size is wrong"
               "for some reason");
 """,
@@ -3531,7 +3570,7 @@ struct ComplexInit : SomeBase {
   }
 
   void fn();
-  
+
   std::vector<int> m_stuff;
 };
 
@@ -3879,7 +3918,7 @@ class NestedTypedef(unittest.TestCase):
 template <class SomeType> class A {
  public:
   typedef B <SomeType> C;
-  
+
   A();
 
  protected:

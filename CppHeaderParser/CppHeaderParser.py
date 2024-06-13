@@ -2509,11 +2509,38 @@ class _CppHeader(Resolver):
                         self.nameStack,
                         ".  Separating processing",
                     )
-                    orig_nameStack = self.nameStack[:]
+                    i = leftMostComma - 2 # start right before the first var name
+                    typeFound = []
+                    typeEndIndex = 0
 
-                    type_nameStack = orig_nameStack[: leftMostComma - 1]
-                    for name in orig_nameStack[leftMostComma - 1 :: 2]:
-                        self.nameStack = type_nameStack + [name]
+                    while not i < 0: # find the type by assuming that the first non-ptr/ref related word before the first varname has to be the end of the type stack
+                        if self.nameStack[i] == "*" or self.nameStack[i] == "&":
+                            if i > 0 and self.nameStack[i - 1] == "const": # handle declarations like "int const& const_int_ref;" correctly
+                                i -= 1; # skip next const
+                        else: # the real type declaration starts (ends) at index i
+                            typeEndIndex = i + 1
+                            typeFound.extend(self.nameStack[0:i + 1])
+
+                            break
+
+                        i-= 1
+
+                    nameStacks = []
+                    currStack = typeFound.copy()
+
+                    for word in self.nameStack[typeEndIndex:]:
+                        if word == ",":
+                            nameStacks.append(currStack)
+                            currStack = typeFound.copy() # reset currStack
+                            continue
+
+                        currStack.append(word)
+
+                    if not currStack == typeFound: # add last var in the list
+                        nameStacks.append(currStack)
+
+                    for nameStack in nameStacks:
+                        self.nameStack = nameStack
                         self._evaluate_property_stack(
                             clearStack=False, addToVar=addToVar
                         )
